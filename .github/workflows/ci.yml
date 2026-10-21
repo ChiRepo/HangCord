@@ -42,16 +42,18 @@ jobs:
   secrets-scan:
     runs-on: ubuntu-latest
     timeout-minutes: 10
-    permissions: { contents: read, pull-requests: read }   # gitleaks reads PR commits on a private repo
     steps:
       - uses: actions/checkout@v7
         with: { fetch-depth: 0 }
-      - uses: gitleaks/gitleaks-action@v3
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          GITLEAKS_CONFIG: .gitleaks.toml
-          GITLEAKS_ENABLE_COMMENTS: "false"
-          # A repo owned by an organisation also needs secrets.GITLEAKS_LICENSE (free key from gitleaks.io).
+      # gitleaks CLI pinned to the version used locally (no licence or PR-comment permissions needed).
+      - name: gitleaks (full history)
+        run: |
+          curl -sSfL -o gl.tgz https://github.com/gitleaks/gitleaks/releases/download/v8.30.1/gitleaks_8.30.1_linux_x64.tar.gz
+          tar -xzf gl.tgz gitleaks && rm gl.tgz
+          if ! ./gitleaks git . --config .gitleaks.toml --redact --no-banner --report-format json --report-path leaks.json; then
+            jq -r '.[] | "::error file=\(.File),line=\(.StartLine)::gitleaks \(.RuleID) in commit \(.Commit[0:7])"' leaks.json
+            exit 1
+          fi
 
   # The code map (graphify/README.md) must match the code in every push/PR. Local parsing only — no AI, no keys.
   code-map:
