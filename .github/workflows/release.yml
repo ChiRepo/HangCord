@@ -68,13 +68,15 @@ jobs:
       - uses: actions/download-artifact@v7
         with: { path: dist, merge-multiple: true }
       - name: Checksums
-        run: cd dist && sha256sum * > SHA256SUMS.txt && cat SHA256SUMS.txt
+        run: |
+          mkdir out && find dist -type f \( -name '*.deb' -o -name '*.AppImage' -o -name '*.exe' -o -name '*.msi' -o -name '*.dmg' \) -exec mv {} out/ \;
+          ls -la out && cd out && sha256sum * > SHA256SUMS.txt && cat SHA256SUMS.txt
       - name: Draft GitHub Release with the installers
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           TAG_IN: ${{ inputs.tag || (github.ref_type == 'tag' && github.ref_name) || '' }}
         run: |
           TAG="${TAG_IN:-v$(node -p "require('./src/apps/desktop/src-tauri/tauri.conf.json').version")}"
-          gh release create "$TAG" dist/* --repo "$GITHUB_REPOSITORY" --draft --target "$GITHUB_SHA" \
+          gh release create "$TAG" out/* --repo "$GITHUB_REPOSITORY" --draft --target "$GITHUB_SHA" \
             --title "HangCord $TAG" \
             --notes "HangCord desktop app $TAG — Windows (.exe / .msi), macOS (.dmg), Linux (.deb / AppImage). Unsigned early build: expect bugs; Windows SmartScreen and macOS Gatekeeper will warn the first time. Verify downloads with SHA256SUMS.txt."
