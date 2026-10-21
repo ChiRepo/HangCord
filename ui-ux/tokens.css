@@ -1,0 +1,71 @@
+/* SUPERSEDED 2026-10-21: use ui-ux/calm-minimal/tokens.css for all new code.
+   Kept only as a record of the earlier (v1, Lantern orange / Manrope) design. */
+
+/* HangCord design tokens — source: ui-ux/screens (HangCord UI design canvas, 2026-10-21).
+   Use these variables everywhere in packages/ui. Never hard-code colours in components. */
+
+:root {
+  /* Brand */
+  --hc-lantern: #FF7A45;        /* primary / accent */
+  --hc-lantern-hover: #FF9A6E;  /* links */
+  --hc-on-lantern: #1A0E08;     /* text/icons on Lantern (white fails contrast) */
+  --hc-moss: #3DD68C;           /* online, success, encrypted */
+  --hc-on-moss: #0E2A1B;
+  --hc-ember: #F04A5A;          /* danger, mentions, leave */
+  --hc-on-ember: #1A0E08;
+  --hc-ember-text: #F47C87;     /* danger text on dark */
+  --hc-honey: #F5B83D;          /* warnings, reminders, schedules */
+  --hc-sky: #6CB6FF;            /* info, moderator role default */
+
+  /* Dark theme surfaces (default) */
+  --hc-bg-deep: #0C0E12;        /* title bar, hangout dock, lounge */
+  --hc-bg: #111318;             /* app background ("Night") */
+  --hc-panel: #181B22;          /* sidebars, cards */
+  --hc-raised: #1F232C;         /* inputs, popovers, selected rows */
+  --hc-selected: #262A34;
+  --hc-line: #2A2F3A;           /* borders */
+  --hc-line-soft: #22262F;      /* row dividers */
+  --hc-line-strong: #3A404D;    /* dashed reserved slots, off switches */
+
+  /* Text on dark */
+  --hc-text: #ECEEF2;
+  --hc-text-body: #DDE1E8;
+  --hc-text-muted: #A3A9B6;
+  --hc-text-dim: #8A91A0;       /* passes 4.5:1 on --hc-bg and --hc-panel */
+
+  /* Tinted surfaces */
+  --hc-moss-tint: #12261C;
+  --hc-honey-tint: #2A2418;
+  --hc-lantern-tint: #2A2018;
+  --hc-beta-tint: #1F1A16;
+
+  /* Light theme */
+  --hc-paper: #FAF8F5;
+  --hc-paper-panel: #F1EEE9;
+  --hc-paper-raised: #FFFFFF;
+  --hc-paper-line: #E2DDD5;
+
+  /* Type */
+  --hc-font: "Manrope", system-ui, sans-serif;
+  --hc-font-mono: "JetBrains Mono", ui-monospace, monospace;
+  --hc-text-xs: 11px;   /* section labels, uppercase, 800, letter-spacing .06em */
+  --hc-text-sm: 12px;
+  --hc-text-md: 14px;   /* body */
+  --hc-text-lg: 16px;   /* room titles */
+  --hc-text-xl: 22px;   /* settings page titles */
+  --hc-text-hero: 56px; /* welcome headline */
+
+  /* Shape & spacing */
+  --hc-radius-sm: 8px;    /* buttons, inputs, nav rows */
+  --hc-radius-md: 12px;   /* composer, banners */
+  --hc-radius-lg: 14px;   /* cards, sections */
+  --hc-radius-xl: 20px;   /* auth cards */
+  --hc-radius-pill: 999px;
+  --hc-hangout-icon: 48px;      /* dock icons: 24px radius idle, 16px when active */
+  --hc-touch: 44px;             /* minimum touch target */
+  --hc-dock-width: 72px;
+  --hc-sidebar-width: 248px;
+  --hc-members-width: 240px;
+  --hc-titlebar-height: 38px;
+  --hc-header-height: 52px;
+}

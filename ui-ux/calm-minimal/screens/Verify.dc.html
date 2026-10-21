@@ -1,0 +1,61 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>HangCord — Verify email</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&amp;family=Space+Grotesk:wght@500;600;700&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0;background:#111316}
+a{color:#86B6FF}a:hover{color:#B3D0FF}
+.hc button,.hc input{font:inherit}
+.hc button:focus-visible,.hc a:focus-visible,.hc input:focus-visible{outline:2px solid #F2A93B;outline-offset:2px}
+.dg{width:52px;height:60px;box-sizing:border-box;border-radius:10px;background:#111316;border:1px solid #2A2F37;color:#ECEEF1;text-align:center;font:600 24px/32px 'Space Grotesk',sans-serif}
+</style>
+</helmet>
+<div class="hc" style="min-height:100vh;width:100%;display:flex;flex-direction:column;background:#111316;color:#ECEEF1;font-family:Inter,sans-serif">
+<header style="display:flex;align-items:center;justify-content:space-between;padding:24px 32px">
+<div style="display:flex;align-items:center;gap:10px"><span style="width:32px;height:32px;border-radius:9px;background:#F2A93B;color:#1A1205;font:700 16px/32px 'Space Grotesk',sans-serif;text-align:center">H</span><span style="font:700 18px/24px 'Space Grotesk',sans-serif">HangCord</span></div>
+<span style="font:500 13px/18px Inter,sans-serif;color:#858E9B">Step 2 of 3</span>
+</header>
+<main style="flex:1;display:flex;align-items:center;justify-content:center;padding:24px">
+<form style="width:100%;max-width:440px;display:flex;flex-direction:column;gap:24px;padding:40px 32px;box-sizing:border-box;border-radius:14px;background:#181B20;border:1px solid #2A2F37" aria-labelledby="v-title">
+<span style="width:48px;height:48px;border-radius:12px;background:#22262D;display:flex;align-items:center;justify-content:center;color:#F2A93B"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="2" y="4" width="20" height="16" rx="2"></rect><path d="m22 7-10 6L2 7"></path></svg></span>
+<div>
+<h1 id="v-title" style="margin:0;font:600 24px/32px 'Space Grotesk',sans-serif">Check your email</h1>
+<p style="margin:8px 0 0;font:400 15px/22px Inter,sans-serif;color:#A9B0BA">We sent a 6-digit code to <span style="color:#ECEEF1;font-weight:500">[your email]</span>. Enter it to finish creating your account.</p>
+</div>
+<fieldset style="border:0;margin:0;padding:0">
+<legend style="font:500 14px/20px Inter,sans-serif;margin-bottom:10px">Verification code</legend>
+<div style="display:flex;gap:8px;justify-content:space-between">
+<input class="dg" aria-label="Digit 1" inputmode="numeric" maxlength="1" value="4" style="border-color:#3A404A">
+<input class="dg" aria-label="Digit 2" inputmode="numeric" maxlength="1" value="8" style="border-color:#3A404A">
+<input class="dg" aria-label="Digit 3" inputmode="numeric" maxlength="1" value="1" style="border-color:#3A404A">
+<input class="dg" aria-label="Digit 4" inputmode="numeric" maxlength="1" style="border:2px solid #F2A93B">
+<input class="dg" aria-label="Digit 5" inputmode="numeric" maxlength="1">
+<input class="dg" aria-label="Digit 6" inputmode="numeric" maxlength="1">
+</div>
+<p style="margin:10px 0 0;font:400 13px/18px Inter,sans-serif;color:#858E9B">Paste works too. The code expires in [expiry time].</p>
+</fieldset>
+<a href="Onboarding.dc.html" style="height:44px;display:flex;align-items:center;justify-content:center;border-radius:6px;background:#F2A93B;color:#1A1205;font:600 15px/22px Inter,sans-serif;text-decoration:none">Verify and continue</a>
+<div style="display:flex;justify-content:space-between;font:400 14px/20px Inter,sans-serif;color:#A9B0BA">
+<span>No email? <a href="#">Resend code</a> <span style="color:#858E9B">in 0:42</span></span>
+<a href="SignIn.dc.html">Change email</a>
+</div>
+</form>
+</main>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1440,"height":900}}'>
+class Component extends DCLogic {
+renderVals() {
+return {};
+}
+}
+</script>
+</body>
+</html>

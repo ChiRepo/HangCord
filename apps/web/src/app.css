@@ -1,0 +1,219 @@
+/* Web companion shell — Calm Minimal, mobile-first (MASTER_PLAN §15.1). Tokens only. */
+*, *::before, *::after { box-sizing: border-box; }
+html, body, #root { height: 100%; }
+body {
+  margin: 0;
+  background: var(--hc-bg);
+  color: var(--hc-text);
+  font: 400 var(--hc-text-body)/22px var(--hc-font);
+  -webkit-text-size-adjust: 100%;
+}
+button, input { font: inherit; color: inherit; }
+button { cursor: pointer; background: none; border: 0; }
+:focus-visible { outline: var(--hc-focus); outline-offset: var(--hc-focus-offset); }
+.sr-only { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+.icon { flex-shrink: 0; }
+.boot { height: 100dvh; background: var(--hc-bg); }
+
+.app {
+  display: flex;
+  flex-direction: column;
+  height: 100dvh;
+  padding-left: env(safe-area-inset-left);
+  padding-right: env(safe-area-inset-right);
+}
+.beta {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--hc-space-2);
+  padding: 6px var(--hc-space-4);
+  padding-top: max(6px, env(safe-area-inset-top));
+  background: var(--hc-panel);
+  border-bottom: 1px solid var(--hc-line);
+  color: var(--hc-text-muted);
+  font: 500 var(--hc-text-meta)/16px var(--hc-font);
+}
+.frame { flex: 1; display: flex; min-height: 0; position: relative; }
+/* Live memory readout from the desktop governor (MASTER_PLAN §11) */
+.mem { display: inline-flex; align-items: center; gap: 6px; color: var(--hc-text-muted); white-space: nowrap; }
+.mem::before { content: ""; width: 8px; height: 8px; border-radius: var(--hc-radius-round); background: var(--hc-moss); }
+.mem--yellow::before { background: var(--hc-honey); }
+.mem--red::before { background: var(--hc-ember-text); }
+.perf { display: inline-flex; align-items: center; gap: var(--hc-space-3); }
+.switch { display: inline-flex; align-items: center; gap: 6px; min-height: 28px; padding: 0 10px; border-radius: var(--hc-radius-pill); border: 1px solid var(--hc-line-strong); color: var(--hc-text-muted); font: 500 var(--hc-text-meta)/16px var(--hc-font); }
+.switch[aria-checked="true"] { border-color: var(--hc-lantern); color: var(--hc-text); background: var(--hc-raised); }
+@media (pointer: coarse) { .switch { min-height: 44px; } }
+
+/* Hangout dock */
+.dock {
+  width: var(--hc-dock-width);
+  flex-shrink: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--hc-space-2);
+  padding: var(--hc-space-3) 0;
+  border-right: 1px solid var(--hc-line);
+  overflow-y: auto;
+}
+.hangout {
+  width: var(--hc-hangout-icon);
+  height: var(--hc-hangout-icon);
+  border-radius: var(--hc-radius-lg);
+  background: var(--hc-raised);
+  font: 600 15px/1 var(--hc-font-display);
+  display: grid;
+  place-items: center;
+  transition: border-radius var(--hc-dur-fast) var(--hc-ease-in), background var(--hc-dur-fast);
+}
+.hangout:hover { border-radius: 12px; }
+.hangout.is-active { background: var(--hc-lantern); color: var(--hc-on-lantern); border-radius: 12px; }
+.hangout--add { color: var(--hc-moss); }
+
+/* Rooms list */
+.rooms {
+  width: var(--hc-sidebar-width);
+  flex-shrink: 0;
+  display: flex;
+  flex-direction: column;
+  background: var(--hc-panel);
+  border-right: 1px solid var(--hc-line);
+  min-width: 0;
+}
+.rooms__head { height: var(--hc-header-height); display: flex; align-items: center; padding: 0 var(--hc-space-4); border-bottom: 1px solid var(--hc-line); }
+.rooms__head h1, .chat__head h1 { margin: 0; font: 600 var(--hc-text-title)/24px var(--hc-font-display); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.rooms__list { flex: 1; overflow-y: auto; padding: var(--hc-space-2); }
+.category { margin-bottom: var(--hc-space-3); }
+.category__head { display: flex; align-items: center; justify-content: space-between; padding: var(--hc-space-2) var(--hc-space-1) var(--hc-space-1) var(--hc-space-2); }
+.category__head h2 { margin: 0; font: 500 var(--hc-text-meta)/16px var(--hc-font); letter-spacing: .06em; text-transform: uppercase; color: var(--hc-text-dim); }
+/* The + on every category: round, always visible to people who may add rooms */
+.add {
+  width: 32px;
+  height: 32px;
+  border-radius: var(--hc-radius-round);
+  display: grid;
+  place-items: center;
+  color: var(--hc-text-muted);
+  transition: background var(--hc-dur-fast), color var(--hc-dur-fast);
+}
+.add:hover:not(:disabled) { background: var(--hc-raised); color: var(--hc-text); }
+.add:disabled { opacity: .45; cursor: not-allowed; }
+.room {
+  width: 100%;
+  min-height: 32px;
+  display: flex;
+  align-items: center;
+  gap: var(--hc-space-2);
+  padding: 0 var(--hc-space-2);
+  border-radius: var(--hc-radius-sm);
+  color: var(--hc-text-muted);
+  font: 500 var(--hc-text-ui)/20px var(--hc-font);
+  text-align: left;
+}
+.room span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.room:hover, .room.is-active { background: var(--hc-raised); color: var(--hc-text); }
+
+/* Chat */
+.chat { flex: 1; min-width: 0; display: flex; flex-direction: column; background: var(--hc-surface); }
+.chat__head { height: var(--hc-header-height); flex-shrink: 0; display: flex; align-items: center; gap: var(--hc-space-2); padding: 0 var(--hc-space-3); border-bottom: 1px solid var(--hc-line); color: var(--hc-text-dim); }
+.chat__head h1 { color: var(--hc-text); }
+.push { margin-left: auto; }
+.tag { padding: 2px 8px; border-radius: var(--hc-radius-pill); background: var(--hc-raised); color: var(--hc-text-muted); font: 500 var(--hc-text-meta)/16px var(--hc-font); white-space: nowrap; }
+.icon-btn { width: 36px; height: 36px; border-radius: var(--hc-radius-round); display: grid; place-items: center; color: var(--hc-text-muted); }
+.icon-btn:hover { background: var(--hc-raised); color: var(--hc-text); }
+.messages { flex: 1; overflow-y: auto; display: flex; flex-direction: column; justify-content: flex-end; gap: var(--hc-space-3); padding: var(--hc-space-4); }
+.msg { display: flex; gap: var(--hc-space-3); max-width: 72ch; }
+.msg p { margin: 0; overflow-wrap: anywhere; }
+.msg__meta b { font-weight: 600; }
+.msg__meta time { color: var(--hc-text-dim); font-size: var(--hc-text-meta); }
+.composer {
+  display: flex;
+  align-items: center;
+  gap: var(--hc-space-2);
+  margin: 0 var(--hc-space-3) var(--hc-space-3);
+  padding: 0 var(--hc-space-2) 0 var(--hc-space-3);
+  min-height: 48px;
+  border-radius: var(--hc-radius-md);
+  background: var(--hc-raised);
+  border: 1px solid var(--hc-line);
+}
+.composer:focus-within { border-color: var(--hc-line-strong); }
+.composer input { flex: 1; min-width: 0; background: transparent; border: 0; outline: none; min-height: 44px; font-size: 16px; }
+
+/* Members */
+.members { width: var(--hc-members-width); flex-shrink: 0; background: var(--hc-panel); border-left: 1px solid var(--hc-line); padding: var(--hc-space-4) var(--hc-space-2); overflow-y: auto; }
+.members__head { display: flex; align-items: center; justify-content: space-between; gap: var(--hc-space-2); margin-bottom: var(--hc-space-2); }
+.members h2 { margin: 0; padding: 0 var(--hc-space-2); font: 500 var(--hc-text-meta)/16px var(--hc-font); letter-spacing: .06em; text-transform: uppercase; color: var(--hc-text-dim); }
+.member { display: flex; align-items: center; gap: var(--hc-space-3); min-height: 48px; padding: 0 var(--hc-space-2); }
+.member span { display: flex; flex-direction: column; font-size: var(--hc-text-ui); line-height: 18px; }
+.member small { color: var(--hc-text-dim); font-size: var(--hc-text-meta); }
+
+/* Add room dialog → bottom sheet on phones */
+.error { margin: 0; color: var(--hc-ember-text); font: 500 var(--hc-text-ui)/20px var(--hc-font); }
+.scrim { position: fixed; inset: 0; background: var(--hc-scrim); display: grid; place-items: center; padding: var(--hc-space-4); z-index: 20; }
+.dialog {
+  width: 100%;
+  max-width: 440px;
+  max-height: calc(100dvh - 32px);
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: var(--hc-space-4);
+  padding: var(--hc-space-6);
+  border-radius: var(--hc-radius-lg);
+  background: var(--hc-panel);
+  border: 1px solid var(--hc-line);
+}
+.dialog h2 { margin: 0; font: 600 var(--hc-text-page)/28px var(--hc-font-display); }
+.choice { border: 0; margin: 0; padding: 0; display: flex; flex-direction: column; gap: var(--hc-space-2); }
+.choice legend { font: 500 var(--hc-text-ui)/20px var(--hc-font); margin-bottom: var(--hc-space-2); }
+.choice label { display: flex; flex-wrap: wrap; align-items: center; gap: var(--hc-space-2); min-height: 44px; padding: var(--hc-space-2) var(--hc-space-3); border-radius: var(--hc-radius-sm); border: 1px solid var(--hc-line); cursor: pointer; }
+.choice label:has(input:checked) { border-color: var(--hc-lantern); background: var(--hc-raised); }
+.choice input { accent-color: var(--hc-lantern); width: 18px; height: 18px; margin: 0; }
+.choice small { flex-basis: 100%; padding-left: 26px; color: var(--hc-text-dim); font-size: var(--hc-text-meta); }
+.field { display: flex; flex-direction: column; gap: 6px; font: 500 var(--hc-text-ui)/20px var(--hc-font); }
+.field input { min-height: 44px; padding: 0 var(--hc-space-3); border-radius: var(--hc-radius-sm); background: var(--hc-bg); border: 1px solid var(--hc-line); font-size: 16px; }
+.dialog__actions { display: flex; justify-content: flex-end; gap: var(--hc-space-2); }
+.btn { min-height: 40px; padding: 0 var(--hc-space-4); border-radius: var(--hc-radius-sm); font-weight: 600; }
+.btn--primary { background: var(--hc-lantern); color: var(--hc-on-lantern); }
+.btn--primary:disabled { opacity: .45; cursor: not-allowed; }
+.btn--ghost { border: 1px solid var(--hc-line-strong); }
+
+/* Below 1100px the members list opens on demand as an overlay inside the app frame, under the
+   beta bar, so it never covers the toggle that opened it. */
+.members.overlay { position: absolute; right: 0; top: 0; bottom: 0; z-index: 10; }
+.members-scrim { position: absolute; inset: 0; z-index: 9; background: var(--hc-scrim); }
+
+/* Any touch screen — phones in landscape and touch tablets too — gets 44px targets (§15.1). */
+@media (pointer: coarse) {
+  .room { min-height: 44px; }
+  .add, .icon-btn, .hangout { width: 44px; height: 44px; }
+  .btn { min-height: 44px; }
+  .choice label { min-height: 48px; }
+}
+
+/* Phone: one pane at a time, bottom tabs, 44px targets (MASTER_PLAN §15.1) */
+@media (max-width: 719px) {
+  .dock { width: 64px; }
+  .rooms { flex: 1; width: auto; border-right: 0; }
+  .room { min-height: 44px; font-size: 15px; }
+  .add { width: 44px; height: 44px; }
+  .icon-btn { width: 44px; height: 44px; }
+  .hangout { width: 44px; height: 44px; }
+  .btn { min-height: 44px; }
+  .members.sheet { position: fixed; left: 0; top: auto; width: auto; max-height: 70dvh; border-left: 0; border-top: 1px solid var(--hc-line); border-radius: var(--hc-radius-lg) var(--hc-radius-lg) 0 0; padding-bottom: calc(var(--hc-space-4) + env(safe-area-inset-bottom)); }
+  .scrim { align-items: end; padding: 0; }
+  .dialog { max-width: none; border-radius: var(--hc-radius-lg) var(--hc-radius-lg) 0 0; padding-bottom: calc(var(--hc-space-6) + env(safe-area-inset-bottom)); max-height: 92dvh; }
+  .dialog__actions .btn { flex: 1; }
+  .tabs {
+    display: flex;
+    justify-content: space-around;
+    border-top: 1px solid var(--hc-line);
+    background: var(--hc-panel);
+    padding-bottom: env(safe-area-inset-bottom);
+  }
+  .tab { flex: 1; min-height: 56px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2px; color: var(--hc-text-dim); font: 500 var(--hc-text-meta)/16px var(--hc-font); }
+  .tab[aria-current="page"] { color: var(--hc-lantern); }
+}

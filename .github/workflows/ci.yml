@@ -1,0 +1,145 @@
+# CI for pushes and PRs (MASTER_PLAN §13, §15, §15.1, §16.1). Branches: main = the real application,
+# WebApp = web companion work. Releases are built by release.yml.
+#
+# Free-minute budget (private repo: 2,000 min/month; Windows counts 2×, macOS 10×):
+#   checks + secrets-scan + desktop-linux run on every push/PR.
+#   desktop-windows runs on pushes to main and on manual runs. desktop-macos runs only on manual runs
+#   (the owner builds macOS on the Mac — apps/desktop/README.md).
+name: ci
+on:
+  push:
+    branches: [main, WebApp]   # other branches are covered by their pull request (no double runs)
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  checks:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v7
+        with: { fetch-depth: 0 }
+      - uses: actions/setup-node@v7
+        with: { node-version: 22, cache: npm }
+      - run: npm ci
+      - run: npm run lint
+      - run: npm run typecheck:js   # Rust is checked in desktop-linux
+      - run: npm run test:js
+      - run: npm run build
+      - run: npm run check:size
+      - run: npm run check:secrets-names
+      - run: npx playwright install --with-deps chromium webkit
+        working-directory: tests/e2e
+      - run: npm run e2e
+        env: { CI: "true" }
+
+  secrets-scan:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions: { contents: read, pull-requests: read }   # gitleaks reads PR commits on a private repo
+    steps:
+      - uses: actions/checkout@v7
+        with: { fetch-depth: 0 }
+      - uses: gitleaks/gitleaks-action@v3
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITLEAKS_CONFIG: .gitleaks.toml
+          GITLEAKS_ENABLE_COMMENTS: "false"
+          # A repo owned by an organisation also needs secrets.GITLEAKS_LICENSE (free key from gitleaks.io).
+
+  # The code map (graphify/README.md) must match the code in every push/PR. Local parsing only — no AI, no keys.
+  code-map:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v7
+      - run: pipx install "graphifyy==$(sed -n 's/^graphifyy==//p' graphify/requirements.txt)"
+      - run: sh graphify/refresh.sh --check
+
+  # The real desktop app (checkpoint 1.1): Rust tests, a test-hooks build driven end to end through
+  # tauri-driver + WebKitWebDriver, then the release .deb / AppImage.
+  desktop-linux:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
+        with: { node-version: 22, cache: npm }
+      - name: Linux libraries for Tauri + WebDriver
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends libwebkit2gtk-4.1-dev libgtk-3-dev \
+            libayatana-appindicator3-dev librsvg2-dev libsoup-3.0-dev libssl-dev libdbus-1-dev pkg-config \
+            build-essential webkit2gtk-driver xvfb dbus
+      - uses: dtolnay/rust-toolchain@1.95
+      - uses: Swatinem/rust-cache@v2.9.3
+        with: { workspaces: "apps/desktop/src-tauri -> target" }
+      - run: npm ci
+      - name: Rust unit tests
+        run: cargo test --locked
+        working-directory: apps/desktop/src-tauri
+      - name: Build the app with test hooks (forced file key — never shipped)
+        run: npx tauri build --no-bundle --features test-hooks --ci
+      - run: cargo install tauri-driver --version 2.1.0 --locked
+      - name: Desktop e2e (launch, governor, + room, single instance, restart from encrypted cache)
+        run: xvfb-run -a dbus-run-session -- node tests/desktop/run.mjs apps/desktop/src-tauri/target/release/hangcord-desktop
+      - name: Release installers (no test hooks)
+        run: npx tauri build --bundles deb appimage --ci
+      - uses: actions/upload-artifact@v7.0.2
+        with:
+          name: hangcord-linux
+          path: |
+            apps/desktop/src-tauri/target/release/bundle/deb/*.deb
+            apps/desktop/src-tauri/target/release/bundle/appimage/*.AppImage
+          retention-days: 7
+
+  desktop-windows:
+    if: github.event_name == 'workflow_dispatch' || (github.event_name == 'push' && github.ref == 'refs/heads/main')
+    runs-on: windows-latest
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
+        with: { node-version: 22, cache: npm }
+      - uses: dtolnay/rust-toolchain@1.95
+      - uses: Swatinem/rust-cache@v2.9.3
+        with: { workspaces: "apps/desktop/src-tauri -> target" }
+      - run: npm ci
+      - run: cargo test --locked
+        working-directory: apps/desktop/src-tauri
+      - run: npx tauri build --bundles nsis msi --ci
+      - uses: actions/upload-artifact@v7.0.2
+        with:
+          name: hangcord-windows
+          path: |
+            apps/desktop/src-tauri/target/release/bundle/nsis/*.exe
+            apps/desktop/src-tauri/target/release/bundle/msi/*.msi
+          retention-days: 7
+
+  desktop-macos:
+    if: github.event_name == 'workflow_dispatch'
+    runs-on: macos-latest
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
+        with: { node-version: 22, cache: npm }
+      - uses: dtolnay/rust-toolchain@1.95
+      - uses: Swatinem/rust-cache@v2.9.3
+        with: { workspaces: "apps/desktop/src-tauri -> target" }
+      - run: npm ci
+      - run: cargo test --locked
+        working-directory: apps/desktop/src-tauri
+      - run: npx tauri build --bundles app dmg --ci
+      - uses: actions/upload-artifact@v7.0.2
+        with:
+          name: hangcord-macos-unsigned
+          path: apps/desktop/src-tauri/target/release/bundle/dmg/*.dmg
+          retention-days: 7

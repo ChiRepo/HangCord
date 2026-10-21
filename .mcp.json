@@ -1,0 +1,9 @@
+{
+  "mcpServers": {
+    "hangcord-code-map": {
+      "type": "stdio",
+      "command": "graphify-mcp",
+      "args": ["graphify/graph/graph.json"]
+    }
+  }
+}

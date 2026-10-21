@@ -1,0 +1,11 @@
+# Automatically generated - DO NOT EDIT!
+
+[[permission]]
+identifier = "allow-cache-keys"
+description = "Enables the cache_keys command without any pre-configured scope."
+commands.allow = ["cache_keys"]
+
+[[permission]]
+identifier = "deny-cache-keys"
+description = "Denies the cache_keys command without any pre-configured scope."
+commands.deny = ["cache_keys"]

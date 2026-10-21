@@ -1,0 +1,55 @@
+{
+  "permissions": {
+    "ask": [
+      "Read(./Private files (.md files store here)/**)",
+      "Edit(./Private files (.md files store here)/**)",
+      "Write(./Private files (.md files store here)/**)",
+      "Edit(./private and only to be accessed once which is before starting work on a project or unless user specifies and AI halucinated from its task/**)",
+      "Write(./private and only to be accessed once which is before starting work on a project or unless user specifies and AI halucinated from its task/**)"
+    ],
+    "deny": [
+      "Read(./.dev.vars)",
+      "Read(./.env)",
+      "Read(./.env.*)"
+    ]
+  },
+  "extraKnownMarketplaces": {
+    "thedotmack": {
+      "source": {
+        "source": "github",
+        "repo": "thedotmack/claude-mem"
+      }
+    },
+    "headroom-marketplace": {
+      "source": {
+        "source": "github",
+        "repo": "headroomlabs-ai/headroom"
+      }
+    },
+    "token-optimizer": {
+      "source": {
+        "source": "github",
+        "repo": "ooples/token-optimizer-mcp"
+      }
+    },
+    "superpowers-dev": {
+      "source": {
+        "source": "github",
+        "repo": "obra/superpowers"
+      }
+    },
+    "context-mode": {
+      "source": {
+        "source": "github",
+        "repo": "mksglu/context-mode"
+      }
+    }
+  },
+  "enabledPlugins": {
+    "claude-mem@thedotmack": true,
+    "headroom@headroom-marketplace": true,
+    "token-optimizer@token-optimizer": true,
+    "superpowers@superpowers-dev": true,
+    "context-mode@context-mode": true
+  }
+}

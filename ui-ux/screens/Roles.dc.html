@@ -1,0 +1,137 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>HangCord — Hangout settings, roles</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&amp;display=swap">
+<style>
+body{margin:0;background:#111318}
+a{color:#FF9A6E}a:hover{color:#FFB894}
+button{font-family:inherit}
+input{font-family:inherit}
+</style>
+</helmet>
+<div style="font-family: Manrope, system-ui, sans-serif; color: #ECEEF2; background: #111318; min-height: 900px; display: flex; flex-wrap: wrap; font-size: 14px; line-height: 1.45">
+
+  <nav aria-label="Hangout settings" style="flex: 0 0 240px; background: #181B22; padding: 32px 12px; display: flex; flex-direction: column; gap: 2px">
+    <div style="font-size: 11px; font-weight: 800; letter-spacing: 0.06em; color: #8A91A0; padding: 0 10px 8px">NIGHT OWLS</div>
+    <sc-for list="{{nav}}" as="n" hint-placeholder-count="12">
+      <sc-if value="{{n.heading}}" hint-placeholder-val="{{false}}"><div style="font-size: 11px; font-weight: 800; letter-spacing: 0.06em; color: #8A91A0; padding: 14px 10px 4px">{{n.heading}}</div></sc-if>
+      <a href="{{n.href}}" style="padding: 7px 10px; border-radius: 8px; text-decoration: none; color: {{n.color}}; background: {{n.bg}}; font-weight: {{n.weight}}">{{n.label}}</a>
+    </sc-for>
+  </nav>
+
+  <section aria-label="Roles" style="flex: 0 1 300px; border-right: 1px solid #1F232C; padding: 32px 16px; display: flex; flex-direction: column; gap: 10px">
+    <div style="display: flex; justify-content: space-between; align-items: center"><h1 style="margin: 0; font-size: 20px; font-weight: 800">Roles</h1><button style="height: 32px; padding: 0 12px; border-radius: 8px; border: 0; background: {{accent}}; color: #1A0E08; font-weight: 800; cursor: pointer">New role</button></div>
+    <p style="margin: 0; color: #A3A9B6; font-size: 13px">Higher roles can manage lower ones. You can drag roles below <strong style="color: #ECEEF2">Admin</strong>.</p>
+    <sc-for list="{{roles}}" as="r" hint-placeholder-count="5">
+      <button style="display: flex; align-items: center; gap: 10px; padding: 10px; border-radius: 10px; border: 1px solid {{r.border}}; background: {{r.bg}}; color: #ECEEF2; text-align: left; cursor: pointer">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#5A6170" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M8 6h0M16 6h0M8 12h0M16 12h0M8 18h0M16 18h0"></path></svg>
+        <span style="width: 12px; height: 12px; border-radius: 50%; background: {{r.color}}"></span>
+        <span style="flex: 1; font-weight: 700">{{r.name}}</span>
+        <sc-if value="{{r.lock}}" hint-placeholder-val="{{false}}"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#8A91A0" stroke-width="2" role="img" aria-label="Above your role"><rect x="5" y="11" width="14" height="10" rx="2"></rect><path d="M8 11V8a4 4 0 0 1 8 0v3"></path></svg></sc-if>
+        <span style="font-size: 12px; color: #8A91A0">{{r.count}}</span>
+      </button>
+    </sc-for>
+  </section>
+
+  <main style="flex: 999 1 560px; min-width: 0; padding: 32px 36px; display: flex; flex-direction: column; gap: 18px">
+    <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px">
+      <div style="display: flex; align-items: center; gap: 10px"><span style="width: 16px; height: 16px; border-radius: 50%; background: #6CB6FF"></span><h2 style="margin: 0; font-size: 20px; font-weight: 800">Edit role — Moderator</h2></div>
+      <div style="display: flex; gap: 8px">
+        <button style="height: 34px; padding: 0 12px; border-radius: 8px; border: 1px solid #2A2F3A; background: none; color: #ECEEF2; font-weight: 700; cursor: pointer">View as role</button>
+        <button style="height: 34px; padding: 0 12px; border-radius: 8px; border: 1px solid #2A2F3A; background: none; color: #ECEEF2; font-weight: 700; cursor: pointer">Members · 3</button>
+      </div>
+    </div>
+
+    <div role="tablist" aria-label="Role editor" style="display: flex; gap: 18px; border-bottom: 1px solid #2A2F3A">
+      <button role="tab" aria-selected="false" style="height: 36px; border: 0; background: none; color: #A3A9B6; font-weight: 700; cursor: pointer">Display</button>
+      <button role="tab" aria-selected="true" style="height: 36px; border: 0; border-bottom: 2px solid {{accent}}; background: none; color: #ECEEF2; font-weight: 800; cursor: pointer">Permissions</button>
+      <button role="tab" aria-selected="false" style="height: 36px; border: 0; background: none; color: #A3A9B6; font-weight: 700; cursor: pointer">Time limit</button>
+    </div>
+
+    <div style="display: flex; gap: 8px; flex-wrap: wrap; align-items: center">
+      <span style="font-size: 13px; color: #A3A9B6">Start from a preset:</span>
+      <button style="height: 30px; padding: 0 12px; border-radius: 999px; border: 1px solid #2A2F3A; background: none; color: #ECEEF2; font-weight: 700; cursor: pointer">Member</button>
+      <button style="height: 30px; padding: 0 12px; border-radius: 999px; border: 1px solid {{accent}}; background: #2A2018; color: #ECEEF2; font-weight: 700; cursor: pointer">Moderator</button>
+      <button style="height: 30px; padding: 0 12px; border-radius: 999px; border: 1px solid #2A2F3A; background: none; color: #ECEEF2; font-weight: 700; cursor: pointer">Admin</button>
+      <label style="margin-left: auto"><span style="position: absolute; left: -9999px">Search permissions</span><input type="search" placeholder="Search permissions" style="height: 32px; width: 220px; border-radius: 8px; border: 1px solid #2A2F3A; background: #181B22; color: #ECEEF2; padding: 0 10px; font-size: 13px"></label>
+    </div>
+
+    <sc-for list="{{groups}}" as="g" hint-placeholder-count="3">
+      <section style="background: #181B22; border: 1px solid #2A2F3A; border-radius: 14px; padding: 4px 18px">
+        <div style="font-size: 11px; font-weight: 800; letter-spacing: 0.06em; color: #8A91A0; padding: 12px 0 4px">{{g.title}}</div>
+        <sc-for list="{{g.perms}}" as="p" hint-placeholder-count="4">
+          <div style="display: flex; align-items: center; gap: 14px; padding: 12px 0; border-top: 1px solid #22262F">
+            <div style="flex: 1; min-width: 0">
+              <div style="display: flex; align-items: center; gap: 8px; font-weight: 700">{{p.name}}<sc-if value="{{p.risk}}" hint-placeholder-val="{{false}}"><span style="font-size: 10px; font-weight: 800; letter-spacing: 0.04em; color: #1A0E08; background: #F5B83D; border-radius: 4px; padding: 1px 6px">SENSITIVE · EMAIL CODE</span></sc-if></div>
+              <div style="font-size: 13px; color: #A3A9B6">{{p.help}}</div>
+            </div>
+            <button role="switch" aria-checked="{{p.on}}" aria-label="{{p.name}}" onClick="{{p.toggle}}" style="flex: 0 0 48px; height: 28px; border-radius: 14px; border: 0; background: {{p.bg}}; position: relative; cursor: pointer"><span style="position: absolute; top: 3px; left: {{p.left}}; width: 22px; height: 22px; border-radius: 50%; background: #FFFFFF"></span></button>
+          </div>
+        </sc-for>
+      </section>
+    </sc-for>
+
+    <div style="background: #1F1A16; border: 1px solid #4A3324; border-radius: 12px; padding: 12px 14px; font-size: 13px; color: #D9CBBF">You can only turn on permissions you have yourself. Administrator can only be given by the owner.</div>
+  </main>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"accent":{"editor":"color","default":"#FF7A45","options":["#FF7A45","#3DD68C","#6CB6FF","#F5B83D"]},"$preview":{"width":1440,"height":1100}}'>
+class Component extends DCLogic {
+  constructor(props) {
+    super(props);
+    this.state = { on: { timeout: true, kick: true, ban: false, manageMessages: true, manageStrands: true, pin: true, mute: true, move: true, controlTogether: true, mentionEveryone: false } };
+  }
+  renderVals() {
+    const accent = this.props.accent ?? '#FF7A45';
+    const on = this.state.on;
+    const mk = (key, name, help, risk) => ({
+      name, help, risk, on: !!on[key],
+      bg: on[key] ? '#3DD68C' : '#3A404D', left: on[key] ? '23px' : '3px',
+      toggle: () => this.setState({ on: Object.assign({}, on, { [key]: !on[key] }) })
+    });
+    const nav = [
+      { label: 'Overview' }, { label: 'Roles', active: true }, { label: 'Expressions' },
+      { heading: 'PEOPLE', label: 'Members' }, { label: 'Invites' }, { label: 'Bans' },
+      { heading: 'MODERATION', label: 'Safety & security', href: 'Security.dc.html' }, { label: 'AutoMod' }, { label: 'Audit log' },
+      { heading: 'COMMUNITY', label: 'Onboarding' }, { label: 'Integrations' },
+      { heading: 'OWNER', label: 'Danger zone' }
+    ].map((n) => Object.assign({ href: '#', color: n.active ? '#ECEEF2' : '#A3A9B6', bg: n.active ? '#262A34' : 'transparent', weight: n.active ? 800 : 600 }, n));
+    const roles = [
+      { name: 'Keeper (owner)', color: accent, count: 1, lock: true },
+      { name: 'Admin', color: '#C9A0FF', count: 2, lock: true },
+      { name: 'Moderator', color: '#6CB6FF', count: 3, selected: true },
+      { name: 'Movie crew', color: '#F5B83D', count: 14 },
+      { name: '@everyone', color: '#8A91A0', count: 58 }
+    ].map((r) => Object.assign({ bg: r.selected ? '#1F232C' : 'transparent', border: r.selected ? '#3A404D' : 'transparent' }, r));
+    const groups = [
+      { title: 'MEMBERS', perms: [
+        mk('timeout', 'Time out members', 'Stop someone from chatting or joining lounges for a while.', true),
+        mk('kick', 'Kick members', 'Remove people below this role. They can rejoin with an invite.', true),
+        mk('ban', 'Ban members', 'Remove people below this role and block them from coming back.', true)
+      ] },
+      { title: 'ROOMS & MESSAGES', perms: [
+        mk('manageMessages', 'Manage messages', 'Delete anyone’s messages and clear reactions.', true),
+        mk('manageStrands', 'Manage strands', 'Rename, lock, archive and delete strands.', true),
+        mk('pin', 'Pin messages', 'Pin and unpin messages.', false),
+        mk('mentionEveryone', 'Mention @everyone and all roles', 'Notify the whole hangout at once.', true)
+      ] },
+      { title: 'LOUNGES & TOGETHER', perms: [
+        mk('mute', 'Mute and deafen members', 'Silence people in lounges.', true),
+        mk('move', 'Move members', 'Move or disconnect people from lounges.', true),
+        mk('controlTogether', 'Control Together sessions', 'Pause or skip watch/listen-together started by others.', false)
+      ] }
+    ];
+    return { accent, nav, roles, groups };
+  }
+}
+</script>
+</body>
+</html>

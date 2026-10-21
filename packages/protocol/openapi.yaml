@@ -1,0 +1,407 @@
+openapi: 3.1.0
+info:
+  title: HangCord API
+  version: 0.1.0
+  description: |
+    Canonical REST contract (MASTER_PLAN §6, ACCESS_AND_SETTINGS §14).
+    No endpoint may be used in code unless it exists here first.
+    `x-hangcord-phase` = roadmap phase that implements it. Schemas marked
+    "detailed" are final for checkpoint cp-001; the rest are refined in their phase.
+servers:
+  - url: https://api.hangcord.example/v1
+    description: Placeholder — the real domain is an open owner decision.
+security:
+  - session: []
+components:
+  securitySchemes:
+    session:
+      type: http
+      scheme: bearer
+      description: HangCord session (15 min) from POST /auth/session.
+  parameters:
+    HangoutId:
+      name: id
+      in: path
+      required: true
+      schema: { type: string }
+    RoomId:
+      name: id
+      in: path
+      required: true
+      schema: { type: string }
+    IfNoneMatch:
+      name: If-None-Match
+      in: header
+      required: false
+      schema: { type: string }
+    IfMatch:
+      name: If-Match
+      in: header
+      required: true
+      schema: { type: string }
+  responses:
+    Ok:
+      description: OK
+      content:
+        application/json:
+          schema: { type: object }
+    NotModified:
+      description: Cached copy is current (ETag matched).
+    Error:
+      description: Error
+      content:
+        application/json:
+          schema: { $ref: "#/components/schemas/Error" }
+  schemas:
+    Error:
+      type: object
+      required: [error]
+      properties:
+        error: { type: string, description: "Stable machine code, e.g. category_full, not_configured" }
+        message: { type: string }
+    Health:
+      type: object
+      required: [ok, service, version, phase]
+      properties:
+        ok: { type: boolean }
+        service: { type: string, enum: [api, gateway, storage-router] }
+        version: { type: string }
+        phase: { type: integer }
+    GuidelinesChoice:
+      type: string
+      enum: [category, own]
+    NewRoomGuidelinesPreference:
+      type: string
+      enum: [category, own, ask]
+    RoomType:
+      type: string
+      enum: [text, lounge, spotlight, board, bulletin, category]
+    Override:
+      type: object
+      required: [targetType, targetId, allow, deny]
+      properties:
+        targetType: { type: string, enum: [role, member] }
+        targetId: { type: string }
+        allow: { type: string, pattern: "^[0-9]{1,20}$", description: "u64 permission bitfield as decimal string; only bits assigned in ACCESS_AND_SETTINGS §3 (room-scoped bits only in overrides)" }
+        deny: { type: string }
+    RoomDefaults:
+      type: object
+      properties:
+        slowmode: { type: integer, minimum: 0, maximum: 21600 }
+        ageRestricted: { type: boolean }
+        translateDefault: { type: boolean }
+        notifyDefault: { type: string, enum: [all, mentions, nothing] }
+    Room:
+      type: object
+      description: detailed (cp-001)
+      required: [id, hangoutId, type, name, position, syncWithCategory, overrides]
+      properties:
+        id: { type: string }
+        hangoutId: { type: string }
+        type: { $ref: "#/components/schemas/RoomType" }
+        categoryId: { type: [string, "null"] }
+        position: { type: integer }
+        name: { type: string, minLength: 1, maxLength: 100 }
+        topic: { type: string, maxLength: 4096, description: "≤ 1024 except Boards (≤ 4096)" }
+        syncWithCategory: { type: boolean }
+        overrides:
+          type: array
+          items: { $ref: "#/components/schemas/Override" }
+        settings: { type: object, additionalProperties: true }
+        roomDefaults: { $ref: "#/components/schemas/RoomDefaults" }
+        guidelinesText: { type: string, maxLength: 2000 }
+    CreateRoomRequest:
+      type: object
+      description: detailed (cp-001) — ACCESS_AND_SETTINGS §7.1
+      required: [type, name, guidelines]
+      properties:
+        type: { $ref: "#/components/schemas/RoomType" }
+        name: { type: string, minLength: 1, maxLength: 100 }
+        categoryId: { type: [string, "null"] }
+        guidelines: { $ref: "#/components/schemas/GuidelinesChoice" }
+        overrides:
+          type: array
+          items: { $ref: "#/components/schemas/Override" }
+        settings: { type: object, additionalProperties: true }
+    Preferences:
+      type: object
+      description: detailed (cp-001) — MASTER_PLAN §7.1. Each key carries its own updatedAt for per-key merge.
+      required: [version, values]
+      properties:
+        version: { type: integer, minimum: 0 }
+        values:
+          type: object
+          additionalProperties:
+            type: object
+            required: [value, updatedAt]
+            properties:
+              value: {}
+              updatedAt: { type: integer, description: "Unix ms" }
+    PreferencesPatch:
+      type: object
+      required: [set]
+      properties:
+        set:
+          type: object
+          additionalProperties:
+            type: object
+            required: [value, updatedAt]
+            properties:
+              value: {}
+              updatedAt: { type: integer }
+    HangoutSnapshot:
+      type: object
+      description: detailed (cp-001) — cacheable hangout bundle, MASTER_PLAN §7.1
+      required: [hangoutId, version, permVersion, hangout, rooms, roles, me, myPermissions]
+      properties:
+        hangoutId: { type: string }
+        version: { type: integer }
+        permVersion: { type: integer }
+        hangout:
+          type: object
+          required: [id, name]
+          properties:
+            id: { type: string }
+            name: { type: string }
+            icon: { type: [string, "null"] }
+        rooms:
+          type: array
+          items: { $ref: "#/components/schemas/Room" }
+        roles:
+          type: array
+          items:
+            type: object
+            required: [id, name, color, position]
+            properties:
+              id: { type: string }
+              name: { type: string }
+              color: { type: [string, "null"] }
+              position: { type: integer }
+        me:
+          type: object
+          required: [userId, roles]
+          properties:
+            userId: { type: string }
+            nickname: { type: [string, "null"] }
+            roles: { type: array, items: { type: string } }
+        myPermissions:
+          type: object
+          description: "roomId → permission bitfield (decimal string). Cosmetic only; the server always re-checks."
+          additionalProperties: { type: string }
+        emoji:
+          type: array
+          items: { type: object }
+
+paths:
+  /health:
+    get:
+      operationId: getHealth
+      security: []
+      x-hangcord-phase: 0
+      summary: Liveness + configuration check (no secret names in the reply)
+      responses:
+        "200":
+          description: Healthy
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Health" }
+        "503": { $ref: "#/components/responses/Error" }
+
+  /gateway:
+    get:
+      operationId: openGateway
+      security: []
+      x-hangcord-phase: 0
+      summary: "WebSocket upgrade for the gateway (frames: src/gateway-events.ts). Phase 0: HELLO + HEARTBEAT only."
+      responses:
+        "101": { description: Switching Protocols }
+        "426": { $ref: "#/components/responses/Error" }
+
+  # ---- Auth (MASTER_PLAN §6.1) ----
+  /auth/session:
+    post: { operationId: createSession, security: [], x-hangcord-phase: 1, summary: "Firebase ID token → HangCord session (403 email_unverified until verified)", responses: { "200": { $ref: "#/components/responses/Ok" }, "403": { $ref: "#/components/responses/Error" } } }
+  /auth/email-code/send:
+    post: { operationId: sendEmailCode, security: [], x-hangcord-phase: 1, summary: "Send a 6-digit code (verify | reset), rate-limited", responses: { "202": { $ref: "#/components/responses/Ok" } } }
+  /auth/email-code/verify:
+    post: { operationId: verifyEmailCode, security: [], x-hangcord-phase: 1, summary: "Check the code; marks emailVerified", responses: { "200": { $ref: "#/components/responses/Ok" }, "400": { $ref: "#/components/responses/Error" } } }
+  /auth/password-reset/confirm:
+    post: { operationId: confirmPasswordReset, security: [], x-hangcord-phase: 1, summary: "Code + new password", responses: { "200": { $ref: "#/components/responses/Ok" } } }
+  /auth/google/exchange:
+    post: { operationId: exchangeGoogleCode, security: [], x-hangcord-phase: 1, summary: "Desktop PKCE code exchange (client secret stays in Workers secrets)", responses: { "200": { $ref: "#/components/responses/Ok" } } }
+  /auth/refresh:
+    post: { operationId: refreshSession, security: [], x-hangcord-phase: 1, summary: "Rotate refresh token", responses: { "200": { $ref: "#/components/responses/Ok" } } }
+  /auth/logout:
+    post: { operationId: logout, x-hangcord-phase: 1, summary: "Revoke session", responses: { "204": { description: Logged out } } }
+  /auth/step-up:
+    post: { operationId: stepUp, x-hangcord-phase: 4, summary: "Send/verify step_up code bound to {action, targetId}", responses: { "200": { $ref: "#/components/responses/Ok" } } }
+
+  # ---- Me ----
+  /me:
+    get: { operationId: getMe, x-hangcord-phase: 1, responses: { "200": { $ref: "#/components/responses/Ok" } } }
+    patch: { operationId: updateMe, x-hangcord-phase: 1, responses: { "200": { $ref: "#/components/responses/Ok" } } }
+  /me/entitlements:
+    get: { operationId: getEntitlements, x-hangcord-phase: 1, summary: "Plus slot (reserved, disabled)", responses: { "200": { $ref: "#/components/responses/Ok" } } }
+  /me/limits:
+    get: { operationId: getLimits, x-hangcord-phase: 1, responses: { "200": { $ref: "#/components/responses/Ok" } } }
+  /me/preferences:
+    get:
+      operationId: getPreferences
+      x-hangcord-phase: 1
+      summary: User preferences (ETag "p:<version>")
+      parameters: [{ $ref: "#/components/parameters/IfNoneMatch" }]
+      responses:
+        "200":
+          description: Current preferences
+          headers: { ETag: { schema: { type: string } } }
+          content: { application/json: { schema: { $ref: "#/components/schemas/Preferences" } } }
+        "304": { $ref: "#/components/responses/NotModified" }
+    patch:
+      operationId: updatePreferences
+      x-hangcord-phase: 1
+      summary: Set keys; 412 on version conflict → client merges per key and retries
+      parameters: [{ $ref: "#/components/parameters/IfMatch" }]
+      requestBody:
+        required: true
+        content: { application/json: { schema: { $ref: "#/components/schemas/PreferencesPatch" } } }
+      responses:
+        "200":
+          description: Updated
+          content: { application/json: { schema: { $ref: "#/components/schemas/Preferences" } } }
+        "412": { $ref: "#/components/responses/Error" }
+
+  # ---- Social ----
+  /friends:
+    get: { operationId: listFriends, x-hangcord-phase: 3, responses: { "200": { $ref: "#/components/responses/Ok" } } }
+    post: { operationId: addFriend, x-hangcord-phase: 3, responses: { "201": { $ref: "#/components/responses/Ok" } } }
+  /friends/{id}:
+    delete: { operationId: removeFriend, x-hangcord-phase: 3, parameters: [{ name: id, in: path, required: true, schema: { type: string } }], responses: { "204": { description: Removed } } }
+  /blocks:
+    post: { operationId: blockUser, x-hangcord-phase: 3, responses: { "201": { $ref: "#/components/responses/Ok" } } }
+
+  # ---- Hangouts & rooms ----
+  /hangouts:
+    post: { operationId: createHangout, x-hangcord-phase: 1, responses: { "201": { $ref: "#/components/responses/Ok" } } }
+  /hangouts/{id}:
+    get: { operationId: getHangout, x-hangcord-phase: 1, parameters: [{ $ref: "#/components/parameters/HangoutId" }], responses: { "200": { $ref: "#/components/responses/Ok" } } }
+    patch: { operationId: updateHangout, x-hangcord-phase: 1, parameters: [{ $ref: "#/components/parameters/HangoutId" }], responses: { "200": { $ref: "#/components/responses/Ok" } } }
+    delete: { operationId: deleteHangout, x-hangcord-phase: 4, summary: "Owner + step-up; soft delete 7 days", parameters: [{ $ref: "#/components/parameters/HangoutId" }], responses: { "202": { $ref: "#/components/responses/Ok" } } }
+  /hangouts/{id}/snapshot:
+    get:
+      operationId: getHangoutSnapshot
+      x-hangcord-phase: 1
+      summary: Cacheable hangout bundle (ETag "h:<id>:<version>") — MASTER_PLAN §7.1
+      parameters: [{ $ref: "#/components/parameters/HangoutId" }, { $ref: "#/components/parameters/IfNoneMatch" }]
+      responses:
+        "200":
+          description: Snapshot
+          headers: { ETag: { schema: { type: string } } }
+          content: { application/json: { schema: { $ref: "#/components/schemas/HangoutSnapshot" } } }
+        "304": { $ref: "#/components/responses/NotModified" }
+        "404": { $ref: "#/components/responses/Error" }
+  /hangouts/{id}/rooms:
+    get: { operationId: listRooms, x-hangcord-phase: 1, parameters: [{ $ref: "#/components/parameters/HangoutId" }], responses: { "200": { $ref: "#/components/responses/Ok" } } }
+    post:
+      operationId: createRoom
+      x-hangcord-phase: 1
+      summary: Add a Room/Lounge, usually from a category's + button (needs MANAGE_ROOMS on that category) — ACCESS_AND_SETTINGS §7.1
+      parameters: [{ $ref: "#/components/parameters/HangoutId" }]
+      requestBody:
+        required: true
+        content: { application/json: { schema: { $ref: "#/components/schemas/CreateRoomRequest" } } }
+      responses:
+        "201":
+          description: Created
+          content: { application/json: { schema: { $ref: "#/components/schemas/Room" } } }
+        "400": { description: "bad_bits | not_a_category | nested_category | bad_name", content: { application/json: { schema: { $ref: "#/components/schemas/Error" } } } }
+        "403": { description: "forbidden | needs_manage_room_permissions | grants_exceed_creator", content: { application/json: { schema: { $ref: "#/components/schemas/Error" } } } }
+        "409": { description: "category_full | hangout_full", content: { application/json: { schema: { $ref: "#/components/schemas/Error" } } } }
+  /rooms/{id}:
+    patch: { operationId: updateRoom, x-hangcord-phase: 1, summary: "Settings per type; categories also roomDefaults + guidelinesText", parameters: [{ $ref: "#/components/parameters/RoomId" }], responses: { "200": { $ref: "#/components/responses/Ok" } } }
+  /rooms/{id}/sync:
+    post: { operationId: syncRoomWithCategory, x-hangcord-phase: 4, summary: '"Sync now" — follow the category guidelines again', parameters: [{ $ref: "#/components/parameters/RoomId" }], responses: { "200": { $ref: "#/components/responses/Ok" } } }
+
+  # ---- Roles & permissions (ACCESS_AND_SETTINGS §14) ----
+  /hangouts/{id}/roles:
+    get: { operationId: listRoles, x-hangcord-phase: 4, parameters: [{ $ref: "#/components/parameters/HangoutId" }], responses: { "200": { $ref: "#/components/responses/Ok" } } }
+    post: { operationId: createRole, x-hangcord-phase: 4, parameters: [{ $ref: "#/components/parameters/HangoutId" }], responses: { "201": { $ref: "#/components/responses/Ok" } } }
+  /hangouts/{id}/roles/positions:
+    patch: { operationId: reorderRoles, x-hangcord-phase: 4, parameters: [{ $ref: "#/components/parameters/HangoutId" }], responses: { "200": { $ref: "#/components/responses/Ok" } } }
+  /roles/{id}:
+    patch: { operationId: updateRole, x-hangcord-phase: 4, parameters: [{ name: id, in: path, required: true, schema: { type: string } }], responses: { "200": { $ref: "#/components/responses/Ok" } } }
+    delete: { operationId: deleteRole, x-hangcord-phase: 4, parameters: [{ name: id, in: path, required: true, schema: { type: string } }], responses: { "204": { description: Deleted } } }
+  /rooms/{id}/overrides/{type}/{targetId}:
+    put: { operationId: putOverride, x-hangcord-phase: 4, parameters: [{ $ref: "#/components/parameters/RoomId" }, { name: type, in: path, required: true, schema: { type: string, enum: [role, member] } }, { name: targetId, in: path, required: true, schema: { type: string } }], responses: { "200": { $ref: "#/components/responses/Ok" } } }
+    delete: { operationId: deleteOverride, x-hangcord-phase: 4, parameters: [{ $ref: "#/components/parameters/RoomId" }, { name: type, in: path, required: true, schema: { type: string, enum: [role, member] } }, { name: targetId, in: path, required: true, schema: { type: string } }], responses: { "204": { description: Deleted } } }
+
+  /hangouts/{id}/members/{uid}/roles/{roleId}:
+    put: { operationId: addMemberRole, x-hangcord-phase: 4, summary: "MANAGE_ROLES + hierarchy; optional expiresAt", parameters: [{ $ref: "#/components/parameters/HangoutId" }, { name: uid, in: path, required: true, schema: { type: string } }, { name: roleId, in: path, required: true, schema: { type: string } }], responses: { "204": { description: Added } } }
+    delete: { operationId: removeMemberRole, x-hangcord-phase: 4, parameters: [{ $ref: "#/components/parameters/HangoutId" }, { name: uid, in: path, required: true, schema: { type: string } }, { name: roleId, in: path, required: true, schema: { type: string } }], responses: { "204": { description: Removed } } }
+  /hangouts/{id}/members/{uid}/permissions:
+    get: { operationId: explainPermissions, x-hangcord-phase: 4, summary: "Bits + explanation (self, or VIEW_AS_ROLE)", parameters: [{ $ref: "#/components/parameters/HangoutId" }, { name: uid, in: path, required: true, schema: { type: string } }, { name: room, in: query, required: false, schema: { type: string } }], responses: { "200": { $ref: "#/components/responses/Ok" } } }
+  /hangouts/{id}/members/{uid}/timeout:
+    post: { operationId: timeoutMember, x-hangcord-phase: 4, parameters: [{ $ref: "#/components/parameters/HangoutId" }, { name: uid, in: path, required: true, schema: { type: string } }], responses: { "204": { description: Done } } }
+  /hangouts/{id}/members/{uid}/kick:
+    post: { operationId: kickMember, x-hangcord-phase: 4, parameters: [{ $ref: "#/components/parameters/HangoutId" }, { name: uid, in: path, required: true, schema: { type: string } }], responses: { "204": { description: Done } } }
+  /hangouts/{id}/members/{uid}/ban:
+    post: { operationId: banMember, x-hangcord-phase: 4, parameters: [{ $ref: "#/components/parameters/HangoutId" }, { name: uid, in: path, required: true, schema: { type: string } }], responses: { "204": { description: Done } } }
+  /hangouts/{id}/bans/{uid}:
+    delete: { operationId: unbanMember, x-hangcord-phase: 4, parameters: [{ $ref: "#/components/parameters/HangoutId" }, { name: uid, in: path, required: true, schema: { type: string } }], responses: { "204": { description: Done } } }
+  /hangouts/{id}/prune:
+    post: { operationId: pruneMembers, x-hangcord-phase: 4, summary: "Dry-run count first", parameters: [{ $ref: "#/components/parameters/HangoutId" }], responses: { "200": { $ref: "#/components/responses/Ok" } } }
+  /hangouts/{id}/security-actions:
+    post: { operationId: setSecurityActions, x-hangcord-phase: 4, parameters: [{ $ref: "#/components/parameters/HangoutId" }], responses: { "200": { $ref: "#/components/responses/Ok" } } }
+  /hangouts/{id}/audit-log:
+    get: { operationId: getAuditLog, x-hangcord-phase: 4, parameters: [{ $ref: "#/components/parameters/HangoutId" }], responses: { "200": { $ref: "#/components/responses/Ok" } } }
+  /hangouts/{id}/key/rotate:
+    post: { operationId: rotateHangoutKey, x-hangcord-phase: 4, summary: "Owner + step-up; returns the new fingerprint only", parameters: [{ $ref: "#/components/parameters/HangoutId" }], responses: { "200": { $ref: "#/components/responses/Ok" } } }
+  /hangouts/{id}/key/fingerprint:
+    get: { operationId: getHangoutKeyFingerprint, x-hangcord-phase: 4, summary: "Never the key", parameters: [{ $ref: "#/components/parameters/HangoutId" }], responses: { "200": { $ref: "#/components/responses/Ok" } } }
+  /hangouts/{id}/transfer:
+    post: { operationId: transferHangout, x-hangcord-phase: 4, summary: "Owner + step-up", parameters: [{ $ref: "#/components/parameters/HangoutId" }], responses: { "200": { $ref: "#/components/responses/Ok" } } }
+
+  # ---- Messages ----
+  /rooms/{id}/messages:
+    get: { operationId: listMessages, x-hangcord-phase: 1, parameters: [{ $ref: "#/components/parameters/RoomId" }], responses: { "200": { $ref: "#/components/responses/Ok" } } }
+    post: { operationId: sendMessageFallback, x-hangcord-phase: 1, summary: "Fallback send when the WebSocket is down", parameters: [{ $ref: "#/components/parameters/RoomId" }], responses: { "201": { $ref: "#/components/responses/Ok" } } }
+  /messages/{id}:
+    patch: { operationId: editMessage, x-hangcord-phase: 1, parameters: [{ name: id, in: path, required: true, schema: { type: string } }], responses: { "200": { $ref: "#/components/responses/Ok" } } }
+    delete: { operationId: deleteMessage, x-hangcord-phase: 1, parameters: [{ name: id, in: path, required: true, schema: { type: string } }], responses: { "204": { description: Deleted } } }
+  /messages/{id}/reactions/{emoji}:
+    put: { operationId: addReaction, x-hangcord-phase: 1, parameters: [{ name: id, in: path, required: true, schema: { type: string } }, { name: emoji, in: path, required: true, schema: { type: string } }], responses: { "204": { description: Added } } }
+    delete: { operationId: removeReaction, x-hangcord-phase: 1, parameters: [{ name: id, in: path, required: true, schema: { type: string } }, { name: emoji, in: path, required: true, schema: { type: string } }], responses: { "204": { description: Removed } } }
+
+  # ---- Attachments, invites, voice ----
+  /attachments/presign:
+    post: { operationId: presignAttachment, x-hangcord-phase: 1, responses: { "200": { $ref: "#/components/responses/Ok" } } }
+  /attachments/{id}:
+    get: { operationId: getAttachment, x-hangcord-phase: 1, summary: "Signed URL, or 202 restoring for cold items", parameters: [{ name: id, in: path, required: true, schema: { type: string } }], responses: { "200": { $ref: "#/components/responses/Ok" }, "202": { $ref: "#/components/responses/Ok" } } }
+  /invites/{code}:
+    get: { operationId: getInvite, security: [], x-hangcord-phase: 1, parameters: [{ name: code, in: path, required: true, schema: { type: string } }], responses: { "200": { $ref: "#/components/responses/Ok" } } }
+    post: { operationId: acceptInvite, x-hangcord-phase: 1, parameters: [{ name: code, in: path, required: true, schema: { type: string } }], responses: { "200": { $ref: "#/components/responses/Ok" } } }
+  /voice/token:
+    post: { operationId: getVoiceToken, x-hangcord-phase: 2, summary: "LiveKit token (10 min) + TURN credentials", responses: { "200": { $ref: "#/components/responses/Ok" } } }
+
+  # ---- Originals ----
+  /translate:
+    post: { operationId: translate, x-hangcord-phase: 5, responses: { "200": { $ref: "#/components/responses/Ok" } } }
+  /rooms/{id}/catch-up:
+    post: { operationId: catchUp, x-hangcord-phase: 5, parameters: [{ $ref: "#/components/parameters/RoomId" }], responses: { "200": { $ref: "#/components/responses/Ok" } } }
+  /scheduled:
+    post: { operationId: scheduleMessage, x-hangcord-phase: 5, responses: { "201": { $ref: "#/components/responses/Ok" } } }
+  /reminders:
+    get: { operationId: listReminders, x-hangcord-phase: 5, responses: { "200": { $ref: "#/components/responses/Ok" } } }
+    post: { operationId: createReminder, x-hangcord-phase: 5, responses: { "201": { $ref: "#/components/responses/Ok" } } }
+
+  # ---- Encrypted DMs ----
+  /mls/key-packages:
+    post: { operationId: uploadKeyPackages, x-hangcord-phase: 3, responses: { "201": { $ref: "#/components/responses/Ok" } } }
+  /mls/key-packages/{userId}:
+    get: { operationId: getKeyPackages, x-hangcord-phase: 3, parameters: [{ name: userId, in: path, required: true, schema: { type: string } }], responses: { "200": { $ref: "#/components/responses/Ok" } } }
+  /mls/welcome:
+    post: { operationId: sendWelcome, x-hangcord-phase: 3, responses: { "201": { $ref: "#/components/responses/Ok" } } }
+
+  # ---- Safety & flags ----
+  /reports:
+    post: { operationId: createReport, x-hangcord-phase: 4, responses: { "201": { $ref: "#/components/responses/Ok" } } }
+  /flags:
+    get: { operationId: getFlags, x-hangcord-phase: 1, responses: { "200": { $ref: "#/components/responses/Ok" } } }

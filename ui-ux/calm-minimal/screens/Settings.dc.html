@@ -1,0 +1,100 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>HangCord — Settings</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&amp;family=Space+Grotesk:wght@500;600;700&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0;background:#111316}
+a{color:#86B6FF}a:hover{color:#B3D0FF}
+.hc button,.hc input{font:inherit}
+.hc button:focus-visible,.hc a:focus-visible,.hc input:focus-visible{outline:2px solid #F2A93B;outline-offset:2px}
+.nav{display:flex;align-items:center;height:34px;padding:0 10px;border-radius:6px;color:#A9B0BA;font:500 14px/20px Inter,sans-serif;text-decoration:none}
+.nav:hover{background:#22262D;color:#ECEEF1}
+.st{display:flex;align-items:center;gap:12px;height:44px;padding:0 12px;border-radius:6px;background:transparent;border:0;color:#ECEEF1;text-align:left;cursor:pointer;width:100%}
+.st:hover{background:#22262D}
+.pb{position:relative;display:inline-block;width:16px;height:16px;box-sizing:border-box;border-radius:50%;flex-shrink:0}
+</style>
+</helmet>
+<div class="hc" style="display:flex;flex-wrap:wrap;min-height:100vh;width:100%;background:#111316;color:#ECEEF1;font-family:Inter,sans-serif">
+
+<nav aria-label="Settings sections" style="flex:1 1 220px;max-width:280px;display:flex;flex-direction:column;gap:2px;padding:48px 16px 24px 24px;box-sizing:border-box;background:#181B20;border-right:1px solid #2A2F37">
+<div style="padding:0 10px 6px;font:500 12px/16px Inter,sans-serif;letter-spacing:.06em;text-transform:uppercase;color:#858E9B">Account</div>
+<a class="nav" href="#" aria-current="page" style="background:#22262D;color:#ECEEF1">My profile</a>
+<a class="nav" href="#">Privacy &amp; safety</a>
+<a class="nav" href="#">Devices</a>
+<div style="padding:16px 10px 6px;font:500 12px/16px Inter,sans-serif;letter-spacing:.06em;text-transform:uppercase;color:#858E9B">App</div>
+<a class="nav" href="#">Appearance</a>
+<a class="nav" href="#">Voice &amp; video</a>
+<a class="nav" href="#">Notifications</a>
+<a class="nav" href="#">Keybinds</a>
+<a class="nav" href="#">Accessibility</a>
+<div style="height:1px;background:#2A2F37;margin:12px 10px"></div>
+<a class="nav" href="SignIn.dc.html" style="color:#F0605A">Log out</a>
+</nav>
+
+<main style="flex:999 1 560px;min-width:0;padding:48px 40px;box-sizing:border-box;display:flex;flex-direction:column;gap:32px;max-width:960px">
+<div style="display:flex;align-items:center;justify-content:space-between">
+<h1 style="margin:0;font:600 20px/28px 'Space Grotesk',sans-serif">My profile</h1>
+<a href="Main.dc.html" aria-label="Close settings" style="width:36px;height:36px;border-radius:50%;border:1px solid #3A404A;display:flex;align-items:center;justify-content:center;color:#A9B0BA"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" aria-hidden="true"><path d="M18 6 6 18M6 6l12 12"></path></svg></a>
+</div>
+
+<div style="display:flex;flex-wrap:wrap;gap:32px;align-items:flex-start">
+<form style="flex:1 1 320px;display:flex;flex-direction:column;gap:20px" aria-label="Edit profile">
+<div style="display:flex;flex-direction:column;gap:6px">
+<label for="st-name" style="font:500 14px/20px Inter,sans-serif">Display name</label>
+<input id="st-name" value="[your name]" style="height:40px;padding:0 12px;border-radius:6px;background:#181B20;border:1px solid #2A2F37;color:#ECEEF1;font:400 15px/22px Inter,sans-serif">
+</div>
+<div style="display:flex;flex-direction:column;gap:6px">
+<label for="st-about" style="font:500 14px/20px Inter,sans-serif">About me</label>
+<textarea id="st-about" rows="3" style="padding:10px 12px;border-radius:6px;background:#181B20;border:1px solid #2A2F37;color:#ECEEF1;font:400 15px/22px Inter,sans-serif;resize:vertical">[a line about you]</textarea>
+<span style="font:400 12px/16px Inter,sans-serif;color:#858E9B">Shown on your profile card. Up to 190 characters.</span>
+</div>
+
+<fieldset style="border:0;padding:0;margin:0;display:flex;flex-direction:column;gap:4px">
+<legend style="font:500 14px/20px Inter,sans-serif;margin-bottom:8px">Status</legend>
+<button type="button" class="st" aria-pressed="true" style="background:#22262D;outline:1px solid #3A404A"><span class="pb" style="background:#34C77B"></span><span style="display:flex;flex-direction:column"><span style="font:500 14px/20px Inter,sans-serif">Online</span></span><svg style="margin-left:auto" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#F2A93B" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 6 9 17l-5-5"></path></svg></button>
+<button type="button" class="st" aria-pressed="false"><span class="pb" style="background:#D9B54A;overflow:hidden"><span style="position:absolute;left:-3px;top:-3px;width:10px;height:10px;border-radius:50%;background:#111316"></span></span><span style="font:500 14px/20px Inter,sans-serif">Idle</span></button>
+<button type="button" class="st" aria-pressed="false"><span class="pb" style="background:#F0605A"><span style="position:absolute;left:4px;top:7px;width:8px;height:2px;border-radius:1px;background:#111316"></span></span><span style="display:flex;flex-direction:column"><span style="font:500 14px/20px Inter,sans-serif">Do not disturb</span><span style="font:400 12px/16px Inter,sans-serif;color:#858E9B">Mutes notifications on every device</span></span></button>
+<button type="button" class="st" aria-pressed="false"><span class="pb" style="box-shadow:inset 0 0 0 2.5px #858E9B"></span><span style="display:flex;flex-direction:column"><span style="font:500 14px/20px Inter,sans-serif">Invisible</span><span style="font:400 12px/16px Inter,sans-serif;color:#858E9B">Appear offline, still use everything</span></span></button>
+</fieldset>
+
+<div style="display:flex;gap:10px;flex-wrap:wrap">
+<button type="button" style="height:36px;padding:0 16px;border-radius:6px;background:#F2A93B;border:0;color:#1A1205;font:600 14px/20px Inter,sans-serif;cursor:pointer">Save changes</button>
+<button type="button" style="height:36px;padding:0 16px;border-radius:6px;background:transparent;border:1px solid #3A404A;color:#ECEEF1;font:500 14px/20px Inter,sans-serif;cursor:pointer">Reset</button>
+</div>
+</form>
+
+<section aria-label="Profile card preview" style="flex:0 1 320px;display:flex;flex-direction:column;gap:8px">
+<span style="font:500 12px/16px Inter,sans-serif;letter-spacing:.06em;text-transform:uppercase;color:#858E9B">Preview</span>
+<div style="border-radius:14px;overflow:hidden;background:#181B20;border:1px solid #2A2F37">
+<div style="height:88px;background:#2A2F37"></div>
+<div style="padding:0 18px 18px;display:flex;flex-direction:column;gap:10px">
+<span style="position:relative;margin-top:-40px;width:80px;height:80px;border-radius:50%;background:#4B3F6B;border:6px solid #181B20;font:600 24px/80px 'Space Grotesk',sans-serif;text-align:center">YOU<span style="position:absolute;right:0;bottom:0;width:22px;height:22px;box-sizing:border-box;border-radius:50%;background:#34C77B;border:4px solid #181B20" aria-label="Online"></span></span>
+<div><div style="font:600 18px/24px 'Space Grotesk',sans-serif">[your name]</div><div style="font:400 14px/20px Inter,sans-serif;color:#A9B0BA">[username]</div></div>
+<div style="height:1px;background:#2A2F37"></div>
+<div style="font:500 12px/16px Inter,sans-serif;letter-spacing:.06em;text-transform:uppercase;color:#858E9B">About me</div>
+<p style="margin:0;font:400 14px/20px Inter,sans-serif">[a line about you]</p>
+<div style="font:500 12px/16px Inter,sans-serif;letter-spacing:.06em;text-transform:uppercase;color:#858E9B">Member since</div>
+<p style="margin:0;font:400 14px/20px Inter,sans-serif;color:#A9B0BA">[join date]</p>
+</div>
+</div>
+</section>
+</div>
+</main>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1440,"height":900}}'>
+class Component extends DCLogic {
+renderVals() {
+return {};
+}
+}
+</script>
+</body>
+</html>

@@ -1,0 +1,84 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>HangCord — Brand sheet</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;600;800&amp;family=JetBrains+Mono:wght@500&amp;display=swap">
+<style>
+body{margin:0}
+</style>
+</helmet>
+<div style="width: 1440px; height: 900px; box-sizing: border-box; padding: 64px; background: #111318; color: #ECEEF2; font-family: Manrope, system-ui, sans-serif; display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 28px">
+
+  <div style="grid-column: span 1; background: #181B22; border-radius: 20px; padding: 36px; display: flex; flex-direction: column; justify-content: space-between">
+    <div style="font-size: 12px; font-weight: 800; letter-spacing: 0.08em; color: #8A91A0">LOGO</div>
+    <div style="display: flex; flex-direction: column; align-items: center; gap: 18px">
+      <svg width="160" height="160" viewBox="0 0 32 32" fill="none" role="img" aria-label="HangCord logo: two chat bubbles tied by a cord"><rect x="2" y="5" width="16" height="13" rx="6" stroke="{{accent}}" stroke-width="2.2"></rect><rect x="14" y="13" width="16" height="13" rx="6" stroke="{{accent}}" stroke-width="2.2"></rect><path d="M9 18c0 6 5 8 9 5" stroke="#3DD68C" stroke-width="2.2" stroke-linecap="round"></path></svg>
+      <div style="font-size: 44px; font-weight: 800; letter-spacing: -0.03em">HangCord</div>
+      <div style="color: #A3A9B6">Better place to hang out.</div>
+    </div>
+    <div style="display: flex; gap: 12px">
+      <div style="flex: 1; height: 72px; border-radius: 14px; background: #FAF8F5; display: flex; align-items: center; justify-content: center"><svg width="40" height="40" viewBox="0 0 32 32" fill="none" aria-hidden="true"><rect x="2" y="5" width="16" height="13" rx="6" stroke="#C2410C" stroke-width="2.4"></rect><rect x="14" y="13" width="16" height="13" rx="6" stroke="#C2410C" stroke-width="2.4"></rect><path d="M9 18c0 6 5 8 9 5" stroke="#15803D" stroke-width="2.4" stroke-linecap="round"></path></svg></div>
+      <div style="flex: 1; height: 72px; border-radius: 14px; background: {{accent}}; display: flex; align-items: center; justify-content: center"><svg width="40" height="40" viewBox="0 0 32 32" fill="none" aria-hidden="true"><rect x="2" y="5" width="16" height="13" rx="6" stroke="#1A0E08" stroke-width="2.4"></rect><rect x="14" y="13" width="16" height="13" rx="6" stroke="#1A0E08" stroke-width="2.4"></rect><path d="M9 18c0 6 5 8 9 5" stroke="#1A0E08" stroke-width="2.4" stroke-linecap="round"></path></svg></div>
+    </div>
+  </div>
+
+  <div style="background: #181B22; border-radius: 20px; padding: 36px; display: flex; flex-direction: column; gap: 14px">
+    <div style="font-size: 12px; font-weight: 800; letter-spacing: 0.08em; color: #8A91A0">COLOUR</div>
+    <sc-for list="{{swatches}}" as="s" hint-placeholder-count="8">
+      <div style="display: flex; align-items: center; gap: 14px">
+        <span style="flex: 0 0 56px; height: 44px; border-radius: 10px; background: {{s.hex}}; box-shadow: inset 0 0 0 1px rgba(255,255,255,0.08)"></span>
+        <div style="flex: 1; line-height: 1.3"><div style="font-weight: 800">{{s.name}}</div><div style="font-size: 12px; color: #A3A9B6">{{s.use}}</div></div>
+        <span style="font-family: 'JetBrains Mono', monospace; font-size: 12px; color: #A3A9B6">{{s.hex}}</span>
+      </div>
+    </sc-for>
+  </div>
+
+  <div style="display: flex; flex-direction: column; gap: 28px">
+    <div style="background: #181B22; border-radius: 20px; padding: 36px; display: flex; flex-direction: column; gap: 10px">
+      <div style="font-size: 12px; font-weight: 800; letter-spacing: 0.08em; color: #8A91A0">TYPE</div>
+      <div style="font-size: 40px; font-weight: 800; letter-spacing: -0.02em; line-height: 1.1">Manrope 800</div>
+      <div style="font-size: 16px; color: #DDE1E8">Manrope 400/600 for everything you read and tap.</div>
+      <div style="font-family: 'JetBrains Mono', monospace; font-size: 14px; color: #A3A9B6">JetBrains Mono · code blocks</div>
+    </div>
+    <div style="flex: 1; background: #181B22; border-radius: 20px; padding: 36px; display: flex; flex-direction: column; gap: 12px">
+      <div style="font-size: 12px; font-weight: 800; letter-spacing: 0.08em; color: #8A91A0">WORDS WE USE</div>
+      <div style="display: flex; flex-wrap: wrap; gap: 8px">
+        <sc-for list="{{words}}" as="w" hint-placeholder-count="9">
+          <span style="font-size: 13px; font-weight: 700; background: #262A34; border-radius: 999px; padding: 5px 12px">{{w}}</span>
+        </sc-for>
+      </div>
+      <div style="font-size: 13px; color: #A3A9B6; margin-top: 6px">Friendly, short, plain-spoken. Say what happened and what to do next. No jargon.</div>
+    </div>
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"accent":{"editor":"color","default":"#FF7A45","options":["#FF7A45","#3DD68C","#6CB6FF","#F5B83D"]},"$preview":{"width":1440,"height":900}}'>
+class Component extends DCLogic {
+  renderVals() {
+    const accent = this.props.accent ?? '#FF7A45';
+    return {
+      accent,
+      swatches: [
+        { name: 'Lantern', hex: accent, use: 'Primary actions, highlights' },
+        { name: 'Moss', hex: '#3DD68C', use: 'Online, success, encrypted' },
+        { name: 'Ember red', hex: '#F04A5A', use: 'Danger, mentions, leave' },
+        { name: 'Honey', hex: '#F5B83D', use: 'Warnings, reminders' },
+        { name: 'Night', hex: '#111318', use: 'App background' },
+        { name: 'Panel', hex: '#181B22', use: 'Sidebars, cards' },
+        { name: 'Raised', hex: '#1F232C', use: 'Inputs, popovers' },
+        { name: 'Paper', hex: '#FAF8F5', use: 'Light theme background' }
+      ],
+      words: ['Hangout', 'Room', 'Lounge', 'Spotlight', 'Board', 'Bulletin', 'Strand', 'Together', 'HangCord Plus (later)']
+    };
+  }
+}
+</script>
+</body>
+</html>

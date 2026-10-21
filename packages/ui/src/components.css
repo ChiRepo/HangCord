@@ -1,0 +1,55 @@
+/* Shared component styles. Tokens only — no raw colours. */
+.hc-avatar {
+  position: relative;
+  display: inline-grid;
+  place-items: center;
+  flex-shrink: 0;
+  width: var(--hc-avatar);
+  height: var(--hc-avatar);
+  border-radius: var(--hc-radius-round);
+  background: var(--hc-raised);
+  color: var(--hc-text);
+  font: 600 13px/1 var(--hc-font);
+}
+
+/* Presence: always round, 16px outer incl. a 3px ring of the surface behind it. */
+.hc-presence {
+  --hc-presence-surface: var(--hc-panel);
+  position: absolute;
+  right: -3px;
+  bottom: -3px;
+  width: var(--hc-presence);
+  height: var(--hc-presence);
+  box-sizing: border-box;
+  border-radius: var(--hc-radius-round);
+  border: var(--hc-presence-ring) solid var(--hc-presence-surface);
+  overflow: hidden;
+}
+.hc-presence--online { background: var(--hc-moss); }
+.hc-presence--idle { background: var(--hc-honey); }
+.hc-presence--idle::before { /* crescent: surface-coloured circle cut from the top-left */
+  content: "";
+  position: absolute;
+  left: -3px;
+  top: -3px;
+  width: 7px;
+  height: 7px;
+  border-radius: var(--hc-radius-round);
+  background: var(--hc-presence-surface);
+}
+.hc-presence--dnd { background: var(--hc-ember-text); }
+.hc-presence--dnd::before { /* short horizontal bar */
+  content: "";
+  position: absolute;
+  left: 2px;
+  right: 2px;
+  top: calc(50% - 1px);
+  height: 2px;
+  border-radius: 1px;
+  background: var(--hc-presence-surface);
+}
+.hc-presence--offline { background: var(--hc-presence-surface); box-shadow: inset 0 0 0 2.5px var(--hc-text-dim); }
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { transition-duration: 80ms !important; animation-duration: 80ms !important; }
+}

@@ -1,0 +1,38 @@
+# Private agent files — never commit
+Private files (.md files store here)/
+private and only to be accessed once which is before starting work on a project or unless user specifies and AI halucinated from its task/
+
+# Secrets
+.dev.vars*
+!.dev.vars.example
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+service-account*.json
+
+# Build / deps
+node_modules/
+dist/
+build/
+target/
+apps/desktop/src-tauri/gen/
+.wrangler/
+.turbo/
+coverage/
+playwright-report/
+test-results/
+*.tsbuildinfo
+
+# OS / editor / misc
+.DS_Store
+.Rhistory
+.vscode/*
+!.vscode/extensions.json
+
+# Graphify working files (graphify/README.md) — keep graph.json, graph.html, GRAPH_REPORT.md
+graphify/graph/cache/
+graphify/graph/manifest.json
+graphify/graph/.graphify_*
+graphify-out/

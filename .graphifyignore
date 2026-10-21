@@ -1,0 +1,20 @@
+# Graphify (graphify/README.md): never graph private notes, secrets or build output.
+# .gitignore is read too; this file can only exclude more.
+Private files (.md files store here)/
+private and only to be accessed once*/
+.dev.vars
+.dev.vars.*
+!.dev.vars.example
+.env
+.env.*
+*.pem
+*.key
+service-account*.json
+node_modules/
+target/
+dist/
+gen/
+test-results/
+playwright-report/
+graphify/
+.claude/

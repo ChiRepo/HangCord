@@ -1,0 +1,16 @@
+# StorageRouter Worker (MASTER_PLAN §8). Phase 0: health + the job scheduler skeleton.
+# Cloudflare's free plan allows only 5 Cron Triggers per ACCOUNT
+# (https://developers.cloudflare.com/workers/platform/limits/), so this Worker uses ONE schedule and
+# dispatches every timed job from it (src/jobs.ts). Other Workers must not add crons without
+# checking the account total (MASTER_PLAN §17).
+name = "hangcord-storage-router"
+main = "src/index.ts"
+compatibility_date = "2026-10-01"
+workers_dev = false
+
+[triggers]
+crons = ["*/15 * * * *"]
+
+[vars]
+FIREBASE_PROJECT_ID = ""
+FIREBASE_BACKUP_PROJECT_ID = ""

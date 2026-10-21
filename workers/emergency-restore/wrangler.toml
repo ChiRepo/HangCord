@@ -1,0 +1,11 @@
+# Break-glass restore Worker (MASTER_PLAN §8.6). NO public route: workers_dev = false and no
+# routes. It is reached only through a service binding during an owner-opened emergency window
+# (built in Phase 4). Its only secret, CSV_EMERGENCY_PRIVATE_KEY_V1, is generated OFFLINE by the
+# owner and set with `npx wrangler secret put` — agents never generate, see or copy it.
+name = "hangcord-emergency-restore"
+main = "src/index.ts"
+compatibility_date = "2026-10-01"
+workers_dev = false
+# Explicit, so preview URLs never depend on Wrangler defaults:
+# https://developers.cloudflare.com/changelog/2025-10-23-preview-url-default-behavior
+preview_urls = false

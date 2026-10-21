@@ -1,0 +1,20 @@
+# LiveKit server config — NO keys here (they come from LIVEKIT_KEYS in the VM's .env).
+# Ports: https://docs.livekit.io/home/self-hosting/ports-firewall/
+# Open on the Oracle VM security list + host firewall: TCP 7880, 7881, 443 (TURN/TLS); UDP 3478, 50000-60000.
+port: 7880
+rtc:
+  tcp_port: 7881
+  port_range_start: 50000
+  port_range_end: 60000
+  use_external_ip: true
+turn:
+  enabled: true
+  udp_port: 3478
+  tls_port: 443
+  domain: "[TURN DOMAIN — owner sets, e.g. turn.hangcord.example]"
+  # TLS cert/key files are mounted by the owner on the VM; never committed.
+logging:
+  level: info
+room:
+  empty_timeout: 300
+  max_participants: 25

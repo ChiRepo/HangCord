@@ -1,0 +1,5 @@
+# Private agent files: AI tools must not read these unless the owner allows it
+Private files (.md files store here)/
+.dev.vars
+.env
+.env.*

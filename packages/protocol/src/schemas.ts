@@ -1,0 +1,121 @@
+// Zod mirrors of the "detailed" schemas in openapi.yaml. Keep the two in sync —
+// test/contract.test.ts fails if a detailed schema is missing here.
+import { z } from "zod";
+import { parseBits } from "./permissions";
+
+export const ErrorBody = z.object({ error: z.string(), message: z.string().optional() });
+export type ErrorBody = z.infer<typeof ErrorBody>;
+
+export const Health = z.object({
+  ok: z.boolean(),
+  service: z.enum(["api", "gateway", "storage-router"]),
+  version: z.string(),
+  phase: z.number().int(),
+});
+export type Health = z.infer<typeof Health>;
+
+export const RoomType = z.enum(["text", "lounge", "spotlight", "board", "bulletin", "category"]);
+export type RoomType = z.infer<typeof RoomType>;
+
+/** How a new room relates to its category (ACCESS_AND_SETTINGS §7.1). */
+export const GuidelinesChoice = z.enum(["category", "own"]);
+export type GuidelinesChoice = z.infer<typeof GuidelinesChoice>;
+
+/** User preference `rooms.newRoomGuidelines` — only pre-selects the choice. */
+export const NewRoomGuidelinesPreference = z.enum(["category", "own", "ask"]);
+export type NewRoomGuidelinesPreference = z.infer<typeof NewRoomGuidelinesPreference>;
+
+const bitfield = z.string().refine((s) => parseBits(s) !== null, "permission bitfield: decimal u64 string with only assigned bits");
+
+export const Override = z.object({
+  targetType: z.enum(["role", "member"]),
+  targetId: z.string(),
+  allow: bitfield,
+  deny: bitfield,
+});
+export type Override = z.infer<typeof Override>;
+
+export const RoomDefaults = z.object({
+  slowmode: z.number().int().min(0).max(21600).optional(),
+  ageRestricted: z.boolean().optional(),
+  translateDefault: z.boolean().optional(),
+  notifyDefault: z.enum(["all", "mentions", "nothing"]).optional(),
+});
+export type RoomDefaults = z.infer<typeof RoomDefaults>;
+
+export const Room = z.object({
+  id: z.string(),
+  hangoutId: z.string(),
+  type: RoomType,
+  categoryId: z.string().nullable().optional(),
+  position: z.number().int(),
+  name: z.string().min(1).max(100),
+  topic: z.string().max(4096).optional(),
+  syncWithCategory: z.boolean(),
+  overrides: z.array(Override),
+  settings: z.record(z.string(), z.unknown()).optional(),
+  roomDefaults: RoomDefaults.optional(),
+  guidelinesText: z.string().max(2000).optional(),
+}).refine((r) => r.type === "board" || (r.topic?.length ?? 0) <= 1024, { message: "topic ≤ 1024 (Boards ≤ 4096)", path: ["topic"] });
+export type Room = z.infer<typeof Room>;
+
+/** Allowed room settings and their ranges (ACCESS_AND_SETTINGS §7). Unknown keys are rejected. */
+export const RoomSettings = z.object({
+  slowmode: z.number().int().min(0).max(21600),
+  ageRestricted: z.boolean(),
+  translateDefault: z.boolean(),
+  notifyDefault: z.enum(["all", "mentions", "nothing"]),
+  strandAutoArchive: z.enum(["1h", "1d", "3d", "1w"]),
+  userLimit: z.number().int().min(0).max(99),
+  bitrate: z.number().int().min(32).max(128),
+  videoQuality: z.enum(["auto", "full"]),
+  togetherAllowed: z.boolean(),
+  whiteboardAllowed: z.boolean(),
+  status: z.string().max(100),
+}).partial().strict();
+export type RoomSettings = z.infer<typeof RoomSettings>;
+
+export const CreateRoomRequest = z.object({
+  type: RoomType,
+  name: z.string().min(1).max(100),
+  categoryId: z.string().nullable().optional(),
+  guidelines: GuidelinesChoice,
+  overrides: z.array(Override).optional(),
+  settings: z.record(z.string(), z.unknown()).optional(),
+});
+export type CreateRoomRequest = z.infer<typeof CreateRoomRequest>;
+
+export const PrefEntry = z.object({ value: z.unknown(), updatedAt: z.number().int() });
+export type PrefEntry = z.infer<typeof PrefEntry>;
+
+export const Preferences = z.object({
+  version: z.number().int().min(0),
+  values: z.record(z.string(), PrefEntry),
+});
+export type Preferences = z.infer<typeof Preferences>;
+
+export const PreferencesPatch = z.object({ set: z.record(z.string(), PrefEntry) });
+export type PreferencesPatch = z.infer<typeof PreferencesPatch>;
+
+/** Ids are cache-key safe on every platform (lowercase letters, digits, dash, underscore). */
+export const Id = z.string().regex(/^[a-z0-9_-]{1,64}$/, "id: 1–64 of a-z 0-9 _ -");
+
+export const HangoutSnapshot = z.object({
+  hangoutId: Id,
+  version: z.number().int(),
+  permVersion: z.number().int(),
+  hangout: z.object({ id: z.string(), name: z.string(), icon: z.string().nullable().optional() }),
+  rooms: z.array(Room),
+  roles: z.array(z.object({ id: z.string(), name: z.string(), color: z.string().nullable(), position: z.number().int() })),
+  me: z.object({ userId: z.string(), nickname: z.string().nullable().optional(), roles: z.array(z.string()) }),
+  /** roomId → bitfield. Cosmetic only; the server always re-checks. */
+  myPermissions: z.record(z.string(), bitfield),
+  emoji: z.array(z.record(z.string(), z.unknown())).optional(),
+});
+export type HangoutSnapshot = z.infer<typeof HangoutSnapshot>;
+
+/** Names of the schemas above that openapi.yaml must also define. */
+export const DETAILED_SCHEMAS = [
+  "Error", "Health", "RoomType", "GuidelinesChoice", "NewRoomGuidelinesPreference", "Override",
+  "RoomDefaults", "Room", "CreateRoomRequest", "Preferences", "PreferencesPatch", "HangoutSnapshot",
+] as const;

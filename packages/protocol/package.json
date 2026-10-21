@@ -1,0 +1,22 @@
+{
+  "name": "@hangcord/protocol",
+  "version": "0.0.1",
+  "private": true,
+  "type": "module",
+  "description": "The API + gateway contract. No endpoint or event may be used in code unless it exists here first (MASTER_PLAN §6).",
+  "exports": {
+    ".": "./src/index.ts",
+    "./openapi.yaml": "./openapi.yaml"
+  },
+  "scripts": {
+    "typecheck": "tsc --noEmit -p tsconfig.json",
+    "test": "vitest run"
+  },
+  "dependencies": {
+    "zod": "4.6.7"
+  },
+  "devDependencies": {
+    "@apidevtools/swagger-parser": "13.1.0",
+    "yaml": "2.9.1"
+  }
+}

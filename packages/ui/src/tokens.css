@@ -1,0 +1,84 @@
+/* HangCord design tokens — Calm Minimal (approved 2026-10-21).
+   Source: ui-ux/calm-minimal/DESIGN_SYSTEM.md and screens/.
+   This file replaces ui-ux/tokens.css for all new code. Never hard-code colours in components. */
+
+:root {
+  /* Brand */
+  --hc-lantern: #F2A93B;               /* primary action, selected hangout, mentions, focus ring */
+  --hc-on-lantern: #1A1205;            /* text/icons on Lantern (9.3:1) */
+  --hc-lantern-tint: rgba(242,169,59,.12); /* mention row background */
+  --hc-moss: #34C77B;                  /* online, speaking, success */
+  --hc-honey: #D9B54A;                 /* idle, warnings, reminders */
+  --hc-ember: #B8322C;                 /* danger fills; white text 5.95:1 */
+  --hc-ember-text: #F0605A;            /* do-not-disturb, error text on dark */
+  --hc-sky: #86B6FF;                   /* links, info */
+
+  /* Dark surfaces (default) */
+  --hc-bg: #111316;                    /* app background, hangout dock */
+  --hc-panel: #181B20;                 /* rooms list, members, cards */
+  --hc-surface: #1D2026;               /* message area */
+  --hc-raised: #22262D;                /* inputs, hover rows, popovers */
+  --hc-line: #2A2F37;                  /* 1px borders */
+  --hc-line-strong: #3A404A;           /* focused / selected outlines */
+  --hc-scrim: rgba(0, 0, 0, .55);      /* dims the app behind dialogs, sheets and overlays */
+
+  /* Text on dark */
+  --hc-text: #ECEEF1;                  /* ≥ 13:1 */
+  --hc-text-muted: #A9B0BA;            /* ≥ 6.9:1 */
+  --hc-text-dim: #858E9B;              /* ≥ 4.58:1 on every surface; min 12px */
+
+  /* Light theme — not redesigned yet; earlier values kept until approved */
+  --hc-paper: #FAF8F5;
+  --hc-paper-panel: #F1EEE9;
+  --hc-paper-raised: #FFFFFF;
+  --hc-paper-line: #E2DDD5;
+
+  /* Type */
+  --hc-font-display: "Space Grotesk", system-ui, sans-serif;
+  --hc-font: "Inter", system-ui, sans-serif;
+  --hc-font-mono: "JetBrains Mono", ui-monospace, monospace;
+  --hc-text-meta: 12px;    /* timestamps, uppercase section labels (+0.06em) */
+  --hc-text-ui: 14px;      /* UI labels */
+  --hc-text-body: 15px;    /* messages, body; line-height 22px */
+  --hc-text-title: 16px;   /* room names, section titles (display font) */
+  --hc-text-page: 20px;    /* page titles (display font) */
+  --hc-text-hero: 40px;    /* welcome headline (display font) */
+
+  /* Space (4-based) */
+  --hc-space-1: 4px;  --hc-space-2: 8px;  --hc-space-3: 12px; --hc-space-4: 16px;
+  --hc-space-5: 20px; --hc-space-6: 24px; --hc-space-8: 32px; --hc-space-12: 48px;
+
+  /* Shape */
+  --hc-radius-sm: 6px;     /* inputs, buttons, rows */
+  --hc-radius-md: 10px;    /* composer, cards, popovers */
+  --hc-radius-lg: 14px;    /* modals, large cards, hangout icon idle */
+  --hc-radius-round: 50%;  /* avatars, presence badges, call controls */
+  --hc-radius-pill: 999px; /* reactions, tags */
+
+  /* Sizes */
+  --hc-hangout-icon: 48px;
+  --hc-avatar: 40px;
+  --hc-presence: 16px;     /* outer size incl. 3px ring; always round */
+  --hc-presence-ring: 3px;
+  --hc-call-control: 52px;
+  --hc-touch: 44px;
+  --hc-dock-width: 72px;
+  --hc-sidebar-width: 240px;
+  --hc-members-width: 240px;
+  --hc-header-height: 48px;
+
+  /* Motion */
+  --hc-dur-fast: 120ms;
+  --hc-dur-mid: 180ms;
+  --hc-dur-slow: 240ms;
+  --hc-ease-in: cubic-bezier(.2,.8,.2,1);
+  --hc-ease-out: cubic-bezier(.4,0,1,1);
+
+  /* Focus */
+  --hc-focus: 2px solid var(--hc-lantern);
+  --hc-focus-offset: 2px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  :root { --hc-dur-fast: 80ms; --hc-dur-mid: 80ms; --hc-dur-slow: 80ms; }
+}

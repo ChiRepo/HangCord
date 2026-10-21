@@ -1,0 +1,11 @@
+# Automatically generated - DO NOT EDIT!
+
+[[permission]]
+identifier = "allow-cache-wipe"
+description = "Enables the cache_wipe command without any pre-configured scope."
+commands.allow = ["cache_wipe"]
+
+[[permission]]
+identifier = "deny-cache-wipe"
+description = "Denies the cache_wipe command without any pre-configured scope."
+commands.deny = ["cache_wipe"]

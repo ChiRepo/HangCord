@@ -1,0 +1,144 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>HangCord — Encrypted DM</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&amp;family=JetBrains+Mono:wght@500&amp;display=swap">
+<style>
+body{margin:0;background:#111318}
+a{color:#FF9A6E}a:hover{color:#FFB894}
+button{font-family:inherit}
+input{font-family:inherit}
+</style>
+</helmet>
+<div style="font-family: Manrope, system-ui, sans-serif; color: #ECEEF2; background: #111318; min-height: 900px; display: flex; flex-wrap: wrap; font-size: 14px; line-height: 1.45">
+
+  <aside aria-label="Chats" style="flex: 0 0 300px; background: #181B22; display: flex; flex-direction: column; gap: 4px; padding: 14px 10px">
+    <label><span style="position: absolute; left: -9999px">Find a chat</span><input type="search" placeholder="Find or start a chat" style="width: 100%; box-sizing: border-box; height: 34px; border-radius: 8px; border: 1px solid #2A2F3A; background: #111318; color: #ECEEF2; padding: 0 10px; font-size: 13px"></label>
+    <div style="display: flex; gap: 6px; padding: 10px 2px">
+      <button style="height: 30px; padding: 0 12px; border-radius: 8px; border: 0; background: #262A34; color: #ECEEF2; font-weight: 700; cursor: pointer">Chats</button>
+      <button style="height: 30px; padding: 0 12px; border-radius: 8px; border: 0; background: none; color: #A3A9B6; font-weight: 700; cursor: pointer">Friends</button>
+      <button style="height: 30px; padding: 0 12px; border-radius: 8px; border: 0; background: none; color: #A3A9B6; font-weight: 700; cursor: pointer">Read later · 3</button>
+    </div>
+    <sc-for list="{{chats}}" as="c" hint-placeholder-count="5">
+      <a href="#" style="display: flex; gap: 10px; align-items: center; padding: 8px; border-radius: 10px; text-decoration: none; color: #ECEEF2; background: {{c.bg}}">
+        <span style="flex: 0 0 38px; height: 38px; border-radius: 50%; background: {{c.color}}; color: #111318; font-weight: 800; display: flex; align-items: center; justify-content: center">{{c.i}}</span>
+        <div style="flex: 1; min-width: 0; line-height: 1.3">
+          <div style="display: flex; justify-content: space-between; gap: 6px"><strong>{{c.name}}</strong><span style="font-size: 11px; color: #8A91A0">{{c.time}}</span></div>
+          <div style="font-size: 12px; color: #A3A9B6; white-space: nowrap; overflow: hidden; text-overflow: ellipsis">{{c.preview}}</div>
+        </div>
+      </a>
+    </sc-for>
+  </aside>
+
+  <main style="flex: 999 1 560px; min-width: 0; display: flex; flex-direction: column">
+    <div style="height: 56px; display: flex; align-items: center; gap: 10px; padding: 0 20px; border-bottom: 1px solid #1F232C">
+      <span style="width: 32px; height: 32px; border-radius: 50%; background: #F5B83D; color: #111318; font-weight: 800; display: flex; align-items: center; justify-content: center">M</span>
+      <h1 style="margin: 0; font-size: 16px; font-weight: 800">meera</h1>
+      <span style="display: flex; align-items: center; gap: 5px; font-size: 12px; font-weight: 700; color: #3DD68C"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" aria-hidden="true"><rect x="5" y="11" width="14" height="10" rx="2"></rect><path d="M8 11V8a4 4 0 0 1 8 0v3"></path></svg>Encrypted</span>
+      <span style="flex: 1"></span>
+      <button aria-label="Start voice call" style="width: 34px; height: 34px; border: 0; background: none; color: #A3A9B6; cursor: pointer"><svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M5 4h4l2 5-2.5 1.5a11 11 0 0 0 5 5L15 13l5 2v4a2 2 0 0 1-2 2A16 16 0 0 1 3 6a2 2 0 0 1 2-2z"></path></svg></button>
+      <button aria-label="Start video call" style="width: 34px; height: 34px; border: 0; background: none; color: #A3A9B6; cursor: pointer"><svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><rect x="3" y="6" width="13" height="12" rx="2"></rect><path d="M16 10l5-3v10l-5-3z"></path></svg></button>
+    </div>
+
+    <div style="flex: 1; padding: 18px 20px; display: flex; flex-direction: column; gap: 14px; overflow: hidden">
+      <div style="align-self: center; max-width: 520px; text-align: center; background: #12261C; border: 1px solid #1E4630; border-radius: 12px; padding: 12px 16px; font-size: 13px; color: #CFEFDC">
+        Messages and calls with meera are end-to-end encrypted. Only the two of you can read them — not even HangCord. <a href="#" style="color: #3DD68C; font-weight: 700">Verify safety number</a>
+      </div>
+
+      <sc-for list="{{messages}}" as="m" hint-placeholder-count="4">
+        <div style="display: flex; justify-content: {{m.align}}">
+          <div style="max-width: 70%; background: {{m.bg}}; color: {{m.fg}}; border-radius: 14px; padding: 9px 13px">
+            <div>{{m.text}}</div>
+            <div style="font-size: 11px; opacity: 0.75; margin-top: 3px; text-align: right">{{m.time}}</div>
+          </div>
+        </div>
+      </sc-for>
+
+      <div style="align-self: center; display: flex; gap: 8px; align-items: center; font-size: 12px; color: #A3A9B6; background: #181B22; border: 1px solid #2A2F3A; border-radius: 999px; padding: 4px 12px">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#F5B83D" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M6 16V11a6 6 0 0 1 12 0v5l2 2H4zM10 21h4"></path></svg>
+        You'll be reminded about "bring the projector" · Fri 8:30 PM
+      </div>
+
+      <div style="display: flex; justify-content: flex-end">
+        <div style="max-width: 70%; border: 1.5px dashed {{accent}}; border-radius: 14px; padding: 9px 13px; background: #1A1512">
+          <div style="font-size: 11px; font-weight: 800; color: {{accent}}; letter-spacing: 0.04em">SCHEDULED · SENDS FRI 9:00 PM</div>
+          <div style="margin-top: 2px">Starting now! Join Chill Lounge 🎬</div>
+          <div style="display: flex; gap: 8px; margin-top: 8px">
+            <button style="height: 28px; padding: 0 10px; border-radius: 7px; border: 1px solid #2A2F3A; background: none; color: #ECEEF2; font-weight: 700; font-size: 12px; cursor: pointer">Edit</button>
+            <button style="height: 28px; padding: 0 10px; border-radius: 7px; border: 1px solid #2A2F3A; background: none; color: #ECEEF2; font-weight: 700; font-size: 12px; cursor: pointer">Send now</button>
+            <button style="height: 28px; padding: 0 10px; border-radius: 7px; border: 0; background: none; color: #F47C87; font-weight: 700; font-size: 12px; cursor: pointer">Cancel</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div style="position: relative; margin: 0 20px 20px">
+      <div style="position: absolute; right: 52px; bottom: 58px; width: 260px; background: #1F232C; border: 1px solid #2A2F3A; border-radius: 12px; padding: 8px; box-shadow: 0 12px 32px rgba(0,0,0,0.45)">
+        <div style="font-size: 11px; font-weight: 800; letter-spacing: 0.06em; color: #8A91A0; padding: 4px 8px 6px">SEND LATER</div>
+        <sc-for list="{{schedule}}" as="s" hint-placeholder-count="4">
+          <button style="width: 100%; display: flex; justify-content: space-between; height: 36px; align-items: center; padding: 0 8px; border: 0; border-radius: 8px; background: {{s.bg}}; color: #ECEEF2; font-weight: 600; cursor: pointer"><span>{{s.label}}</span><span style="color: #8A91A0; font-size: 12px">{{s.when}}</span></button>
+        </sc-for>
+      </div>
+      <form style="display: flex; align-items: center; gap: 6px; background: #1F232C; border: 1px solid #2A2F3A; border-radius: 12px; padding: 6px 8px">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#3DD68C" stroke-width="2.2" aria-hidden="true"><rect x="5" y="11" width="14" height="10" rx="2"></rect><path d="M8 11V8a4 4 0 0 1 8 0v3"></path></svg>
+        <label style="flex: 1"><span style="position: absolute; left: -9999px">Encrypted message</span><input type="text" value="Starting now! Join Chill Lounge" style="width: 100%; height: 34px; border: 0; background: none; color: #ECEEF2; font-size: 14px; outline: none"></label>
+        <button type="button" aria-label="Schedule message" aria-expanded="true" style="width: 34px; height: 34px; border-radius: 8px; border: 0; background: #2A2F3A; color: {{accent}}; cursor: pointer"><svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="12" r="8.5"></circle><path d="M12 7v5l3 2"></path></svg></button>
+        <button type="submit" aria-label="Send" style="width: 34px; height: 34px; border-radius: 8px; border: 0; background: {{accent}}; color: #1A0E08; cursor: pointer"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 12l16-8-6 16-2-7z"></path></svg></button>
+      </form>
+    </div>
+  </main>
+
+  <aside aria-label="Profile" style="flex: 0 1 300px; background: #181B22; display: flex; flex-direction: column">
+    <div style="height: 96px; background: #3A2A1F"></div>
+    <div style="padding: 0 18px 18px; display: flex; flex-direction: column; gap: 14px">
+      <span style="margin-top: -36px; width: 72px; height: 72px; border-radius: 50%; background: #F5B83D; color: #111318; font-weight: 800; font-size: 26px; display: flex; align-items: center; justify-content: center; border: 5px solid #181B22">M</span>
+      <div><div style="font-size: 18px; font-weight: 800">meera</div><div style="color: #A3A9B6; font-size: 13px">@meera.draws · she/her</div></div>
+      <div style="background: #111318; border-radius: 12px; padding: 12px; font-size: 13px; color: #DDE1E8">Illustrator, night owl, keeper of movie night.</div>
+      <div style="background: #111318; border-radius: 12px; padding: 12px">
+        <div style="font-size: 11px; font-weight: 800; letter-spacing: 0.06em; color: #8A91A0">SAFETY NUMBER</div>
+        <div style="font-family: 'JetBrains Mono', monospace; font-size: 13px; color: #ECEEF2; margin-top: 6px; line-height: 1.7">48213 99041 27765<br>10392 66580 31477</div>
+        <div style="font-size: 12px; color: #3DD68C; font-weight: 700; margin-top: 6px">Verified in person · 12 Oct</div>
+      </div>
+      <div style="font-size: 13px; color: #A3A9B6">3 mutual hangouts · 11 mutual friends</div>
+      <div style="border: 1px dashed #3A404D; border-radius: 12px; padding: 12px; font-size: 12px; color: #8A91A0">[Reserved: HangCord Plus profile flair — coming later]</div>
+    </div>
+  </aside>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"accent":{"editor":"color","default":"#FF7A45","options":["#FF7A45","#3DD68C","#6CB6FF","#F5B83D"]},"$preview":{"width":1440,"height":900}}'>
+class Component extends DCLogic {
+  renderVals() {
+    const accent = this.props.accent ?? '#FF7A45';
+    return {
+      accent,
+      chats: [
+        { i: 'M', name: 'meera', time: '9:12 PM', preview: 'You: Starting now! Join Chill…', color: '#F5B83D', bg: '#262A34' },
+        { i: 'D', name: 'dev', time: '8:40 PM', preview: 'sent a whiteboard snapshot', color: '#3DD68C', bg: 'transparent' },
+        { i: 'G', name: 'Project crew (4)', time: '7:05 PM', preview: 'rohan: deck is in the board', color: '#C9A0FF', bg: 'transparent' },
+        { i: 'S', name: 'sana', time: 'Yesterday', preview: 'good luck for the exam!!', color: '#FF9AB8', bg: 'transparent' },
+        { i: 'T', name: 'tara', time: 'Mon', preview: 'Reminder: return the book', color: '#8A91A0', bg: 'transparent' }
+      ],
+      messages: [
+        { text: 'Can you bring the projector on Friday?', time: '8:55 PM', align: 'flex-start', bg: '#1F232C', fg: '#ECEEF2' },
+        { text: 'Yes! Setting a reminder so I don’t forget.', time: '8:57 PM', align: 'flex-end', bg: accent, fg: '#1A0E08' },
+        { text: 'Also scheduling the "we’re live" ping for 9 so nobody misses it', time: '8:58 PM', align: 'flex-end', bg: accent, fg: '#1A0E08' }
+      ],
+      schedule: [
+        { label: 'In 1 hour', when: '10:12 PM', bg: 'transparent' },
+        { label: 'Tomorrow morning', when: '9:00 AM', bg: 'transparent' },
+        { label: 'Friday, start of event', when: '9:00 PM', bg: '#2A2F3A' },
+        { label: 'Pick date & time…', when: '', bg: 'transparent' }
+      ]
+    };
+  }
+}
+</script>
+</body>
+</html>

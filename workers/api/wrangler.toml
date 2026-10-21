@@ -1,0 +1,15 @@
+# REST API Worker (MASTER_PLAN §6). Secrets are NEVER written here — set them with
+#   npx wrangler secret put <NAME>            (owner only; see docs/SECRETS_AND_SENSITIVE_DATA.md)
+# Local dev: copy names from /.dev.vars.example into workers/api/.dev.vars (git-ignored).
+name = "hangcord-api"
+main = "src/index.ts"
+compatibility_date = "2026-10-01"
+workers_dev = true
+
+# Public values only (docs/SECRETS_AND_SENSITIVE_DATA.md). Filled in by the owner when the accounts exist.
+[vars]
+FIREBASE_PROJECT_ID = ""
+GOOGLE_OAUTH_DESKTOP_CLIENT_ID = ""
+TURNSTILE_SITE_KEY = ""
+LIVEKIT_URL = ""
+EMAIL_FROM_ADDRESS = ""

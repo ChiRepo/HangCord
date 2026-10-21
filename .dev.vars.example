@@ -1,0 +1,46 @@
+# Copy to .dev.vars next to each Worker's wrangler config for local development (git-ignored).
+# NAMES ONLY — never commit values. Production values: `npx wrangler secret put <NAME> --env prod` (owner only).
+# Full register with owners, storage and rotation: docs/SECRETS_AND_SENSITIVE_DATA.md
+
+# ---- workers/api : secrets ----
+FIREBASE_AUTH_ADMIN_SA_JSON=
+FIRESTORE_SA_JSON=
+GOOGLE_OAUTH_DESKTOP_CLIENT_SECRET=
+BREVO_API_KEY=
+MAILJET_API_KEY=
+MAILJET_SECRET_KEY=
+RESEND_API_KEY=
+EMAIL_CODE_PEPPER=
+SESSION_SIGNING_KEY=
+TURNSTILE_SECRET_KEY=
+LIVEKIT_API_KEY=
+LIVEKIT_API_SECRET=
+CF_TURN_KEY_ID=
+CF_TURN_API_TOKEN=
+GIF_PROVIDER_API_KEY=
+
+# ---- workers/gateway : secrets ----
+SESSION_SIGNING_KEY=
+HANGCORD_KEK_V1=
+
+# ---- workers/storage-router : secrets ----
+FIRESTORE_SA_JSON=
+CSV_ROUTINE_KEY=
+CSV_EMERGENCY_PUBLIC_KEY_V1=
+FIRESTORE_BACKUP_SA_JSON=
+BACKUP2_ENDPOINT=
+BACKUP2_API_KEY=
+B2_KEY_ID=
+B2_APPLICATION_KEY=
+GARAGE_ACCESS_KEY=
+GARAGE_SECRET_KEY=
+ORACLE_ARCHIVE_ACCESS_KEY=
+ORACLE_ARCHIVE_SECRET_KEY=
+
+# ---- NOT secrets: put these in wrangler `vars` (public is fine) ----
+# FIREBASE_PROJECT_ID, FIREBASE_BACKUP_PROJECT_ID, FIREBASE_WEB_CONFIG, GOOGLE_OAUTH_DESKTOP_CLIENT_ID,
+# TURNSTILE_SITE_KEY, LIVEKIT_URL, EMAIL_FROM_ADDRESS
+
+# ---- workers/emergency-restore : secrets (break-glass only; local dev uses TEST keys only, never the real one) ----
+CSV_EMERGENCY_PRIVATE_KEY_V1=
+

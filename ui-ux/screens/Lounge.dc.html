@@ -1,0 +1,126 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>HangCord — Lounge, watch together</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&amp;display=swap">
+<style>
+body{margin:0;background:#0C0E12}
+a{color:#FF9A6E}a:hover{color:#FFB894}
+button{font-family:inherit}
+</style>
+</helmet>
+<div style="font-family: Manrope, system-ui, sans-serif; color: #ECEEF2; background: #0C0E12; min-height: 900px; display: flex; flex-direction: column; font-size: 14px; line-height: 1.45">
+
+  <header style="min-height: 56px; display: flex; align-items: center; gap: 12px; padding: 8px 20px; border-bottom: 1px solid #1F232C; flex-wrap: wrap">
+    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#A3A9B6" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M4 10v4h4l5 4V6L8 10z"></path><path d="M16.5 9a4 4 0 0 1 0 6M19 6.5a7.5 7.5 0 0 1 0 11"></path></svg>
+    <h1 style="margin: 0; font-size: 17px; font-weight: 800">Chill Lounge</h1>
+    <span style="color: #8A91A0">Night Owls</span>
+    <span style="display: flex; align-items: center; gap: 5px; font-size: 12px; font-weight: 700; color: #3DD68C; background: #12261C; border-radius: 999px; padding: 3px 10px"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" aria-hidden="true"><rect x="5" y="11" width="14" height="10" rx="2"></rect><path d="M8 11V8a4 4 0 0 1 8 0v3"></path></svg>End-to-end encrypted</span>
+    <span style="flex: 1"></span>
+    <div role="tablist" aria-label="Together" style="display: flex; gap: 4px; background: #181B22; border-radius: 10px; padding: 4px">
+      <button role="tab" aria-selected="true" style="height: 32px; padding: 0 14px; border-radius: 8px; border: 0; background: {{accent}}; color: #1A0E08; font-weight: 800; cursor: pointer">Watch</button>
+      <button role="tab" aria-selected="false" style="height: 32px; padding: 0 14px; border-radius: 8px; border: 0; background: none; color: #A3A9B6; font-weight: 700; cursor: pointer">Listen</button>
+      <button role="tab" aria-selected="false" style="height: 32px; padding: 0 14px; border-radius: 8px; border: 0; background: none; color: #A3A9B6; font-weight: 700; cursor: pointer">Whiteboard</button>
+    </div>
+  </header>
+
+  <div style="flex: 1; display: flex; flex-wrap: wrap; gap: 16px; padding: 16px 20px">
+    <section aria-label="Watch together" style="flex: 999 1 640px; min-width: 0; display: flex; flex-direction: column; gap: 12px">
+      <div style="position: relative; aspect-ratio: 16 / 9; max-height: 520px; border-radius: 16px; background: #181B22; border: 1px solid #2A2F3A; display: flex; align-items: center; justify-content: center; overflow: hidden">
+        <div style="text-align: center; color: #8A91A0">
+          <svg width="56" height="56" viewBox="0 0 24 24" fill="none" stroke="#A3A9B6" stroke-width="1.6" aria-hidden="true"><circle cx="12" cy="12" r="9.5"></circle><path d="M10 8.5l5.5 3.5-5.5 3.5z" fill="#A3A9B6"></path></svg>
+          <div style="margin-top: 8px; font-size: 13px">[Shared YouTube player — "Friday movie trailers"]</div>
+        </div>
+        <div style="position: absolute; left: 16px; top: 16px; display: flex; gap: 8px; align-items: center; background: rgba(12,14,18,0.82); border-radius: 999px; padding: 4px 12px 4px 4px; font-size: 12px">
+          <span style="width: 24px; height: 24px; border-radius: 50%; background: #F5B83D; color: #111318; font-weight: 800; display: flex; align-items: center; justify-content: center; font-size: 11px">M</span>
+          Host: <strong>meera</strong> · <span style="color: #3DD68C; font-weight: 700">In sync</span>
+        </div>
+      </div>
+      <div style="display: flex; align-items: center; gap: 12px; flex-wrap: wrap">
+        <button aria-label="Pause for everyone" style="width: 40px; height: 40px; border-radius: 50%; border: 0; background: #ECEEF2; color: #111318; cursor: pointer"><svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><rect x="6" y="5" width="4" height="14" rx="1"></rect><rect x="14" y="5" width="4" height="14" rx="1"></rect></svg></button>
+        <span style="font-size: 12px; color: #A3A9B6; font-variant-numeric: tabular-nums">0:42</span>
+        <div style="flex: 1; min-width: 160px; height: 6px; border-radius: 3px; background: #2A2F3A; position: relative"><div style="width: 32%; height: 6px; border-radius: 3px; background: {{accent}}"></div></div>
+        <span style="font-size: 12px; color: #A3A9B6; font-variant-numeric: tabular-nums">2:13</span>
+        <button style="height: 36px; padding: 0 12px; border-radius: 8px; border: 1px solid #2A2F3A; background: none; color: #ECEEF2; font-weight: 700; cursor: pointer">Queue · 4</button>
+        <button style="height: 36px; padding: 0 12px; border-radius: 8px; border: 1px solid #2A2F3A; background: none; color: #ECEEF2; font-weight: 700; cursor: pointer">Add link</button>
+      </div>
+
+      <div style="display: flex; gap: 12px; flex-wrap: wrap">
+        <sc-for list="{{queue}}" as="q" hint-placeholder-count="3">
+          <div style="flex: 1 1 200px; display: flex; gap: 10px; align-items: center; background: #181B22; border: 1px solid #2A2F3A; border-radius: 12px; padding: 10px">
+            <div style="flex: 0 0 72px; height: 42px; border-radius: 6px; background: #262A34; display: flex; align-items: center; justify-content: center; color: #8A91A0; font-size: 10px">[thumb]</div>
+            <div style="min-width: 0; font-size: 12px; line-height: 1.3"><div style="font-weight: 700; white-space: nowrap; overflow: hidden; text-overflow: ellipsis">{{q.title}}</div><div style="color: #8A91A0">{{q.meta}}</div></div>
+          </div>
+        </sc-for>
+      </div>
+    </section>
+
+    <aside aria-label="People in lounge" style="flex: 1 1 340px; display: flex; flex-direction: column; gap: 12px">
+      <div style="display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px">
+        <sc-for list="{{people}}" as="p" hint-placeholder-count="4">
+          <div style="aspect-ratio: 4 / 3; border-radius: 14px; background: #181B22; box-shadow: {{p.ring}}; position: relative; display: flex; align-items: center; justify-content: center">
+            <span style="width: 56px; height: 56px; border-radius: 50%; background: {{p.color}}; color: #111318; font-weight: 800; font-size: 20px; display: flex; align-items: center; justify-content: center">{{p.i}}</span>
+            <span style="position: absolute; left: 8px; bottom: 8px; font-size: 12px; font-weight: 700; background: rgba(12,14,18,0.82); border-radius: 6px; padding: 2px 8px">{{p.name}}</span>
+            <sc-if value="{{p.muted}}" hint-placeholder-val="{{false}}"><span aria-label="Muted" role="img" style="position: absolute; right: 8px; bottom: 8px; width: 24px; height: 24px; border-radius: 50%; background: #F04A5A; display: flex; align-items: center; justify-content: center"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.4" stroke-linecap="round" aria-hidden="true"><path d="M4 4l16 16M9 9v2a3 3 0 0 0 5 2M15 10V6a3 3 0 0 0-6 0"></path></svg></span></sc-if>
+          </div>
+        </sc-for>
+      </div>
+
+      <div style="flex: 1; min-height: 240px; background: #181B22; border: 1px solid #2A2F3A; border-radius: 14px; padding: 12px; display: flex; flex-direction: column; gap: 10px">
+        <div style="display: flex; justify-content: space-between; align-items: center"><strong>Whiteboard</strong><span style="font-size: 12px; color: #8A91A0">3 drawing · autosaved</span></div>
+        <div style="flex: 1; position: relative; border-radius: 10px; background: #F1EEE9; overflow: hidden">
+          <div style="position: absolute; left: 14px; top: 14px; width: 120px; height: 64px; background: #FFE08A; border-radius: 6px; color: #2A2F3A; font-size: 12px; font-weight: 700; padding: 8px; box-sizing: border-box">Dune 2?</div>
+          <div style="position: absolute; left: 150px; top: 30px; width: 120px; height: 64px; background: #BDE7FF; border-radius: 6px; color: #2A2F3A; font-size: 12px; font-weight: 700; padding: 8px; box-sizing: border-box">Spirited Away</div>
+          <div style="position: absolute; left: 60px; top: 110px; width: 140px; height: 46px; border: 2.5px solid #FF7A45; border-radius: 50%"></div>
+          <div style="position: absolute; left: 210px; top: 118px; font-size: 13px; font-weight: 800; color: #C2410C">winner?</div>
+        </div>
+      </div>
+    </aside>
+  </div>
+
+  <footer style="display: flex; justify-content: center; gap: 10px; padding: 14px 20px 20px; flex-wrap: wrap">
+    <sc-for list="{{controls}}" as="c" hint-placeholder-count="6">
+      <button aria-label="{{c.label}}" style="height: 48px; min-width: 48px; padding: 0 16px; border-radius: 14px; border: 0; background: {{c.bg}}; color: {{c.fg}}; font-weight: 700; cursor: pointer">{{c.text}}</button>
+    </sc-for>
+  </footer>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"accent":{"editor":"color","default":"#FF7A45","options":["#FF7A45","#3DD68C","#6CB6FF","#F5B83D"]},"$preview":{"width":1440,"height":900}}'>
+class Component extends DCLogic {
+  renderVals() {
+    const accent = this.props.accent ?? '#FF7A45';
+    return {
+      accent,
+      queue: [
+        { title: 'Trailer: space opera sequel', meta: 'added by dev · 2:31' },
+        { title: 'Trailer: hand-drawn classic', meta: 'added by sana · 1:58' },
+        { title: 'Lo-fi break mix', meta: 'added by rohan · 1:02:10' }
+      ],
+      people: [
+        { i: 'M', name: 'meera · sharing', color: '#F5B83D', ring: '0 0 0 3px ' + accent },
+        { i: 'K', name: 'kiran', color: '#6CB6FF', ring: '0 0 0 3px #3DD68C' },
+        { i: 'D', name: 'dev', color: '#3DD68C', ring: 'none' },
+        { i: 'S', name: 'sana', color: '#FF9AB8', ring: 'none', muted: true }
+      ],
+      controls: [
+        { label: 'Mute microphone', text: 'Mic', bg: '#1F232C', fg: '#ECEEF2' },
+        { label: 'Turn camera on', text: 'Camera', bg: '#1F232C', fg: '#ECEEF2' },
+        { label: 'Share screen', text: 'Share screen', bg: '#1F232C', fg: '#ECEEF2' },
+        { label: 'Together activities', text: 'Together', bg: accent, fg: '#1A0E08' },
+        { label: 'Soundboard', text: 'Soundboard', bg: '#1F232C', fg: '#ECEEF2' },
+        { label: 'Noise suppression on', text: 'Noise suppression', bg: '#12261C', fg: '#3DD68C' },
+        { label: 'Leave lounge', text: 'Leave', bg: '#F04A5A', fg: '#1A0E08' }
+      ]
+    };
+  }
+}
+</script>
+</body>
+</html>

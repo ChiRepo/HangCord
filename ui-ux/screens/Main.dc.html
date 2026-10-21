@@ -1,0 +1,225 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>HangCord — Room chat</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&amp;display=swap">
+<style>
+body{margin:0;background:#111318}
+a{color:#FF9A6E}a:hover{color:#FFB894}
+button{font-family:inherit}
+input{font-family:inherit}
+</style>
+</helmet>
+<div style="font-family: Manrope, system-ui, sans-serif; color: #ECEEF2; background: #111318; min-height: 900px; display: flex; flex-direction: column; font-size: 14px; line-height: 1.45">
+
+  <header style="height: 38px; background: #0C0E12; border-bottom: 1px solid #1F232C; display: flex; align-items: center; gap: 12px; padding: 0 12px; flex-wrap: wrap">
+    <div style="display: flex; align-items: center; gap: 8px">
+      <svg width="20" height="20" viewBox="0 0 32 32" fill="none" aria-hidden="true"><rect x="2" y="5" width="16" height="13" rx="6" stroke="{{accent}}" stroke-width="2.4"></rect><rect x="14" y="13" width="16" height="13" rx="6" stroke="{{accent}}" stroke-width="2.4"></rect><path d="M9 18c0 6 5 8 9 5" stroke="#3DD68C" stroke-width="2.4" stroke-linecap="round"></path></svg>
+      <span style="font-weight: 800; letter-spacing: -0.01em">HangCord</span>
+      <span style="font-size: 10px; font-weight: 800; letter-spacing: 0.08em; color: {{accent}}; border: 1px solid {{accent}}; border-radius: 999px; padding: 1px 7px">BETA</span>
+    </div>
+    <label style="flex: 1 1 260px; display: flex; justify-content: center">
+      <span style="position: absolute; left: -9999px">Search</span>
+      <input type="search" placeholder="Search Night Owls" style="width: 100%; max-width: 420px; height: 26px; background: #181B22; border: 1px solid #2A2F3A; border-radius: 8px; color: #ECEEF2; padding: 0 10px; font-size: 12px">
+    </label>
+    <div style="display: flex; align-items: center; gap: 10px; color: #A3A9B6; font-size: 12px">
+      <span style="display: flex; align-items: center; gap: 6px; background: #181B22; border: 1px solid #2A2F3A; border-radius: 999px; padding: 2px 10px"><span style="width: 7px; height: 7px; border-radius: 50%; background: #3DD68C"></span>Smooth · 412 MB</span>
+      <button aria-label="Minimise" style="background: none; border: 0; color: #A3A9B6; width: 28px; height: 28px; cursor: pointer"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M5 12h14"></path></svg></button>
+      <button aria-label="Maximise" style="background: none; border: 0; color: #A3A9B6; width: 28px; height: 28px; cursor: pointer"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><rect x="4" y="4" width="16" height="16" rx="2"></rect></svg></button>
+      <button aria-label="Close" style="background: none; border: 0; color: #A3A9B6; width: 28px; height: 28px; cursor: pointer"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"></path></svg></button>
+    </div>
+  </header>
+
+  <div style="flex: 1; display: flex; flex-wrap: wrap; min-height: 0">
+
+    <nav aria-label="Hangouts" style="flex: 0 0 72px; background: #0C0E12; display: flex; flex-direction: column; align-items: center; gap: 10px; padding: 12px 0">
+      <button aria-label="Chats and friends" style="width: 48px; height: 48px; border-radius: 16px; background: #1F232C; border: 0; color: #ECEEF2; cursor: pointer; display: flex; align-items: center; justify-content: center"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M4 6a3 3 0 0 1 3-3h7a3 3 0 0 1 3 3v4a3 3 0 0 1-3 3H9l-4 3v-3.5A3 3 0 0 1 4 10z"></path><path d="M17 8h0a3 3 0 0 1 3 3v4a3 3 0 0 1-1 2.2V21l-3.5-2.5H12a3 3 0 0 1-2.6-1.5"></path></svg></button>
+      <div style="width: 32px; height: 2px; background: #2A2F3A; border-radius: 2px"></div>
+      <sc-for list="{{hangouts}}" as="h" hint-placeholder-count="5">
+        <div style="position: relative; display: flex; align-items: center">
+          <sc-if value="{{h.active}}" hint-placeholder-val="{{false}}"><span style="position: absolute; left: -12px; width: 4px; height: 36px; border-radius: 0 4px 4px 0; background: #ECEEF2"></span></sc-if>
+          <sc-if value="{{h.unread}}" hint-placeholder-val="{{false}}"><span style="position: absolute; left: -12px; width: 4px; height: 8px; border-radius: 0 4px 4px 0; background: #ECEEF2"></span></sc-if>
+          <button aria-label="{{h.name}}" style="width: 48px; height: 48px; border-radius: {{h.radius}}; background: {{h.bg}}; border: 0; color: {{h.fg}}; font-weight: 800; font-size: 15px; cursor: pointer">{{h.initials}}</button>
+          <sc-if value="{{h.badge}}" hint-placeholder-val="{{false}}"><span style="position: absolute; right: -4px; bottom: -4px; min-width: 18px; height: 18px; border-radius: 9px; background: #F04A5A; color: #1A0E08; font-size: 11px; font-weight: 800; display: flex; align-items: center; justify-content: center; border: 3px solid #0C0E12">{{h.badge}}</span></sc-if>
+        </div>
+      </sc-for>
+      <button aria-label="Create a hangout" style="width: 48px; height: 48px; border-radius: 24px; background: #181B22; border: 1px dashed #3A404D; color: #3DD68C; cursor: pointer; display: flex; align-items: center; justify-content: center"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><path d="M12 5v14M5 12h14"></path></svg></button>
+    </nav>
+
+    <aside aria-label="Rooms" style="flex: 0 0 248px; background: #181B22; display: flex; flex-direction: column; min-height: 862px">
+      <button style="height: 52px; display: flex; align-items: center; justify-content: space-between; padding: 0 16px; border: 0; border-bottom: 1px solid #0C0E12; background: none; color: #ECEEF2; font-weight: 800; font-size: 15px; cursor: pointer">Night Owls<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M6 9l6 6 6-6"></path></svg></button>
+      <div style="margin: 12px 10px 4px; padding: 10px 12px; border-radius: 10px; background: #1F232C; display: flex; gap: 10px; align-items: center">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="{{accent}}" stroke-width="2" aria-hidden="true"><rect x="3" y="5" width="18" height="16" rx="2"></rect><path d="M3 10h18M8 3v4M16 3v4"></path></svg>
+        <div style="font-size: 12px"><div style="font-weight: 700">Movie night</div><div style="color: #A3A9B6">Fri · 9:00 PM · 14 going</div></div>
+      </div>
+      <div style="flex: 1; padding: 6px 8px; display: flex; flex-direction: column; gap: 2px; overflow: hidden">
+        <sc-for list="{{groups}}" as="g" hint-placeholder-count="3">
+          <div style="font-size: 11px; font-weight: 800; letter-spacing: 0.06em; color: #8A91A0; padding: 14px 8px 4px">{{g.label}}</div>
+          <sc-for list="{{g.rooms}}" as="r" hint-placeholder-count="3">
+            <a href="#" style="display: flex; align-items: center; gap: 8px; padding: 6px 8px; border-radius: 8px; text-decoration: none; color: {{r.color}}; background: {{r.bg}}; font-weight: {{r.weight}}">
+              <sc-if value="{{r.isText}}" hint-placeholder-val="{{true}}"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M9 4L7 20M17 4l-2 16M4 9h16M3 15h16"></path></svg></sc-if>
+              <sc-if value="{{r.isLounge}}" hint-placeholder-val="{{false}}"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M4 10v4h4l5 4V6L8 10z"></path><path d="M16.5 9a4 4 0 0 1 0 6M19 6.5a7.5 7.5 0 0 1 0 11"></path></svg></sc-if>
+              <sc-if value="{{r.isBoard}}" hint-placeholder-val="{{false}}"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><rect x="4" y="4" width="16" height="16" rx="3"></rect><path d="M8 9h8M8 13h5"></path></svg></sc-if>
+              <sc-if value="{{r.isBulletin}}" hint-placeholder-val="{{false}}"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M4 11v3l11 5V6L4 11zM15 9h3a2 2 0 0 1 0 6h-3"></path></svg></sc-if>
+              <span style="flex: 1">{{r.name}}</span>
+              <sc-if value="{{r.mentions}}" hint-placeholder-val="{{false}}"><span style="background: #F04A5A; color: #1A0E08; font-size: 11px; font-weight: 800; border-radius: 9px; padding: 0 6px">{{r.mentions}}</span></sc-if>
+            </a>
+            <sc-for list="{{r.people}}" as="p" hint-placeholder-count="0">
+              <div style="display: flex; align-items: center; gap: 8px; padding: 3px 8px 3px 34px; color: #A3A9B6; font-size: 13px">
+                <span style="width: 22px; height: 22px; border-radius: 50%; background: {{p.color}}; color: #111318; font-size: 10px; font-weight: 800; display: flex; align-items: center; justify-content: center; box-shadow: {{p.ring}}">{{p.i}}</span>
+                <span style="flex: 1">{{p.name}}</span>
+                <sc-if value="{{p.live}}" hint-placeholder-val="{{false}}"><span style="font-size: 10px; font-weight: 800; color: #111318; background: {{accent}}; border-radius: 4px; padding: 0 5px">LIVE</span></sc-if>
+              </div>
+            </sc-for>
+          </sc-for>
+        </sc-for>
+      </div>
+      <div style="background: #14171D; border-top: 1px solid #0C0E12; padding: 10px 12px; display: flex; flex-direction: column; gap: 10px">
+        <div style="display: flex; align-items: center; justify-content: space-between">
+          <div style="font-size: 12px"><div style="color: #3DD68C; font-weight: 800">Connected · 24 ms</div><div style="color: #A3A9B6">Chill Lounge / Night Owls</div></div>
+          <button aria-label="Leave lounge" style="width: 32px; height: 32px; border-radius: 8px; border: 0; background: #2A2F3A; color: #ECEEF2; cursor: pointer"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M5 15c4-4 10-4 14 0l-2 2-3-2v-2a10 10 0 0 0-4 0v2l-3 2z"></path></svg></button>
+        </div>
+        <div style="display: flex; align-items: center; gap: 8px">
+          <span style="position: relative; width: 32px; height: 32px; border-radius: 50%; background: #6CB6FF; color: #111318; font-weight: 800; font-size: 13px; display: flex; align-items: center; justify-content: center">K<span style="position: absolute; right: -2px; bottom: -2px; width: 11px; height: 11px; border-radius: 50%; background: #3DD68C; border: 2px solid #14171D"></span></span>
+          <div style="flex: 1; font-size: 12px; line-height: 1.3"><div style="font-weight: 800">kiran</div><div style="color: #A3A9B6">Building HangCord</div></div>
+          <button aria-label="Mute microphone" style="width: 30px; height: 30px; border: 0; border-radius: 8px; background: none; color: #A3A9B6; cursor: pointer"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><rect x="9" y="3" width="6" height="11" rx="3"></rect><path d="M5 11a7 7 0 0 0 14 0M12 18v3"></path></svg></button>
+          <button aria-label="Deafen" style="width: 30px; height: 30px; border: 0; border-radius: 8px; background: none; color: #A3A9B6; cursor: pointer"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M4 15v-3a8 8 0 0 1 16 0v3"></path><rect x="3" y="14" width="4" height="6" rx="1.5"></rect><rect x="17" y="14" width="4" height="6" rx="1.5"></rect></svg></button>
+          <a href="Settings.dc.html" aria-label="Settings" style="width: 30px; height: 30px; border-radius: 8px; color: #A3A9B6; display: flex; align-items: center; justify-content: center"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="12" cy="12" r="3"></circle><path d="M19 12a7 7 0 0 0-.1-1.2l2-1.6-2-3.4-2.4 1a7 7 0 0 0-2-1.2L14 3h-4l-.5 2.6a7 7 0 0 0-2 1.2l-2.4-1-2 3.4 2 1.6A7 7 0 0 0 5 12c0 .4 0 .8.1 1.2l-2 1.6 2 3.4 2.4-1a7 7 0 0 0 2 1.2L10 21h4l.5-2.6a7 7 0 0 0 2-1.2l2.4 1 2-3.4-2-1.6c.1-.4.1-.8.1-1.2z"></path></svg></a>
+        </div>
+      </div>
+    </aside>
+
+    <main style="flex: 999 1 560px; min-width: 0; display: flex; flex-direction: column; background: #111318">
+      <div style="height: 52px; display: flex; align-items: center; gap: 10px; padding: 0 18px; border-bottom: 1px solid #1F232C; flex-wrap: wrap">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#8A91A0" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M9 4L7 20M17 4l-2 16M4 9h16M3 15h16"></path></svg>
+        <h1 style="margin: 0; font-size: 16px; font-weight: 800">general</h1>
+        <span style="color: #8A91A0; font-size: 13px; flex: 1; min-width: 160px">Say hi. Plan stuff. Be kind.</span>
+        <button aria-label="Strands" style="background: none; border: 0; color: #A3A9B6; width: 32px; height: 32px; cursor: pointer"><svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M5 5c6 0 6 14 14 14M5 12h6M5 19c4 0 5-7 9-7"></path></svg></button>
+        <button aria-label="Pinned messages" style="background: none; border: 0; color: #A3A9B6; width: 32px; height: 32px; cursor: pointer"><svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M9 3h6l-1 6 4 4H6l4-4zM12 13v8"></path></svg></button>
+        <button aria-label="Notification settings" style="background: none; border: 0; color: #A3A9B6; width: 32px; height: 32px; cursor: pointer"><svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M6 16V11a6 6 0 0 1 12 0v5l2 2H4zM10 21h4"></path></svg></button>
+        <button aria-label="Show members" style="background: none; border: 0; color: #ECEEF2; width: 32px; height: 32px; cursor: pointer"><svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="9" cy="8" r="3.5"></circle><path d="M3 20a6 6 0 0 1 12 0M16 4.5a3.5 3.5 0 0 1 0 7M18 14a6 6 0 0 1 3 6"></path></svg></button>
+      </div>
+
+      <div style="margin: 14px 18px 0; padding: 10px 14px; border-radius: 12px; background: #1F232C; border: 1px solid #2A2F3A; display: flex; align-items: center; gap: 12px; flex-wrap: wrap">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="{{accent}}" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M12 3l1.8 5.2L19 10l-5.2 1.8L12 17l-1.8-5.2L5 10l5.2-1.8zM19 16l.8 2.2L22 19l-2.2.8L19 22l-.8-2.2L16 19l2.2-.8z"></path></svg>
+        <div style="flex: 1; min-width: 200px"><strong>48 new messages</strong> <span style="color: #A3A9B6">since you left at 6:10 PM</span></div>
+        <button style="height: 32px; padding: 0 14px; border-radius: 8px; border: 0; background: {{accent}}; color: #1A0E08; font-weight: 800; cursor: pointer">Catch me up</button>
+        <button style="height: 32px; padding: 0 12px; border-radius: 8px; border: 1px solid #2A2F3A; background: none; color: #ECEEF2; font-weight: 700; cursor: pointer">Jump to first unread</button>
+      </div>
+
+      <div style="flex: 1; padding: 8px 18px 0; display: flex; flex-direction: column; gap: 2px; overflow: hidden">
+        <div style="display: flex; align-items: center; gap: 12px; color: #8A91A0; font-size: 12px; font-weight: 700; margin: 10px 0"><span style="flex: 1; height: 1px; background: #1F232C"></span>Today<span style="flex: 1; height: 1px; background: #1F232C"></span></div>
+        <sc-for list="{{messages}}" as="m" hint-placeholder-count="5">
+          <sc-if value="{{m.newDivider}}" hint-placeholder-val="{{false}}">
+            <div style="display: flex; align-items: center; gap: 10px; color: #F04A5A; font-size: 11px; font-weight: 800; margin: 8px 0"><span style="flex: 1; height: 1px; background: #F04A5A"></span>NEW</div>
+          </sc-if>
+          <article style="display: flex; gap: 14px; padding: 8px 10px; border-radius: 10px; background: {{m.bg}}">
+            <span style="flex: 0 0 40px; height: 40px; border-radius: 50%; background: {{m.color}}; color: #111318; font-weight: 800; display: flex; align-items: center; justify-content: center">{{m.i}}</span>
+            <div style="flex: 1; min-width: 0">
+              <sc-if value="{{m.replyTo}}" hint-placeholder-val="{{false}}"><div style="font-size: 12px; color: #8A91A0; margin-bottom: 2px">↳ replying to <strong style="color: #A3A9B6">{{m.replyTo}}</strong></div></sc-if>
+              <div style="display: flex; align-items: baseline; gap: 8px"><strong style="color: {{m.nameColor}}">{{m.name}}</strong><span style="font-size: 11px; color: #8A91A0">{{m.time}}</span></div>
+              <p style="margin: 2px 0 0; color: #DDE1E8">{{m.text}}</p>
+              <sc-if value="{{m.translated}}" hint-placeholder-val="{{false}}">
+                <div style="margin-top: 4px; display: flex; gap: 6px; align-items: center; font-size: 12px; color: #8A91A0"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M4 5h9M8 3v2M6 5c1 4 4 7 7 8M11 5c-1 4-4 7-7 8M13 21l4-10 4 10M14.5 17h5"></path></svg>Translated from {{m.translated}} · <a href="#">Show original</a></div>
+              </sc-if>
+              <sc-if value="{{m.image}}" hint-placeholder-val="{{false}}">
+                <div style="margin-top: 8px; width: 320px; max-width: 100%; height: 150px; border-radius: 12px; background: #1F232C; border: 1px solid #2A2F3A; display: flex; align-items: center; justify-content: center; color: #8A91A0; font-size: 12px">[poster-lineup.webp · 184 KB]</div>
+              </sc-if>
+              <sc-if value="{{m.reactions}}" hint-placeholder-val="{{false}}">
+                <div style="display: flex; gap: 6px; margin-top: 6px; flex-wrap: wrap">
+                  <sc-for list="{{m.reactions}}" as="rx" hint-placeholder-count="2">
+                    <button style="height: 24px; padding: 0 8px; border-radius: 8px; background: {{rx.bg}}; border: 1px solid {{rx.border}}; color: #ECEEF2; font-size: 12px; font-weight: 700; cursor: pointer">{{rx.label}} {{rx.n}}</button>
+                  </sc-for>
+                </div>
+              </sc-if>
+            </div>
+          </article>
+        </sc-for>
+        <div style="font-size: 12px; color: #8A91A0; padding: 6px 10px"><strong style="color: #A3A9B6">meera</strong> and <strong style="color: #A3A9B6">dev</strong> are typing…</div>
+      </div>
+
+      <form style="margin: 0 18px 18px; display: flex; align-items: center; gap: 6px; background: #1F232C; border: 1px solid #2A2F3A; border-radius: 12px; padding: 6px 8px">
+        <button type="button" aria-label="Add attachment" style="width: 34px; height: 34px; border-radius: 50%; border: 0; background: #2A2F3A; color: #ECEEF2; cursor: pointer"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><path d="M12 5v14M5 12h14"></path></svg></button>
+        <label style="flex: 1"><span style="position: absolute; left: -9999px">Message</span><input type="text" placeholder="Message #general" style="width: 100%; height: 34px; border: 0; background: none; color: #ECEEF2; font-size: 14px; outline: none"></label>
+        <button type="button" aria-label="Schedule message" style="width: 34px; height: 34px; border: 0; background: none; color: #A3A9B6; cursor: pointer"><svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="12" r="8.5"></circle><path d="M12 7v5l3 2"></path></svg></button>
+        <button type="button" aria-label="GIFs" style="height: 34px; padding: 0 6px; border: 0; background: none; color: #A3A9B6; font-weight: 800; font-size: 11px; cursor: pointer">GIF</button>
+        <button type="button" aria-label="Emoji" style="width: 34px; height: 34px; border: 0; background: none; color: #A3A9B6; cursor: pointer"><svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="12" r="8.5"></circle><path d="M8.5 14a4 4 0 0 0 7 0M9 10h0M15 10h0"></path></svg></button>
+        <button type="submit" aria-label="Send" style="width: 34px; height: 34px; border-radius: 8px; border: 0; background: {{accent}}; color: #1A0E08; cursor: pointer"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 12l16-8-6 16-2-7z"></path></svg></button>
+      </form>
+    </main>
+
+    <aside aria-label="Members" style="flex: 0 1 240px; background: #181B22; padding: 14px 10px; display: flex; flex-direction: column; gap: 2px">
+      <sc-for list="{{memberGroups}}" as="mg" hint-placeholder-count="2">
+        <div style="font-size: 11px; font-weight: 800; letter-spacing: 0.06em; color: #8A91A0; padding: 12px 8px 6px">{{mg.label}}</div>
+        <sc-for list="{{mg.people}}" as="p" hint-placeholder-count="3">
+          <div style="display: flex; align-items: center; gap: 10px; padding: 6px 8px; border-radius: 8px; opacity: {{p.opacity}}">
+            <span style="position: relative; flex: 0 0 32px; height: 32px; border-radius: 50%; background: {{p.color}}; color: #111318; font-weight: 800; font-size: 13px; display: flex; align-items: center; justify-content: center">{{p.i}}<span style="position: absolute; right: -2px; bottom: -2px; width: 11px; height: 11px; border-radius: 50%; background: {{p.status}}; border: 2px solid #181B22"></span></span>
+            <div style="min-width: 0; line-height: 1.25"><div style="font-weight: 700; color: {{p.nameColor}}">{{p.name}}</div><div style="font-size: 12px; color: #8A91A0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis">{{p.activity}}</div></div>
+          </div>
+        </sc-for>
+      </sc-for>
+    </aside>
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{&quot;accent&quot;:{&quot;editor&quot;:&quot;color&quot;,&quot;default&quot;:&quot;#FF7A45&quot;,&quot;options&quot;:[&quot;#FF7A45&quot;,&quot;#3DD68C&quot;,&quot;#6CB6FF&quot;,&quot;#F5B83D&quot;]},&quot;$preview&quot;:{&quot;width&quot;:1440,&quot;height&quot;:900}}">
+class Component extends DCLogic {
+  renderVals() {
+    const accent = this.props.accent ?? '#FF7A45';
+    const hangouts = [
+      { name: 'Night Owls', initials: 'NO', bg: accent, fg: '#1A0E08', radius: '16px', active: true },
+      { name: 'CS Batch 2027', initials: 'CS', bg: '#2A2F3A', fg: '#ECEEF2', radius: '24px', unread: true, badge: 3 },
+      { name: 'Indie Game Lab', initials: 'IG', bg: '#2A2F3A', fg: '#ECEEF2', radius: '24px' },
+      { name: 'Pune Cyclists', initials: 'PC', bg: '#2A2F3A', fg: '#ECEEF2', radius: '24px', unread: true },
+      { name: 'Lo-fi Corner', initials: 'LF', bg: '#2A2F3A', fg: '#ECEEF2', radius: '24px' }
+    ];
+    const room = (name, kind, extra) => Object.assign({ name, isText: kind === 'text', isLounge: kind === 'lounge', isBoard: kind === 'board', isBulletin: kind === 'bulletin', color: '#A3A9B6', bg: 'transparent', weight: 600, people: [] }, extra || {});
+    const groups = [
+      { label: 'TALK', rooms: [
+        room('bulletin', 'bulletin'),
+        room('general', 'text', { color: '#ECEEF2', bg: '#262A34', weight: 800 }),
+        room('study-hall', 'text', { color: '#ECEEF2', weight: 800, mentions: 2 }),
+        room('memes', 'text')
+      ] },
+      { label: 'LOUNGES', rooms: [
+        room('Chill Lounge', 'lounge', { color: '#ECEEF2', people: [
+          { i: 'K', name: 'kiran', color: '#6CB6FF', ring: '0 0 0 2px #3DD68C' },
+          { i: 'M', name: 'meera', color: '#F5B83D', ring: 'none', live: true },
+          { i: 'D', name: 'dev', color: '#3DD68C', ring: 'none' }
+        ] }),
+        room('Gaming Lounge', 'lounge')
+      ] },
+      { label: 'BOARDS', rooms: [ room('ideas', 'board'), room('help', 'board') ] }
+    ];
+    const messages = [
+      { i: 'M', name: 'meera', nameColor: accent, color: '#F5B83D', time: '6:42 PM', text: 'Poster for Friday is done! Vote on the movie below.', image: true, reactions: [ { label: '🔥', n: 6, bg: '#2A2018', border: accent }, { label: '👀', n: 2, bg: '#1F232C', border: '#2A2F3A' } ], bg: 'transparent' },
+      { i: 'R', name: 'rohan', nameColor: '#ECEEF2', color: '#C9A0FF', time: '6:58 PM', text: 'Movie night tomorrow is confirmed, right? Who is bringing snacks?', translated: 'Hindi', bg: 'transparent' },
+      { newDivider: true, i: 'D', name: 'dev', nameColor: '#6CB6FF', color: '#3DD68C', time: '7:31 PM', text: 'Confirmed. I set a reminder on this message for everyone in Movie night.', replyTo: 'rohan', bg: 'transparent' },
+      { i: 'S', name: 'sana', nameColor: '#ECEEF2', color: '#FF9AB8', time: '7:34 PM', text: 'Hopping into Chill Lounge — meera is sharing the trailer list on the whiteboard.', bg: '#171A20', reactions: [ { label: '🙌', n: 3, bg: '#1F232C', border: '#2A2F3A' } ] }
+    ];
+    const memberGroups = [
+      { label: 'KEEPERS — 1', people: [ { i: 'M', name: 'meera', nameColor: accent, color: '#F5B83D', status: '#3DD68C', activity: 'Sharing screen in Chill Lounge', opacity: 1 } ] },
+      { label: 'ONLINE — 4', people: [
+        { i: 'D', name: 'dev', nameColor: '#6CB6FF', color: '#3DD68C', status: '#3DD68C', activity: 'Watching together', opacity: 1 },
+        { i: 'K', name: 'kiran', nameColor: '#ECEEF2', color: '#6CB6FF', status: '#3DD68C', activity: 'Building HangCord', opacity: 1 },
+        { i: 'R', name: 'rohan', nameColor: '#ECEEF2', color: '#C9A0FF', status: '#F5B83D', activity: 'Idle', opacity: 1 },
+        { i: 'S', name: 'sana', nameColor: '#ECEEF2', color: '#FF9AB8', status: '#F04A5A', activity: 'Do not disturb · exams', opacity: 1 }
+      ] },
+      { label: 'OFFLINE — 9', people: [
+        { i: 'A', name: 'arjun', nameColor: '#A3A9B6', color: '#8A91A0', status: '#5A6170', activity: 'Last seen 2h ago', opacity: 0.6 },
+        { i: 'T', name: 'tara', nameColor: '#A3A9B6', color: '#8A91A0', status: '#5A6170', activity: 'Last seen yesterday', opacity: 0.6 }
+      ] }
+    ];
+    return { accent, hangouts, groups, messages, memberGroups };
+  }
+}
+</script>
+</body>
+</html>

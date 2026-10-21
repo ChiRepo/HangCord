@@ -1,0 +1,11 @@
+# Automatically generated - DO NOT EDIT!
+
+[[permission]]
+identifier = "allow-governor-status"
+description = "Enables the governor_status command without any pre-configured scope."
+commands.allow = ["governor_status"]
+
+[[permission]]
+identifier = "deny-governor-status"
+description = "Denies the governor_status command without any pre-configured scope."
+commands.deny = ["governor_status"]

@@ -1,0 +1,122 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>HangCord — Settings, performance</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&amp;display=swap">
+<style>
+body{margin:0;background:#111318}
+a{color:#FF9A6E}a:hover{color:#FFB894}
+button{font-family:inherit}
+</style>
+</helmet>
+<div style="font-family: Manrope, system-ui, sans-serif; color: #ECEEF2; background: #111318; min-height: 900px; display: flex; flex-wrap: wrap; font-size: 14px; line-height: 1.5">
+
+  <nav aria-label="Settings sections" style="flex: 1 1 260px; max-width: 320px; background: #181B22; padding: 40px 14px 20px; display: flex; flex-direction: column; gap: 2px">
+    <sc-for list="{{sections}}" as="s" hint-placeholder-count="10">
+      <sc-if value="{{s.heading}}" hint-placeholder-val="{{false}}"><div style="font-size: 11px; font-weight: 800; letter-spacing: 0.06em; color: #8A91A0; padding: 14px 10px 4px">{{s.heading}}</div></sc-if>
+      <a href="#" style="display: flex; justify-content: space-between; align-items: center; padding: 7px 10px; border-radius: 8px; text-decoration: none; color: {{s.color}}; background: {{s.bg}}; font-weight: {{s.weight}}"><span>{{s.label}}</span><sc-if value="{{s.tag}}" hint-placeholder-val="{{false}}"><span style="font-size: 10px; font-weight: 800; color: #A3A9B6; border: 1px solid #3A404D; border-radius: 999px; padding: 0 7px">{{s.tag}}</span></sc-if></a>
+    </sc-for>
+  </nav>
+
+  <main style="flex: 999 1 640px; min-width: 0; padding: 40px 48px; display: flex; flex-direction: column; gap: 22px; max-width: 900px">
+    <div>
+      <h1 style="margin: 0; font-size: 22px; font-weight: 800">Performance</h1>
+      <p style="margin: 4px 0 0; color: #A3A9B6">HangCord sizes itself to your computer. More memory means smoother scrolling and more video at once — but never more than 1.7 GB.</p>
+    </div>
+
+    <section style="background: #181B22; border: 1px solid #2A2F3A; border-radius: 16px; padding: 20px; display: flex; flex-direction: column; gap: 14px">
+      <div style="display: flex; justify-content: space-between; align-items: flex-start; gap: 16px; flex-wrap: wrap">
+        <div>
+          <div style="font-size: 12px; color: #8A91A0; font-weight: 700">THIS COMPUTER · 16 GB RAM</div>
+          <div style="font-size: 20px; font-weight: 800; margin-top: 2px">{{profileName}} profile</div>
+          <div style="color: #A3A9B6; font-size: 13px">Budget up to {{budget}} · using {{used}} right now</div>
+        </div>
+        <span style="display: flex; align-items: center; gap: 6px; font-weight: 800; font-size: 12px; color: {{stateColor}}; background: #111318; border-radius: 999px; padding: 4px 12px"><span style="width: 8px; height: 8px; border-radius: 50%; background: {{stateColor}}"></span>{{stateLabel}}</span>
+      </div>
+      <div role="img" aria-label="Memory use by area" style="display: flex; height: 14px; border-radius: 7px; overflow: hidden; background: #262A34">
+        <sc-for list="{{bars}}" as="b" hint-placeholder-count="4"><div style="width: {{b.w}}; background: {{b.c}}"></div></sc-for>
+      </div>
+      <div style="display: flex; gap: 18px; flex-wrap: wrap; font-size: 12px; color: #A3A9B6">
+        <sc-for list="{{bars}}" as="b" hint-placeholder-count="4"><span style="display: flex; align-items: center; gap: 6px"><span style="width: 10px; height: 10px; border-radius: 3px; background: {{b.c}}"></span>{{b.label}} · {{b.mb}}</span></sc-for>
+      </div>
+    </section>
+
+    <section style="background: #181B22; border: 1px solid #2A2F3A; border-radius: 16px; padding: 6px 20px">
+      <div style="display: flex; justify-content: space-between; align-items: center; gap: 16px; padding: 14px 0; border-bottom: 1px solid #2A2F3A">
+        <div><div style="font-weight: 800">Lightweight mode</div><div style="color: #A3A9B6; font-size: 13px">Use the leanest profile (about 300 MB). Great for older laptops or gaming at the same time.</div></div>
+        <button role="switch" aria-checked="{{lite}}" aria-label="Lightweight mode" onClick="{{toggleLite}}" style="flex: 0 0 52px; height: 30px; border-radius: 15px; border: 0; background: {{switchBg}}; position: relative; cursor: pointer"><span style="position: absolute; top: 3px; left: {{knobLeft}}; width: 24px; height: 24px; border-radius: 50%; background: #FFFFFF"></span></button>
+      </div>
+      <div style="padding: 14px 0; border-bottom: 1px solid #2A2F3A">
+        <div style="font-weight: 800">Memory profile</div>
+        <div style="color: #A3A9B6; font-size: 13px; margin-bottom: 10px">Auto picks based on your RAM and how much is free.</div>
+        <div role="radiogroup" aria-label="Memory profile" style="display: flex; gap: 6px; flex-wrap: wrap">
+          <sc-for list="{{profiles}}" as="p" hint-placeholder-count="6">
+            <button role="radio" aria-checked="{{p.on}}" onClick="{{p.pick}}" style="height: 34px; padding: 0 14px; border-radius: 8px; border: 1px solid {{p.border}}; background: {{p.bg}}; color: {{p.fg}}; font-weight: 700; cursor: pointer">{{p.label}}</button>
+          </sc-for>
+        </div>
+      </div>
+      <sc-for list="{{toggles}}" as="t" hint-placeholder-count="3">
+        <div style="display: flex; justify-content: space-between; align-items: center; gap: 16px; padding: 14px 0; border-bottom: {{t.line}}">
+          <div><div style="font-weight: 700">{{t.label}}</div><div style="color: #A3A9B6; font-size: 13px">{{t.help}}</div></div>
+          <span aria-hidden="true" style="flex: 0 0 52px; height: 30px; border-radius: 15px; background: {{t.bg}}; position: relative"><span style="position: absolute; top: 3px; left: {{t.left}}; width: 24px; height: 24px; border-radius: 50%; background: #FFFFFF"></span></span>
+        </div>
+      </sc-for>
+    </section>
+
+    <section style="border: 1.5px dashed #3A404D; border-radius: 16px; padding: 20px; display: flex; gap: 16px; align-items: center; flex-wrap: wrap">
+      <svg width="34" height="34" viewBox="0 0 24 24" fill="none" stroke="#8A91A0" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><path d="M12 3l2.6 5.6 6 .7-4.5 4.1 1.2 6L12 16.6 6.7 19.4l1.2-6L3.4 9.3l6-.7z"></path></svg>
+      <div style="flex: 1; min-width: 220px"><div style="font-weight: 800">HangCord Plus</div><div style="color: #A3A9B6; font-size: 13px">Coming later. Everything you see in HangCord today is free.</div></div>
+      <span style="font-size: 12px; font-weight: 800; color: #A3A9B6; border: 1px solid #3A404D; border-radius: 999px; padding: 4px 12px">Reserved</span>
+    </section>
+  </main>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"accent":{"editor":"color","default":"#FF7A45","options":["#FF7A45","#3DD68C","#6CB6FF","#F5B83D"]},"$preview":{"width":1440,"height":900}}'>
+class Component extends DCLogic {
+  constructor(props) { super(props); this.state = { profile: 'Auto' }; }
+  renderVals() {
+    const accent = this.props.accent ?? '#FF7A45';
+    const chosen = this.state.profile;
+    const lite = chosen === 'Lite';
+    const map = { Auto: ['Rich', '1.2 GB', '412 MB'], Lite: ['Lite', '300 MB', '238 MB'], Balanced: ['Balanced', '500 MB', '331 MB'], Smooth: ['Smooth', '800 MB', '389 MB'], Rich: ['Rich', '1.2 GB', '412 MB'], Max: ['Max', '1.7 GB', '455 MB'] };
+    const m = map[chosen];
+    const barsFull = lite
+      ? [ { label: 'Interface', mb: '92 MB', w: '31%', c: '#6CB6FF' }, { label: 'Messages', mb: '48 MB', w: '16%', c: accent }, { label: 'Images', mb: '40 MB', w: '13%', c: '#F5B83D' }, { label: 'Voice', mb: '58 MB', w: '19%', c: '#3DD68C' } ]
+      : [ { label: 'Interface', mb: '118 MB', w: '10%', c: '#6CB6FF' }, { label: 'Messages', mb: '96 MB', w: '8%', c: accent }, { label: 'Images', mb: '124 MB', w: '10%', c: '#F5B83D' }, { label: 'Voice', mb: '74 MB', w: '6%', c: '#3DD68C' } ];
+    const sections = [
+      { heading: 'USER', label: 'My account' }, { label: 'Profiles' }, { label: 'Privacy & encryption' },
+      { heading: 'APP', label: 'Appearance' }, { label: 'Accessibility' }, { label: 'Voice & video' }, { label: 'Notifications' }, { label: 'Keybinds' }, { label: 'Language & translation' }, { label: 'Performance', active: true },
+      { heading: 'MORE', label: 'HangCord Plus', tag: 'LATER' }, { label: 'Beta & feedback', tag: 'BETA' }
+    ].map((s) => Object.assign({ color: s.active ? '#ECEEF2' : '#A3A9B6', bg: s.active ? '#262A34' : 'transparent', weight: s.active ? 800 : 600 }, s));
+    const profiles = ['Auto', 'Lite', 'Balanced', 'Smooth', 'Rich', 'Max'].map((label) => ({
+      label: label === 'Max' ? 'Max (1.7 GB)' : label,
+      on: chosen === label,
+      bg: chosen === label ? accent : 'transparent',
+      fg: chosen === label ? '#1A0E08' : '#ECEEF2',
+      border: chosen === label ? accent : '#2A2F3A',
+      pick: () => this.setState({ profile: label })
+    }));
+    const toggles = [
+      { label: 'Preload nearby rooms', help: 'Opens rooms instantly. Turned off automatically in Lite.', on: !lite },
+      { label: 'Animated avatars and emoji', help: 'Pauses when the window is hidden.', on: !lite },
+      { label: 'Hardware acceleration', help: 'Uses your graphics card for video and scrolling.', on: true }
+    ].map((t, i, a) => Object.assign(t, { bg: t.on ? '#3DD68C' : '#3A404D', left: t.on ? '25px' : '3px', line: i === a.length - 1 ? '0' : '1px solid #2A2F3A' }));
+    return {
+      accent, sections, profiles, toggles, bars: barsFull, lite,
+      profileName: chosen === 'Auto' ? 'Auto · ' + m[0] : m[0], budget: m[1], used: m[2],
+      stateLabel: 'Healthy', stateColor: '#3DD68C',
+      switchBg: lite ? '#3DD68C' : '#3A404D', knobLeft: lite ? '25px' : '3px',
+      toggleLite: () => this.setState({ profile: lite ? 'Auto' : 'Lite' })
+    };
+  }
+}
+</script>
+</body>
+</html>

@@ -1,0 +1,15 @@
+{
+  "name": "@hangcord/cache",
+  "version": "0.0.1",
+  "private": true,
+  "type": "module",
+  "description": "Shared preference + hangout cache core (MASTER_PLAN §7.1). Same logic on desktop, web and phones.",
+  "exports": { ".": "./src/index.ts" },
+  "scripts": {
+    "typecheck": "tsc --noEmit -p tsconfig.json",
+    "test": "vitest run"
+  },
+  "dependencies": {
+    "@hangcord/protocol": "*"
+  }
+}

@@ -1,0 +1,172 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>HangCord — Main chat</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&amp;family=Space+Grotesk:wght@500;600;700&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0;background:#111316}
+a{color:#86B6FF}a:hover{color:#B3D0FF}
+.hc button{font:inherit;color:inherit;background:none;border:0;cursor:pointer}
+.hc button:focus-visible,.hc a:focus-visible,.hc input:focus-visible{outline:2px solid #F2A93B;outline-offset:2px}
+.srv{width:48px;height:48px;border-radius:14px;display:flex;align-items:center;justify-content:center;font:600 15px/1 'Space Grotesk',sans-serif;background:#22262D;color:#ECEEF1;transition:border-radius .12s cubic-bezier(.2,.8,.2,1),background .12s}
+.srv:hover{border-radius:12px;background:#2C3139}
+.ch{height:32px;display:flex;align-items:center;gap:8px;padding:0 8px;border-radius:6px;color:#A9B0BA;font:500 14px/20px Inter,sans-serif;text-decoration:none}
+.ch:hover{background:#22262D;color:#ECEEF1}
+.ib{width:32px;height:32px;border-radius:6px;display:flex;align-items:center;justify-content:center;color:#A9B0BA}
+.ib:hover{background:#22262D;color:#ECEEF1}
+.msg:hover{background:#1A1D22}
+@media (max-width:1100px){.members{display:none}}
+@media (max-width:720px){.channels{display:none}.rail{display:none}}
+</style>
+</helmet>
+<div class="hc" style="display:flex;height:100vh;min-height:900px;width:100%;background:#111316;color:#ECEEF1;font-family:Inter,sans-serif;font-size:15px;line-height:22px;overflow:hidden">
+
+<nav class="rail" aria-label="Hangouts" style="width:72px;flex-shrink:0;display:flex;flex-direction:column;align-items:center;gap:8px;padding:12px 0;background:#111316;border-right:1px solid #1D2026">
+<button class="srv" aria-label="Direct messages" style="background:#22262D;color:#ECEEF1"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M7.9 20A9 9 0 1 0 4 16.1L2 22Z"></path></svg></button>
+<div style="width:32px;height:1px;background:#2A2F37;margin:4px 0"></div>
+<div style="position:relative;display:flex;justify-content:center;width:72px">
+<span style="position:absolute;left:0;top:8px;width:4px;height:32px;border-radius:0 4px 4px 0;background:{{accent}}"></span>
+<button class="srv" aria-label="Night Owls (selected)" style="border-radius:12px;background:{{accent}};color:#1A1205">NO</button>
+</div>
+<div style="position:relative;display:flex;justify-content:center;width:72px">
+<span style="position:absolute;left:0;top:20px;width:4px;height:8px;border-radius:0 4px 4px 0;background:#ECEEF1"></span>
+<button class="srv" aria-label="Study Circle, unread">SC</button>
+</div>
+<div style="position:relative;display:flex;justify-content:center;width:72px">
+<button class="srv" aria-label="Pixel Club, 3 mentions">PC</button>
+<span style="position:absolute;right:10px;bottom:-2px;min-width:18px;height:18px;padding:0 5px;box-sizing:border-box;border-radius:9px;background:#B8322C;color:#FFFFFF;font:600 11px/18px Inter,sans-serif;text-align:center;border:3px solid #111316">3</span>
+</div>
+<button class="srv" aria-label="Weekend Hikes">WH</button>
+<button class="srv" aria-label="Add a hangout" style="color:#34C77B"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" aria-hidden="true"><path d="M5 12h14M12 5v14"></path></svg></button>
+<button class="srv" aria-label="Explore hangouts"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10"></circle><polygon points="16.24 7.76 14.12 14.12 7.76 16.24 9.88 9.88 16.24 7.76"></polygon></svg></button>
+</nav>
+
+<aside class="channels" aria-label="Rooms and lounges" style="width:240px;flex-shrink:0;display:flex;flex-direction:column;background:#181B20;border-right:1px solid #2A2F37">
+<button style="height:48px;display:flex;align-items:center;justify-content:space-between;padding:0 16px;border-bottom:1px solid #2A2F37;font:600 16px/24px 'Space Grotesk',sans-serif;color:#ECEEF1;text-align:left">Night Owls<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#A9B0BA" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m6 9 6 6 6-6"></path></svg></button>
+<div style="flex:1;overflow:auto;padding:12px 8px;display:flex;flex-direction:column;gap:2px">
+<div style="padding:12px 8px 4px;font:500 12px/16px Inter,sans-serif;letter-spacing:.06em;text-transform:uppercase;color:#858E9B">Rooms</div>
+<a class="ch" href="#"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#858E9B" stroke-width="1.75" stroke-linecap="round" aria-hidden="true"><path d="M4 9h16M4 15h16M10 3 8 21M16 3l-2 18"></path></svg>welcome</a>
+<a class="ch" href="#" aria-current="page" style="background:#22262D;color:#ECEEF1"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#A9B0BA" stroke-width="1.75" stroke-linecap="round" aria-hidden="true"><path d="M4 9h16M4 15h16M10 3 8 21M16 3l-2 18"></path></svg>general</a>
+<a class="ch" href="#" style="color:#ECEEF1;font-weight:600"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#858E9B" stroke-width="1.75" stroke-linecap="round" aria-hidden="true"><path d="M4 9h16M4 15h16M10 3 8 21M16 3l-2 18"></path></svg>late-night-study<span style="margin-left:auto;width:8px;height:8px;border-radius:4px;background:#ECEEF1" aria-label="unread"></span></a>
+<a class="ch" href="#"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#858E9B" stroke-width="1.75" stroke-linecap="round" aria-hidden="true"><path d="M4 9h16M4 15h16M10 3 8 21M16 3l-2 18"></path></svg>clips-and-memes</a>
+<div style="padding:16px 8px 4px;font:500 12px/16px Inter,sans-serif;letter-spacing:.06em;text-transform:uppercase;color:#858E9B">Lounges</div>
+<a class="ch" href="Voice.dc.html"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#858E9B" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon><path d="M15.5 8.5a5 5 0 0 1 0 7"></path></svg>Lounge</a>
+<div style="display:flex;flex-direction:column;gap:2px;padding-left:34px">
+<div style="display:flex;align-items:center;gap:8px;height:28px;font:500 13px/18px Inter,sans-serif;color:#A9B0BA"><span style="width:24px;height:24px;border-radius:12px;background:#3B4A5E;color:#ECEEF1;font:600 10px/24px Inter,sans-serif;text-align:center;outline:2px solid #34C77B;outline-offset:1px">AR</span>Aarav<span style="margin-left:auto;font-size:12px;color:#858E9B">speaking</span></div>
+<div style="display:flex;align-items:center;gap:8px;height:28px;font:500 13px/18px Inter,sans-serif;color:#A9B0BA"><span style="width:24px;height:24px;border-radius:12px;background:#5A4A3B;color:#ECEEF1;font:600 10px/24px Inter,sans-serif;text-align:center">MI</span>Mira</div>
+</div>
+<a class="ch" href="#"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#858E9B" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon><path d="M15.5 8.5a5 5 0 0 1 0 7"></path></svg>Study Hall</a>
+</div>
+<div style="height:56px;display:flex;align-items:center;gap:8px;padding:0 8px;background:#15181C;border-top:1px solid #2A2F37">
+<a href="Settings.dc.html" style="display:flex;align-items:center;gap:8px;flex:1;min-width:0;padding:4px;border-radius:6px;text-decoration:none;color:#ECEEF1">
+<span style="position:relative;width:32px;height:32px;flex-shrink:0;border-radius:16px;background:#4B3F6B;font:600 12px/32px Inter,sans-serif;text-align:center">YOU<span style="position:absolute;right:-3px;bottom:-3px;width:16px;height:16px;box-sizing:border-box;border-radius:50%;background:#34C77B;border:3px solid #15181C" aria-label="Online"></span></span>
+<span style="display:flex;flex-direction:column;min-width:0"><span style="font:600 14px/18px Inter,sans-serif">[your name]</span><span style="font:500 12px/16px Inter,sans-serif;color:#858E9B">Online</span></span>
+</a>
+<button class="ib" aria-label="Mute microphone"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 2a3 3 0 0 0-3 3v7a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3Z"></path><path d="M19 10v2a7 7 0 0 1-14 0v-2M12 19v3"></path></svg></button>
+<button class="ib" aria-label="Deafen"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 14h3a2 2 0 0 1 2 2v3a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-7a9 9 0 0 1 18 0v7a2 2 0 0 1-2 2h-1a2 2 0 0 1-2-2v-3a2 2 0 0 1 2-2h3"></path></svg></button>
+<a class="ib" href="Settings.dc.html" aria-label="User settings"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="3"></circle><path d="M12 2v3M12 19v3M4.9 4.9l2.1 2.1M17 17l2.1 2.1M2 12h3M19 12h3M4.9 19.1 7 17M17 7l2.1-2.1"></path></svg></a>
+</div>
+</aside>
+
+<main style="flex:1;min-width:0;display:flex;flex-direction:column;background:#1D2026">
+<header style="height:48px;flex-shrink:0;display:flex;align-items:center;gap:12px;padding:0 16px;border-bottom:1px solid #2A2F37">
+<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#858E9B" stroke-width="1.75" stroke-linecap="round" aria-hidden="true"><path d="M4 9h16M4 15h16M10 3 8 21M16 3l-2 18"></path></svg>
+<h1 style="margin:0;font:600 16px/24px 'Space Grotesk',sans-serif">general</h1>
+<span style="width:1px;height:20px;background:#2A2F37"></span>
+<span style="font:400 14px/20px Inter,sans-serif;color:#A9B0BA;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-width:0">Hang out, say hi, share what you're up to</span>
+<div style="margin-left:auto;display:flex;align-items:center;gap:4px">
+<button class="ib" aria-label="Notification settings"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9"></path><path d="M10.3 21a1.94 1.94 0 0 0 3.4 0"></path></svg></button>
+<button class="ib" aria-label="Toggle member list" style="color:#ECEEF1;background:#22262D"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><path d="M22 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75"></path></svg></button>
+<label style="display:flex;align-items:center;gap:8px;height:32px;width:200px;padding:0 10px;box-sizing:border-box;border-radius:6px;background:#111316;border:1px solid #2A2F37;color:#858E9B;font:400 14px/20px Inter,sans-serif">
+<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" aria-hidden="true"><circle cx="11" cy="11" r="7"></circle><path d="m21 21-4.3-4.3"></path></svg>
+<span style="position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0)">Search messages</span>
+<input placeholder="Search  Ctrl K" style="flex:1;min-width:0;background:transparent;border:0;color:#ECEEF1;font:inherit;outline:none">
+</label>
+</div>
+</header>
+
+<section aria-label="Messages in general" aria-live="polite" style="flex:1;overflow:auto;display:flex;flex-direction:column;justify-content:flex-end;padding:16px 0 8px">
+<div style="display:flex;align-items:center;gap:12px;padding:8px 16px;font:500 12px/16px Inter,sans-serif;color:#858E9B"><span style="flex:1;height:1px;background:#2A2F37"></span>Today<span style="flex:1;height:1px;background:#2A2F37"></span></div>
+
+<article class="msg" style="display:flex;gap:16px;padding:6px 16px">
+<span style="width:40px;height:40px;flex-shrink:0;border-radius:20px;background:#3B4A5E;font:600 14px/40px Inter,sans-serif;text-align:center">AR</span>
+<div style="min-width:0;max-width:72ch">
+<div style="display:flex;align-items:baseline;gap:8px"><span style="font:600 15px/22px Inter,sans-serif;color:#86B6FF">Aarav</span><time style="font:500 12px/16px Inter,sans-serif;color:#858E9B">10:42 PM</time></div>
+<p style="margin:0;color:#ECEEF1">anyone up for the Lounge? I'm finishing the DBMS assignment and need company</p>
+<p style="margin:2px 0 0;color:#ECEEF1">bringing chai, virtually</p>
+</div>
+</article>
+
+<article class="msg" style="display:flex;gap:16px;padding:6px 16px;margin-top:8px">
+<span style="width:40px;height:40px;flex-shrink:0;border-radius:20px;background:#5A4A3B;font:600 14px/40px Inter,sans-serif;text-align:center">MI</span>
+<div style="min-width:0;max-width:72ch">
+<div style="display:flex;align-items:baseline;gap:8px"><span style="font:600 15px/22px Inter,sans-serif;color:#ECEEF1">Mira</span><time style="font:500 12px/16px Inter,sans-serif;color:#858E9B">10:44 PM</time></div>
+<p style="margin:0">joining in 5. also the notes from today's lecture are pinned in <a href="#">#late-night-study</a></p>
+<div style="margin-top:8px;display:flex;align-items:center;gap:12px;width:320px;max-width:100%;padding:12px;box-sizing:border-box;border-radius:10px;background:#181B20;border:1px solid #2A2F37">
+<span style="width:36px;height:36px;border-radius:6px;background:#22262D;display:flex;align-items:center;justify-content:center;color:#A9B0BA"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><path d="M14 2v6h6"></path></svg></span>
+<span style="display:flex;flex-direction:column;min-width:0"><a href="#" style="font:500 14px/20px Inter,sans-serif">normalization-notes.pdf</a><span style="font:500 12px/16px Inter,sans-serif;color:#858E9B">[file size]</span></span>
+</div>
+<div style="margin-top:6px;display:flex;gap:6px">
+<button style="display:flex;align-items:center;gap:6px;height:26px;padding:0 8px;border-radius:13px;background:#22262D;border:1px solid #3A404A;font:500 12px/16px Inter,sans-serif;color:#ECEEF1" aria-label="Thanks reaction, 4, you reacted">thanks · 4</button>
+<button style="display:flex;align-items:center;justify-content:center;width:26px;height:26px;border-radius:13px;background:transparent;border:1px solid #2A2F37;color:#858E9B" aria-label="Add reaction"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M5 12h14M12 5v14"></path></svg></button>
+</div>
+</div>
+</article>
+
+<article class="msg" style="display:flex;gap:16px;padding:6px 14px;margin-top:8px;background:rgba(242,169,59,.12);border-left:2px solid {{accent}}">
+<span style="width:40px;height:40px;flex-shrink:0;border-radius:20px;background:#3E5A4A;font:600 14px/40px Inter,sans-serif;text-align:center">KS</span>
+<div style="min-width:0;max-width:72ch">
+<div style="display:flex;align-items:baseline;gap:8px"><span style="font:600 15px/22px Inter,sans-serif;color:#34C77B">Kabir</span><span style="padding:0 6px;border-radius:4px;background:#22262D;font:500 11px/16px Inter,sans-serif;color:#A9B0BA">MOD</span><time style="font:500 12px/16px Inter,sans-serif;color:#858E9B">10:47 PM</time></div>
+<p style="margin:0"><span style="padding:0 3px;border-radius:4px;background:rgba(242,169,59,.2);color:{{accent}};font-weight:500">@you</span> can you set up the movie night event for Saturday? you had the list</p>
+</div>
+</article>
+
+<article class="msg" style="display:flex;gap:16px;padding:6px 16px;margin-top:8px">
+<span style="width:40px;height:40px;flex-shrink:0;border-radius:20px;background:#4B3F6B;font:600 14px/40px Inter,sans-serif;text-align:center">YOU</span>
+<div style="min-width:0;max-width:72ch">
+<div style="display:flex;align-items:baseline;gap:8px"><span style="font:600 15px/22px Inter,sans-serif;color:#ECEEF1">[your name]</span><time style="font:500 12px/16px Inter,sans-serif;color:#858E9B">10:48 PM</time></div>
+<p style="margin:0">on it — posting it in #welcome tonight</p>
+<p style="margin:2px 0 0;color:#A9B0BA">sending…</p>
+</div>
+</article>
+</section>
+
+<div style="padding:0 16px 8px;flex-shrink:0">
+<div style="display:flex;align-items:center;gap:8px;min-height:48px;padding:0 8px;border-radius:10px;background:#22262D;border:1px solid #2A2F37">
+<button class="ib" aria-label="Attach a file"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m21.44 11.05-9.19 9.19a6 6 0 0 1-8.49-8.49l8.57-8.57A4 4 0 1 1 18 8.84l-8.59 8.57a2 2 0 0 1-2.83-2.83l8.49-8.48"></path></svg></button>
+<label style="flex:1;min-width:0;display:flex"><span style="position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0)">Message #general</span><input placeholder="Message #general" style="flex:1;min-width:0;height:44px;background:transparent;border:0;outline:none;color:#ECEEF1;font:400 15px/22px Inter,sans-serif"></label>
+<button class="ib" aria-label="Emoji picker"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10"></circle><path d="M8 14s1.5 2 4 2 4-2 4-2M9 9h.01M15 9h.01"></path></svg></button>
+</div>
+<div style="height:20px;padding:2px 8px 0;font:500 12px/16px Inter,sans-serif;color:#858E9B">Mira is typing…</div>
+</div>
+</main>
+
+<aside class="members" aria-label="Members" style="width:240px;flex-shrink:0;background:#181B20;border-left:1px solid #2A2F37;padding:16px 8px;box-sizing:border-box;overflow:auto">
+<div style="padding:0 8px 6px;font:500 12px/16px Inter,sans-serif;letter-spacing:.06em;text-transform:uppercase;color:#858E9B">Mods — 1</div>
+<div style="display:flex;align-items:center;gap:10px;height:42px;padding:0 8px;border-radius:6px"><span style="position:relative;width:32px;height:32px;border-radius:16px;background:#3E5A4A;font:600 12px/32px Inter,sans-serif;text-align:center">KS<span style="position:absolute;right:-3px;bottom:-3px;width:16px;height:16px;box-sizing:border-box;border-radius:50%;background:#34C77B;border:3px solid #181B20"></span></span><span style="display:flex;flex-direction:column"><span style="font:500 14px/18px Inter,sans-serif;color:#34C77B">Kabir</span><span style="font:400 12px/16px Inter,sans-serif;color:#858E9B">Online</span></span></div>
+<div style="padding:16px 8px 6px;font:500 12px/16px Inter,sans-serif;letter-spacing:.06em;text-transform:uppercase;color:#858E9B">Online — 3</div>
+<div style="display:flex;align-items:center;gap:10px;height:42px;padding:0 8px"><span style="position:relative;width:32px;height:32px;border-radius:16px;background:#3B4A5E;font:600 12px/32px Inter,sans-serif;text-align:center">AR<span style="position:absolute;right:-3px;bottom:-3px;width:16px;height:16px;box-sizing:border-box;border-radius:50%;background:#34C77B;border:3px solid #181B20"></span></span><span style="display:flex;flex-direction:column"><span style="font:500 14px/18px Inter,sans-serif">Aarav</span><span style="font:400 12px/16px Inter,sans-serif;color:#858E9B">In Lounge</span></span></div>
+<div style="display:flex;align-items:center;gap:10px;height:42px;padding:0 8px"><span style="position:relative;width:32px;height:32px;border-radius:16px;background:#5A4A3B;font:600 12px/32px Inter,sans-serif;text-align:center">MI<span style="position:absolute;right:-3px;bottom:-3px;width:16px;height:16px;box-sizing:border-box;border-radius:50%;background:#D9B54A;border:3px solid #181B20;overflow:hidden" aria-label="Idle"><span style="position:absolute;left:-2px;top:-2px;width:7px;height:7px;border-radius:50%;background:#181B20"></span></span></span><span style="display:flex;flex-direction:column"><span style="font:500 14px/18px Inter,sans-serif">Mira</span><span style="font:400 12px/16px Inter,sans-serif;color:#858E9B">Idle</span></span></div>
+<div style="display:flex;align-items:center;gap:10px;height:42px;padding:0 8px"><span style="position:relative;width:32px;height:32px;border-radius:16px;background:#4B3F6B;font:600 12px/32px Inter,sans-serif;text-align:center">YOU<span style="position:absolute;right:-3px;bottom:-3px;width:16px;height:16px;box-sizing:border-box;border-radius:50%;background:#34C77B;border:3px solid #181B20"></span></span><span style="display:flex;flex-direction:column"><span style="font:500 14px/18px Inter,sans-serif">[your name]</span><span style="font:400 12px/16px Inter,sans-serif;color:#858E9B">Online</span></span></div>
+<div style="padding:16px 8px 6px;font:500 12px/16px Inter,sans-serif;letter-spacing:.06em;text-transform:uppercase;color:#858E9B">Offline — 2</div>
+<div style="display:flex;align-items:center;gap:10px;height:42px;padding:0 8px;opacity:.55"><span style="position:relative;width:32px;height:32px;border-radius:50%;background:#2C3139;font:600 12px/32px Inter,sans-serif;text-align:center">RD<span style="position:absolute;right:-3px;bottom:-3px;width:16px;height:16px;box-sizing:border-box;border-radius:50%;background:#181B20;border:3px solid #181B20;box-shadow:inset 0 0 0 2.5px #858E9B" aria-label="Offline"></span></span><span style="font:500 14px/18px Inter,sans-serif">Riya</span></div>
+<div style="display:flex;align-items:center;gap:10px;height:42px;padding:0 8px;opacity:.55"><span style="position:relative;width:32px;height:32px;border-radius:50%;background:#2C3139;font:600 12px/32px Inter,sans-serif;text-align:center">DV<span style="position:absolute;right:-3px;bottom:-3px;width:16px;height:16px;box-sizing:border-box;border-radius:50%;background:#181B20;border:3px solid #181B20;box-shadow:inset 0 0 0 2.5px #858E9B" aria-label="Offline"></span></span><span style="font:500 14px/18px Inter,sans-serif">Dev</span></div>
+</aside>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"accent":{"editor":"color","default":"#F2A93B","options":["#F2A93B","#7FB2FF","#34C77B","#E58FB0"]},"$preview":{"width":1440,"height":900}}'>
+class Component extends DCLogic {
+renderVals() {
+return { accent: this.props.accent ?? '#F2A93B' };
+}
+}
+</script>
+</body>
+</html>

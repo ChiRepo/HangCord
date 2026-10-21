@@ -1,0 +1,3 @@
+# Graphify version for the code map (graphify/README.md). Other versions build a different graph.json,
+# so CI and every machine use exactly this one.  uv tool install graphifyy==0.9.93
+graphifyy==0.9.93

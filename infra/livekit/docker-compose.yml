@@ -1,0 +1,14 @@
+# LiveKit SFU for the Oracle Cloud Always Free VM (MASTER_PLAN §10). Owner runs this on the VM.
+# Keys come from infra/livekit/.env ON THE VM ONLY (git-ignored, never committed):
+#   LIVEKIT_KEYS="<api key>: <api secret>"   (same values the owner sets as Workers secrets
+#                                              LIVEKIT_API_KEY / LIVEKIT_API_SECRET for workers/api)
+# Docs: https://docs.livekit.io/home/self-hosting/deployment/
+services:
+  livekit:
+    image: livekit/livekit-server:v1.13.10
+    command: --config /etc/livekit.yaml
+    restart: unless-stopped
+    network_mode: host # WebRTC needs the host's UDP port range
+    env_file: .env
+    volumes:
+      - ./livekit.yaml:/etc/livekit.yaml:ro

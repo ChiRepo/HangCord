@@ -1,0 +1,14 @@
+{
+  "name": "@hangcord/policy",
+  "version": "0.0.1",
+  "private": true,
+  "type": "module",
+  "description": "Repo-wide rules as tests: no secrets in configs, cron budget, private folders ignored, mobile meta present.",
+  "scripts": {
+    "typecheck": "tsc --noEmit -p tsconfig.json",
+    "test": "vitest run"
+  },
+  "devDependencies": {
+    "smol-toml": "1.9.1"
+  }
+}

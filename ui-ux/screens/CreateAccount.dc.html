@@ -1,0 +1,59 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>HangCord — Create account</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&amp;display=swap">
+<style>
+body{margin:0;background:#111318}
+a{color:#FF9A6E}a:hover{color:#FFB894}
+button{font-family:inherit}
+input{font-family:inherit}
+</style>
+</helmet>
+<div style="font-family: Manrope, system-ui, sans-serif; color: #ECEEF2; background: #111318; min-height: 900px; display: flex; align-items: center; justify-content: center; padding: 48px 24px; box-sizing: border-box; font-size: 15px; line-height: 1.5">
+  <div style="width: 100%; max-width: 460px; background: #181B22; border: 1px solid #2A2F3A; border-radius: 20px; padding: 36px; box-sizing: border-box; display: flex; flex-direction: column; gap: 16px">
+    <div style="display: flex; align-items: center; gap: 10px">
+      <svg width="32" height="32" viewBox="0 0 32 32" fill="none" role="img" aria-label="HangCord logo"><rect x="2" y="5" width="16" height="13" rx="6" stroke="{{accent}}" stroke-width="2.4"></rect><rect x="14" y="13" width="16" height="13" rx="6" stroke="{{accent}}" stroke-width="2.4"></rect><path d="M9 18c0 6 5 8 9 5" stroke="#3DD68C" stroke-width="2.4" stroke-linecap="round"></path></svg>
+      <span style="font-weight: 800; font-size: 18px">HangCord</span>
+      <span style="font-size: 10px; font-weight: 800; letter-spacing: 0.08em; color: {{accent}}; border: 1px solid {{accent}}; border-radius: 999px; padding: 1px 7px">BETA</span>
+    </div>
+    <div>
+      <h1 style="margin: 0; font-size: 26px; font-weight: 800">Create your account</h1>
+      <p style="margin: 4px 0 0; color: #A3A9B6; font-size: 14px">We'll email you a 6-digit code to confirm it's really you.</p>
+    </div>
+
+    <button style="height: 48px; border-radius: 12px; border: 1px solid #2A2F3A; background: #FFFFFF; color: #1F1F1F; font-weight: 700; font-size: 15px; cursor: pointer">[Google mark] Sign up with Google</button>
+    <div style="display: flex; align-items: center; gap: 12px; color: #8A91A0; font-size: 12px"><span style="flex: 1; height: 1px; background: #2A2F3A"></span>or with email<span style="flex: 1; height: 1px; background: #2A2F3A"></span></div>
+
+    <label style="display: flex; flex-direction: column; gap: 6px; font-size: 13px; font-weight: 700; color: #A3A9B6">Display name<input type="text" value="kiran" autocomplete="nickname" style="height: 46px; border-radius: 12px; border: 1px solid #2A2F3A; background: #111318; color: #ECEEF2; padding: 0 14px; font-size: 15px"></label>
+    <label style="display: flex; flex-direction: column; gap: 6px; font-size: 13px; font-weight: 700; color: #A3A9B6">Email<input type="email" value="kiran@example.com" autocomplete="email" style="height: 46px; border-radius: 12px; border: 1px solid #2A2F3A; background: #111318; color: #ECEEF2; padding: 0 14px; font-size: 15px"></label>
+    <label style="display: flex; flex-direction: column; gap: 6px; font-size: 13px; font-weight: 700; color: #A3A9B6">Password<input type="password" value="correcthorse42" autocomplete="new-password" style="height: 46px; border-radius: 12px; border: 1px solid #2A2F3A; background: #111318; color: #ECEEF2; padding: 0 14px; font-size: 15px"></label>
+    <div style="display: flex; flex-direction: column; gap: 6px">
+      <div role="img" aria-label="Password strength: good" style="display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 4px">
+        <span style="height: 4px; border-radius: 2px; background: #3DD68C"></span><span style="height: 4px; border-radius: 2px; background: #3DD68C"></span><span style="height: 4px; border-radius: 2px; background: #3DD68C"></span><span style="height: 4px; border-radius: 2px; background: #2A2F3A"></span>
+      </div>
+      <div style="font-size: 12px; color: #A3A9B6">Good · at least 8 characters, avoid common words</div>
+    </div>
+    <label style="display: flex; gap: 10px; align-items: flex-start; font-size: 13px; color: #DDE1E8"><input type="checkbox" checked style="width: 18px; height: 18px; margin-top: 1px; accent-color: #FF7A45">I'm at least [MINIMUM AGE] and agree to the <a href="#">Terms</a> and <a href="#">Privacy Policy</a></label>
+
+    <a href="VerifyEmail.dc.html" style="height: 48px; border-radius: 12px; background: {{accent}}; color: #1A0E08; font-weight: 800; font-size: 15px; display: flex; align-items: center; justify-content: center; text-decoration: none">Send my code</a>
+    <p style="margin: 0; font-size: 14px; color: #A3A9B6; text-align: center">Already have an account? <a href="Welcome.dc.html" style="font-weight: 800">Sign in</a></p>
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"accent":{"editor":"color","default":"#FF7A45","options":["#FF7A45","#3DD68C","#6CB6FF","#F5B83D"]},"$preview":{"width":1440,"height":900}}'>
+class Component extends DCLogic {
+  renderVals() {
+    return { accent: this.props.accent ?? '#FF7A45' };
+  }
+}
+</script>
+</body>
+</html>

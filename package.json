@@ -1,0 +1,46 @@
+{
+  "name": "hangcord",
+  "private": true,
+  "version": "0.0.1",
+  "description": "HangCord — better place to hang out. Monorepo (see docs/MASTER_PLAN.md §13).",
+  "license": "UNLICENSED",
+  "type": "module",
+  "engines": {
+    "node": ">=22.12.0"
+  },
+  "workspaces": [
+    "packages/*",
+    "workers/*",
+    "apps/web",
+    "apps/desktop",
+    "tools/*",
+    "tests/e2e"
+  ],
+  "scripts": {
+    "lint": "eslint .",
+    "typecheck:js": "npm run typecheck --workspaces --if-present",
+    "typecheck": "npm run typecheck:js && npm run desktop:check",
+    "test:js": "npm run test --workspaces --if-present",
+    "test": "npm run test:js && npm run desktop:test",
+    "build": "npm run build --workspaces --if-present",
+    "check:size": "node scripts/check-bundle-size.mjs",
+    "check:secrets-names": "node scripts/check-secret-names.mjs",
+    "e2e": "npm run e2e -w tests/e2e",
+    "checkpoint": "npm run lint && npm run typecheck && npm run test && npm run build && npm run check:size && npm run check:secrets-names && npm run e2e",
+    "desktop:test": "npm run rust:test -w apps/desktop",
+    "desktop:check": "npm run rust:check -w apps/desktop",
+    "desktop:build": "npm run build:app -w apps/desktop",
+    "graph": "sh graphify/refresh.sh",
+    "graph:check": "sh graphify/refresh.sh --check",
+    "graph:hook": "node -e \"const fs=require('fs');if(!fs.existsSync('.git'))throw new Error('run git init first');fs.copyFileSync('graphify/hooks/pre-commit','.git/hooks/pre-commit');fs.chmodSync('.git/hooks/pre-commit',0o755);console.log('pre-commit hook installed')\""
+  },
+  "devDependencies": {
+    "@eslint/js": "10.0.1",
+    "@types/node": "26.6.5",
+    "eslint": "10.13.0",
+    "globals": "17.13.0",
+    "typescript": "5.9.3",
+    "typescript-eslint": "8.72.0",
+    "vitest": "5.0.5"
+  }
+}

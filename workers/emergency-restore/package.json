@@ -1,0 +1,15 @@
+{
+  "name": "@hangcord/worker-emergency-restore",
+  "version": "0.0.1",
+  "private": true,
+  "type": "module",
+  "description": "Break-glass only (MASTER_PLAN §8.6). No public route. Holds the emergency CSV decryption key as a Workers Secret.",
+  "scripts": {
+    "typecheck": "tsc --noEmit -p tsconfig.json",
+    "test": "vitest run"
+  },
+  "devDependencies": {
+    "@cloudflare/workers-types": "5.20261021.1",
+    "wrangler": "4.151.3"
+  }
+}

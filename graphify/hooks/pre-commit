@@ -1,0 +1,16 @@
+#!/bin/sh
+# Git pre-commit hook: keep the code map in step with every commit (graphify/README.md).
+# Install once (after `git init`):  npm run graph:hook
+# It only rebuilds when staged files can change the graph, and adds the refreshed outputs to the commit.
+set -eu
+root=$(git rev-parse --show-toplevel)
+cd "$root"
+if ! git diff --cached --name-only --diff-filter=ACMRD | grep -Ev '^graphify/' | grep -q .; then
+  exit 0   # only graphify/ files staged — nothing to rebuild
+fi
+if ! command -v graphify >/dev/null 2>&1; then
+  echo "pre-commit: graphify not installed — skipping the code map (CI will flag a stale graph)." >&2
+  exit 0
+fi
+sh graphify/refresh.sh >/dev/null
+git add graphify/graph/graph.json graphify/graph/graph.html graphify/graph/GRAPH_REPORT.md

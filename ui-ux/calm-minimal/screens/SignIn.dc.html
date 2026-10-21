@@ -1,0 +1,69 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>HangCord — Sign in</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&amp;family=Space+Grotesk:wght@500;600;700&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0;background:#111316}
+a{color:#86B6FF}a:hover{color:#B3D0FF}
+.hc button,.hc input{font:inherit}
+.hc button:focus-visible,.hc a:focus-visible,.hc input:focus-visible{outline:2px solid #F2A93B;outline-offset:2px}
+.fld{height:44px;width:100%;box-sizing:border-box;padding:0 12px;border-radius:6px;background:#111316;border:1px solid #2A2F37;color:#ECEEF1;font:400 15px/22px Inter,sans-serif}
+.fld:focus{border-color:#3A404A}
+</style>
+</helmet>
+<div class="hc" style="display:flex;flex-wrap:wrap;min-height:100vh;width:100%;background:#111316;color:#ECEEF1;font-family:Inter,sans-serif">
+
+<section style="flex:1 1 480px;display:flex;flex-direction:column;justify-content:space-between;padding:56px;box-sizing:border-box;background:#15181C;border-right:1px solid #2A2F37">
+<div style="display:flex;align-items:center;gap:10px"><span style="width:36px;height:36px;border-radius:10px;background:#F2A93B;color:#1A1205;font:700 18px/36px 'Space Grotesk',sans-serif;text-align:center">H</span><span style="font:700 22px/28px 'Space Grotesk',sans-serif">HangCord</span></div>
+<div style="max-width:440px">
+<h1 style="margin:0;font:700 40px/48px 'Space Grotesk',sans-serif">A better place to hang out.</h1>
+<p style="margin:16px 0 0;font:400 16px/24px Inter,sans-serif;color:#A9B0BA">Talk, call and share with the people you actually want to spend time with. Free, on desktop and the web.</p>
+</div>
+<p style="margin:0;font:500 12px/16px Inter,sans-serif;color:#858E9B">Windows · macOS · Linux · Web</p>
+</section>
+
+<main style="flex:1 1 480px;display:flex;align-items:center;justify-content:center;padding:48px 24px;box-sizing:border-box">
+<form style="width:100%;max-width:380px;display:flex;flex-direction:column;gap:20px" aria-labelledby="si-title">
+<div>
+<h2 id="si-title" style="margin:0;font:600 24px/32px 'Space Grotesk',sans-serif">Welcome back</h2>
+<p style="margin:6px 0 0;font:400 15px/22px Inter,sans-serif;color:#A9B0BA">Sign in to pick up where you left off.</p>
+</div>
+
+<button type="button" style="height:44px;display:flex;align-items:center;justify-content:center;gap:10px;border-radius:6px;background:#22262D;border:1px solid #3A404A;color:#ECEEF1;font:500 15px/22px Inter,sans-serif;cursor:pointer">
+<span style="width:20px;height:20px;border-radius:10px;background:#ECEEF1;color:#111316;font:700 12px/20px Inter,sans-serif;text-align:center" aria-hidden="true">G</span>Continue with Google</button>
+
+<div style="display:flex;align-items:center;gap:12px;font:500 12px/16px Inter,sans-serif;color:#858E9B"><span style="flex:1;height:1px;background:#2A2F37"></span>or with email<span style="flex:1;height:1px;background:#2A2F37"></span></div>
+
+<div style="display:flex;flex-direction:column;gap:6px">
+<label for="si-email" style="font:500 14px/20px Inter,sans-serif">Email</label>
+<input id="si-email" class="fld" type="email" autocomplete="email" placeholder="you@example.com">
+</div>
+<div style="display:flex;flex-direction:column;gap:6px">
+<div style="display:flex;justify-content:space-between;align-items:baseline"><label for="si-pass" style="font:500 14px/20px Inter,sans-serif">Password</label><a href="#" style="font:500 13px/18px Inter,sans-serif">Forgot password?</a></div>
+<input id="si-pass" class="fld" type="password" autocomplete="current-password" style="border-color:#F0605A" aria-describedby="si-err" aria-invalid="true">
+<p id="si-err" style="margin:0;font:500 13px/18px Inter,sans-serif;color:#F0605A">That password doesn't match this email. Try again or reset it.</p>
+</div>
+
+<a href="Main.dc.html" style="height:44px;display:flex;align-items:center;justify-content:center;border-radius:6px;background:#F2A93B;color:#1A1205;font:600 15px/22px Inter,sans-serif;text-decoration:none">Sign in</a>
+
+<p style="margin:0;text-align:center;font:400 14px/20px Inter,sans-serif;color:#A9B0BA">New here? <a href="Verify.dc.html">Create an account</a></p>
+</form>
+</main>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1440,"height":900}}'>
+class Component extends DCLogic {
+renderVals() {
+return {};
+}
+}
+</script>
+</body>
+</html>

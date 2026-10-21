@@ -1,0 +1,86 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>HangCord — Verify your email</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&amp;family=JetBrains+Mono:wght@500;700&amp;display=swap">
+<style>
+body{margin:0;background:#111318}
+a{color:#FF9A6E}a:hover{color:#FFB894}
+button{font-family:inherit}
+input{font-family:inherit}
+</style>
+</helmet>
+<div style="font-family: Manrope, system-ui, sans-serif; color: #ECEEF2; background: #111318; min-height: 900px; display: flex; align-items: center; justify-content: center; padding: 48px 24px; box-sizing: border-box; font-size: 15px; line-height: 1.5">
+  <div style="width: 100%; max-width: 460px; background: #181B22; border: 1px solid #2A2F3A; border-radius: 20px; padding: 36px; box-sizing: border-box; display: flex; flex-direction: column; gap: 18px">
+
+    <sc-if value="{{entering}}" hint-placeholder-val="{{true}}">
+      <div style="display: flex; flex-direction: column; gap: 18px">
+        <span style="width: 52px; height: 52px; border-radius: 16px; background: #2A2018; display: flex; align-items: center; justify-content: center"><svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="{{accent}}" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="5" width="18" height="14" rx="2"></rect><path d="M3 7l9 6 9-6"></path></svg></span>
+        <div>
+          <h1 style="margin: 0; font-size: 26px; font-weight: 800">Check your email</h1>
+          <p style="margin: 4px 0 0; color: #A3A9B6; font-size: 14px">We sent a 6-digit code to <strong style="color: #ECEEF2">kiran@example.com</strong>. It works for 5 minutes.</p>
+        </div>
+        <fieldset style="border: 0; margin: 0; padding: 0">
+          <legend style="position: absolute; left: -9999px">6-digit code</legend>
+          <div style="display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); gap: 8px">
+            <sc-for list="{{digits}}" as="d" hint-placeholder-count="6">
+              <label style="display: block"><span style="position: absolute; left: -9999px">Digit {{d.n}}</span><input type="text" inputmode="numeric" maxlength="1" value="{{d.v}}" style="width: 100%; box-sizing: border-box; height: 58px; border-radius: 12px; border: 2px solid {{d.border}}; background: #111318; color: #ECEEF2; text-align: center; font-family: 'JetBrains Mono', monospace; font-size: 24px; font-weight: 700"></label>
+            </sc-for>
+          </div>
+        </fieldset>
+        <sc-if value="{{resent}}" hint-placeholder-val="{{false}}">
+          <div role="status" style="font-size: 13px; color: #3DD68C; font-weight: 700">New code sent. Older codes no longer work.</div>
+        </sc-if>
+        <button onClick="{{verify}}" style="height: 48px; border-radius: 12px; border: 0; background: {{accent}}; color: #1A0E08; font-weight: 800; font-size: 15px; cursor: pointer">Verify and continue</button>
+        <div style="display: flex; justify-content: space-between; flex-wrap: wrap; gap: 8px; font-size: 13px; color: #A3A9B6">
+          <span>Didn't get it? Check spam, or</span>
+          <button onClick="{{resend}}" style="background: none; border: 0; padding: 0; color: #FF9A6E; font-weight: 700; font-size: 13px; cursor: pointer">{{resendLabel}}</button>
+        </div>
+        <a href="CreateAccount.dc.html" style="font-size: 13px; font-weight: 700">Use a different email</a>
+        <div style="border-top: 1px solid #2A2F3A; padding-top: 14px; font-size: 12px; color: #8A91A0">If our code emails are busy, we'll send a sign-in link instead — open it, then come back here.</div>
+      </div>
+    </sc-if>
+
+    <sc-if value="{{verified}}" hint-placeholder-val="{{false}}">
+      <div style="display: flex; flex-direction: column; gap: 18px; align-items: flex-start">
+        <span style="width: 52px; height: 52px; border-radius: 50%; background: #12261C; display: flex; align-items: center; justify-content: center"><svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="#3DD68C" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12l5 5L19 7"></path></svg></span>
+        <div>
+          <h1 style="margin: 0; font-size: 26px; font-weight: 800">You're in, kiran</h1>
+          <p style="margin: 4px 0 0; color: #A3A9B6; font-size: 14px">Your email is confirmed. Join a hangout with an invite link, or start your own.</p>
+        </div>
+        <a href="Main.dc.html" style="align-self: stretch; height: 48px; border-radius: 12px; background: {{accent}}; color: #1A0E08; font-weight: 800; font-size: 15px; display: flex; align-items: center; justify-content: center; text-decoration: none">Open HangCord</a>
+        <button onClick="{{reset}}" style="background: none; border: 0; padding: 0; color: #A3A9B6; font-size: 13px; cursor: pointer">Back to code screen (demo)</button>
+      </div>
+    </sc-if>
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"accent":{"editor":"color","default":"#FF7A45","options":["#FF7A45","#3DD68C","#6CB6FF","#F5B83D"]},"$preview":{"width":1440,"height":900}}'>
+class Component extends DCLogic {
+  constructor(props) { super(props); this.state = { verified: false, resent: false }; }
+  renderVals() {
+    const accent = this.props.accent ?? '#FF7A45';
+    const vals = ['4', '8', '2', '9', '1', ''];
+    return {
+      accent,
+      entering: !this.state.verified,
+      verified: this.state.verified,
+      resent: this.state.resent,
+      resendLabel: this.state.resent ? 'Resend in 0:60' : 'Resend code',
+      digits: vals.map((v, i) => ({ n: i + 1, v, border: i === 5 ? accent : '#2A2F3A' })),
+      verify: () => this.setState({ verified: true }),
+      resend: () => this.setState({ resent: true }),
+      reset: () => this.setState({ verified: false, resent: false })
+    };
+  }
+}
+</script>
+</body>
+</html>

@@ -1,0 +1,164 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>HangCord — Safety and security</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&amp;family=JetBrains+Mono:wght@500;700&amp;display=swap">
+<style>
+body{margin:0;background:#111318}
+a{color:#FF9A6E}a:hover{color:#FFB894}
+button{font-family:inherit}
+input{font-family:inherit}
+</style>
+</helmet>
+<div style="font-family: Manrope, system-ui, sans-serif; color: #ECEEF2; background: #111318; min-height: 1100px; padding: 32px 36px; box-sizing: border-box; display: flex; flex-direction: column; gap: 18px; font-size: 14px; line-height: 1.45">
+
+  <div>
+    <h1 style="margin: 0; font-size: 22px; font-weight: 800">Safety &amp; security</h1>
+    <p style="margin: 4px 0 0; color: #A3A9B6">Night Owls · changes here are saved to the audit log</p>
+  </div>
+
+  <sc-if value="{{paused}}" hint-placeholder-val="{{false}}">
+    <div role="status" style="display: flex; align-items: center; gap: 12px; background: #2A2418; border: 1px solid #5A4520; border-radius: 12px; padding: 12px 14px; flex-wrap: wrap">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#F5B83D" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M12 3l9 16H3zM12 10v4M12 17h0"></path></svg>
+      <div style="flex: 1; min-width: 220px"><strong>Invites and member DMs are paused</strong> <span style="color: #D9CBBF">until 11:40 PM (4 h). New people can't join; members can only DM friends.</span></div>
+      <button onClick="{{unpause}}" style="height: 32px; padding: 0 12px; border-radius: 8px; border: 1px solid #5A4520; background: none; color: #ECEEF2; font-weight: 700; cursor: pointer">End early</button>
+    </div>
+  </sc-if>
+
+  <div style="display: flex; gap: 18px; flex-wrap: wrap; align-items: flex-start">
+    <div style="flex: 999 1 560px; min-width: 0; display: flex; flex-direction: column; gap: 18px">
+
+      <section style="background: #181B22; border: 1px solid #2A2F3A; border-radius: 14px; padding: 18px">
+        <h2 style="margin: 0 0 4px; font-size: 16px; font-weight: 800">Who can talk right away</h2>
+        <p style="margin: 0 0 12px; color: #A3A9B6; font-size: 13px">Newcomers who don't meet this can still read.</p>
+        <div role="radiogroup" aria-label="Verification level" style="display: flex; flex-direction: column; gap: 6px">
+          <sc-for list="{{levels}}" as="l" hint-placeholder-count="5">
+            <button role="radio" aria-checked="{{l.on}}" onClick="{{l.pick}}" style="display: flex; align-items: center; gap: 12px; padding: 10px 12px; border-radius: 10px; border: 1px solid {{l.border}}; background: {{l.bg}}; color: #ECEEF2; text-align: left; cursor: pointer">
+              <span style="width: 16px; height: 16px; border-radius: 50%; border: 2px solid {{l.ring}}; box-sizing: border-box; display: flex; align-items: center; justify-content: center"><span style="width: 8px; height: 8px; border-radius: 50%; background: {{l.dot}}"></span></span>
+              <span style="flex: 1"><span style="font-weight: 700">{{l.name}}</span> <span style="color: #A3A9B6; font-size: 13px">— {{l.help}}</span></span>
+            </button>
+          </sc-for>
+        </div>
+      </section>
+
+      <section style="background: #181B22; border: 1px solid #2A2F3A; border-radius: 14px; padding: 6px 18px">
+        <sc-for list="{{toggles}}" as="t" hint-placeholder-count="4">
+          <div style="display: flex; align-items: center; gap: 14px; padding: 14px 0; border-top: {{t.line}}">
+            <div style="flex: 1; min-width: 0"><div style="font-weight: 700">{{t.name}}</div><div style="font-size: 13px; color: #A3A9B6">{{t.help}}</div></div>
+            <span aria-hidden="true" style="flex: 0 0 48px; height: 28px; border-radius: 14px; background: {{t.bg}}; position: relative"><span style="position: absolute; top: 3px; left: {{t.left}}; width: 22px; height: 22px; border-radius: 50%; background: #FFFFFF"></span></span>
+          </div>
+        </sc-for>
+      </section>
+
+      <section style="background: #181B22; border: 1px solid #2A2F3A; border-radius: 14px; padding: 18px; display: flex; flex-direction: column; gap: 12px">
+        <h2 style="margin: 0; font-size: 16px; font-weight: 800">Security actions</h2>
+        <p style="margin: 0; color: #A3A9B6; font-size: 13px">Use during a raid or spam wave. Ends automatically.</p>
+        <div style="display: flex; gap: 8px; flex-wrap: wrap">
+          <sc-for list="{{durations}}" as="d" hint-placeholder-count="4"><button style="height: 32px; padding: 0 12px; border-radius: 8px; border: 1px solid {{d.border}}; background: {{d.bg}}; color: #ECEEF2; font-weight: 700; cursor: pointer">{{d.label}}</button></sc-for>
+        </div>
+        <div style="display: flex; gap: 10px; flex-wrap: wrap">
+          <button onClick="{{pause}}" style="height: 38px; padding: 0 14px; border-radius: 10px; border: 0; background: #F5B83D; color: #1A0E08; font-weight: 800; cursor: pointer">Pause invites + DMs</button>
+          <button style="height: 38px; padding: 0 14px; border-radius: 10px; border: 1px solid #2A2F3A; background: none; color: #ECEEF2; font-weight: 700; cursor: pointer">Pause invites only</button>
+        </div>
+      </section>
+    </div>
+
+    <div style="flex: 1 1 360px; display: flex; flex-direction: column; gap: 18px">
+      <section aria-label="Hangout key" style="background: #181B22; border: 1px solid #2A2F3A; border-radius: 14px; padding: 18px; display: flex; flex-direction: column; gap: 12px">
+        <div style="display: flex; align-items: center; gap: 8px"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#3DD68C" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="8" cy="15" r="4"></circle><path d="M11 12l9-9M16 7l3 3"></path></svg><h2 style="margin: 0; font-size: 16px; font-weight: 800">Hangout key</h2><span style="margin-left: auto; font-size: 11px; font-weight: 800; color: #A3A9B6; border: 1px solid #3A404D; border-radius: 999px; padding: 1px 8px">OWNER</span></div>
+        <p style="margin: 0; color: #A3A9B6; font-size: 13px">Kept only on HangCord's servers. It locks this hangout's messages at rest and proves who's a member. You'll never see the key itself — only its fingerprint.</p>
+        <div style="font-family: 'JetBrains Mono', monospace; font-size: 15px; font-weight: 700; letter-spacing: 0.04em; background: #111318; border-radius: 10px; padding: 12px">{{fingerprint}}</div>
+        <div style="font-size: 12px; color: #8A91A0">Version {{epoch}} · rotated {{rotated}} · next automatic rotation in {{next}}</div>
+
+        <sc-if value="{{askingCode}}" hint-placeholder-val="{{false}}">
+          <div style="background: #111318; border: 1px solid #2A2F3A; border-radius: 12px; padding: 14px; display: flex; flex-direction: column; gap: 10px">
+            <strong>Confirm it's you</strong>
+            <div style="font-size: 13px; color: #A3A9B6">We emailed a 6-digit code to k•••n@example.com. Rotating keeps all old messages readable.</div>
+            <label style="display: flex; flex-direction: column; gap: 6px; font-size: 13px; font-weight: 700; color: #A3A9B6">Code<input type="text" inputmode="numeric" value="731 904" style="height: 42px; border-radius: 10px; border: 1px solid #2A2F3A; background: #181B22; color: #ECEEF2; padding: 0 12px; font-family: 'JetBrains Mono', monospace; font-size: 18px"></label>
+            <div style="display: flex; gap: 8px">
+              <button onClick="{{confirm}}" style="flex: 1; height: 38px; border-radius: 10px; border: 0; background: {{accent}}; color: #1A0E08; font-weight: 800; cursor: pointer">Rotate now</button>
+              <button onClick="{{cancel}}" style="height: 38px; padding: 0 12px; border-radius: 10px; border: 1px solid #2A2F3A; background: none; color: #ECEEF2; font-weight: 700; cursor: pointer">Cancel</button>
+            </div>
+          </div>
+        </sc-if>
+        <sc-if value="{{showRotate}}" hint-placeholder-val="{{true}}">
+          <button onClick="{{ask}}" style="height: 38px; border-radius: 10px; border: 1px solid #2A2F3A; background: none; color: #ECEEF2; font-weight: 700; cursor: pointer">Rotate key…</button>
+        </sc-if>
+        <sc-if value="{{done}}" hint-placeholder-val="{{false}}">
+          <div role="status" style="font-size: 13px; color: #3DD68C; font-weight: 700">Key rotated. Members were re-verified automatically.</div>
+        </sc-if>
+      </section>
+
+      <section aria-label="Recent audit log" style="background: #181B22; border: 1px solid #2A2F3A; border-radius: 14px; padding: 18px; display: flex; flex-direction: column; gap: 10px">
+        <div style="display: flex; align-items: center; justify-content: space-between"><h2 style="margin: 0; font-size: 16px; font-weight: 800">Audit log</h2><span style="font-size: 12px; font-weight: 700; color: #3DD68C">Chain verified</span></div>
+        <sc-for list="{{audit}}" as="a" hint-placeholder-count="4">
+          <div style="display: flex; gap: 10px; font-size: 13px; padding-top: 8px; border-top: 1px solid #22262F">
+            <span style="flex: 0 0 26px; height: 26px; border-radius: 50%; background: {{a.color}}; color: #111318; font-weight: 800; font-size: 11px; display: flex; align-items: center; justify-content: center">{{a.i}}</span>
+            <div style="flex: 1; min-width: 0"><div><strong>{{a.who}}</strong> {{a.what}}</div><div style="font-size: 12px; color: #8A91A0">{{a.when}}</div></div>
+          </div>
+        </sc-for>
+        <a href="#" style="font-size: 13px; font-weight: 700">Open full audit log</a>
+      </section>
+    </div>
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"accent":{"editor":"color","default":"#FF7A45","options":["#FF7A45","#3DD68C","#6CB6FF","#F5B83D"]},"$preview":{"width":1440,"height":1100}}'>
+class Component extends DCLogic {
+  constructor(props) { super(props); this.state = { level: 'member10', paused: true, key: 'idle' }; }
+  renderVals() {
+    const accent = this.props.accent ?? '#FF7A45';
+    const s = this.state;
+    const levels = [
+      ['open', 'Open', 'anyone with a verified HangCord account'],
+      ['account1d', 'New accounts wait', 'account at least 1 day old'],
+      ['member10', 'Settle in first', 'in this hangout for 10 minutes'],
+      ['account7d', 'Established only', 'account at least 7 days old']
+    ].map(([id, name, help]) => ({
+      name, help, on: s.level === id,
+      bg: s.level === id ? '#1F232C' : 'transparent', border: s.level === id ? accent : '#2A2F3A',
+      ring: s.level === id ? accent : '#5A6170', dot: s.level === id ? accent : 'transparent',
+      pick: () => this.setState({ level: id })
+    }));
+    const toggles = [
+      { name: 'Raid protection', help: 'If lots of people join at once, new joiners must pass a quick CAPTCHA for up to 1 hour and moderators are alerted.', on: true },
+      { name: 'Members accept rules first', help: '6 rules · until they accept, people can only read.', on: true },
+      { name: 'DM protection', help: 'Members can only DM each other if they are friends.', on: false },
+      { name: 'Sensitive actions need an email code', help: 'Bans, kicks, role changes with risky permissions, AutoMod edits.', on: true }
+    ].map((t, i) => Object.assign(t, { bg: t.on ? '#3DD68C' : '#3A404D', left: t.on ? '23px' : '3px', line: i === 0 ? '0' : '1px solid #22262F' }));
+    const durations = ['1 hour', '4 hours', '12 hours', '24 hours'].map((label, i) => ({ label, bg: i === 1 ? '#2A2018' : 'transparent', border: i === 1 ? accent : '#2A2F3A' }));
+    const rotatedDone = s.key === 'done';
+    return {
+      accent, levels, toggles, durations,
+      paused: s.paused,
+      pause: () => this.setState({ paused: true }),
+      unpause: () => this.setState({ paused: false }),
+      fingerprint: rotatedDone ? '41c0 9e2d 7a15 b3f8' : '9f3a 77c1 0b2e d4a8',
+      epoch: rotatedDone ? 4 : 3,
+      rotated: rotatedDone ? 'just now' : '62 days ago',
+      next: rotatedDone ? '180 days' : '118 days',
+      askingCode: s.key === 'asking',
+      showRotate: s.key !== 'asking',
+      done: rotatedDone,
+      ask: () => this.setState({ key: 'asking' }),
+      cancel: () => this.setState({ key: 'idle' }),
+      confirm: () => this.setState({ key: 'done' }),
+      audit: [
+        { i: 'M', color: '#F5B83D', who: 'meera', what: 'paused invites and member DMs for 4 hours', when: 'Today, 7:40 PM · email code confirmed' },
+        { i: 'D', color: '#3DD68C', who: 'dev', what: 'timed out spam_acc_91 for 1 day — "link spam"', when: 'Today, 7:38 PM' },
+        { i: 'A', color: '#8A91A0', who: 'AutoMod', what: 'blocked 14 messages matching "free gift link"', when: 'Today, 7:35 PM' },
+        { i: 'K', color: '#6CB6FF', who: 'kiran', what: 'gave Moderator to sana', when: 'Yesterday, 10:02 PM · email code confirmed' }
+      ]
+    };
+  }
+}
+</script>
+</body>
+</html>

@@ -1,0 +1,20 @@
+{
+  "name": "@hangcord/worker-storage-router",
+  "version": "0.0.1",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "wrangler dev",
+    "deploy": "wrangler deploy",
+    "typecheck": "tsc --noEmit -p tsconfig.json",
+    "test": "vitest run"
+  },
+  "dependencies": {
+    "@hangcord/protocol": "*",
+    "@hangcord/worker-kit": "*"
+  },
+  "devDependencies": {
+    "@cloudflare/workers-types": "5.20261021.1",
+    "wrangler": "4.151.3"
+  }
+}
