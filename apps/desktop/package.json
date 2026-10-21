@@ -3,7 +3,7 @@
   "version": "0.0.1",
   "private": true,
   "type": "module",
-  "description": "HangCord desktop app (Tauri 2) — the real application. Runs the shared UI from apps/web.",
+  "description": "HangCord desktop app (Tauri 2) — the real application. Its screens live in apps/desktop/ui.",
   "scripts": {
     "tauri": "tauri",
     "dev": "tauri dev",

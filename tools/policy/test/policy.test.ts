@@ -102,9 +102,9 @@ describe("Graphify code map (graphify/README.md)", () => {
   });
 });
 
-describe("mobile gate basics (MASTER_PLAN §15.1)", () => {
-  it("web shell has a mobile viewport with safe-area support and no zoom lock", () => {
-    const html = read("apps/web/index.html");
+describe("desktop UI layout basics (narrow windows; phones: WebApp branch)", () => {
+  it("desktop UI has a mobile viewport with safe-area support and no zoom lock", () => {
+    const html = read("apps/desktop/ui/index.html");
     const vp = html.match(/<meta name="viewport" content="([^"]+)"/)?.[1] ?? "";
     expect(vp).toContain("width=device-width");
     expect(vp).toContain("viewport-fit=cover");
@@ -114,17 +114,17 @@ describe("mobile gate basics (MASTER_PLAN §15.1)", () => {
     const offenders = [...under("apps/", /\.(css|tsx)$/), ...under("packages/", /\.(css|tsx)$/)].filter((f) => /\d+vh\b/.test(code(read(f))));
     expect(offenders).toEqual([]);
   });
-  it("web shell uses safe-area insets", () => expect(read("apps/web/src/app.css")).toContain("safe-area-inset-bottom"));
+  it("desktop UI uses safe-area insets", () => expect(read("apps/desktop/ui/src/app.css")).toContain("safe-area-inset-bottom"));
 });
 
 describe("design system (DESIGN_SYSTEM.md)", () => {
   it("no raw colours outside the token files", () => {
-    const src = [...under("apps/web/src", /\.(css|tsx|ts)$/), ...under("packages/ui/src", /\.(css|tsx|ts)$/)].filter((f) => !/tokens\.(css|ts)$/.test(f));
+    const src = [...under("apps/desktop/ui/src", /\.(css|tsx|ts)$/), ...under("packages/ui/src", /\.(css|tsx|ts)$/)].filter((f) => !/tokens\.(css|ts)$/.test(f));
     const offenders = src.filter((f) => /#[0-9a-fA-F]{3,8}\b|rgba?\(|hsla?\(/.test(code(read(f))));
     expect(offenders).toEqual([]);
   });
   it("no Discord words in UI text (use Hangout / Room / Lounge — MASTER_PLAN §2.2)", () => {
-    const offenders = under("apps/web/src", /\.tsx$/).flatMap((f) =>
+    const offenders = under("apps/desktop/ui/src", /\.tsx$/).flatMap((f) =>
       [...code(read(f)).matchAll(/\b(servers?|channels?|nitro|discord)\b/gi)].map((m) => `${f}: ${m[0]}`),
     );
     expect(offenders).toEqual([]);

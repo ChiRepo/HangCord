@@ -1,9 +1,9 @@
 {
-  "name": "@hangcord/web",
+  "name": "@hangcord/desktop-ui",
   "version": "0.0.1",
   "private": true,
   "type": "module",
-  "description": "Web companion (desktop + phone browsers). Phase 0 shell with sample data.",
+  "description": "The desktop app's screens (React). Built into apps/desktop by Tauri — not hosted on the web (web companion: WebApp branch).",
   "scripts": {
     "dev": "vite",
     "build": "tsc --noEmit -p tsconfig.json && vite build",

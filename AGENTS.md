@@ -7,7 +7,7 @@
 2. Read this file and `docs/MASTER_PLAN.md` (especially §5 diagrams and §6 contract).
 3. Run `npm ci` then `npm run checkpoint` to see the current baseline before changing anything (see §6a).
 4. Do **not** open the private folder (see §2) unless the user says so in this conversation.
-5. **GitHub first:** the repo is **`ChiRepo/HangCord`** (GitHub). Branches: **`main` = the real application** (desktop app + everything it shares), **`WebApp` = web companion work** (`apps/web` and web-only changes, merged into `main` when ready). Commit and push **only when the owner asks** (the owner or ChatGPT may also push). Before any new work starts, every change already made must be pushed; if it can't be, stop and tell the owner. Never push either private folder, `.dev.vars*`, `.env*` or keys — run gitleaks first.
+5. **GitHub first:** the repo is **`ChiRepo/HangCord`** (GitHub). Branches: **`main` = the real application** (desktop app + everything it shares), **`WebApp` = the web companion** (browser version, its hosting and phone tests; never merged into `main` wholesale — shared fixes are ported, merged into `main` when ready). Commit and push **only when the owner asks** (the owner or ChatGPT may also push). Before any new work starts, every change already made must be pushed; if it can't be, stop and tell the owner. Never push either private folder, `.dev.vars*`, `.env*` or keys — run gitleaks first.
 
 ## 2. The private folder
 `Private files (.md files store here)/` holds `handoff.md`, `details.md`, `what changed previously.md`, `what has to be changed.md`, `next steps.md`, `guides.md`, `user preferences.md` and the owner's own notes. The rules live separately in `private and only to be accessed once which is before starting work on a project or unless user specifies and AI halucinated from its task/rules.md` (read once at start, see §1).
@@ -24,7 +24,7 @@ A full, installable desktop application (Windows, macOS, Linux; Tauri 2) plus a 
 **New features (owner, 2026-10-21) — build exactly to spec:**
 - **+ add from category** (ACCESS_AND_SETTINGS §7.1): every category header has a round **+** that adds a Room or Lounge inside it, with "Follow category guidelines" or "Own guidelines", pre-selected from the user's `rooms.newRoomGuidelines` preference. Shown only with `MANAGE_ROOMS` on that category; the server re-checks. Core logic: `workers/api/src/rooms/new-room.ts`.
 - **Hangout + preference caching** (MASTER_PLAN §7.1): all cache logic lives in `packages/cache` (versions, patches, merge, LRU, wipe). Never decide access from the cache. Never cache secrets.
-- **Mobile gate on every checkpoint** (MASTER_PLAN §15.1): see §6 step 1.
+- **Mobile gate** (MASTER_PLAN §15.1) applies to the web companion on the `WebApp` branch. On `main` the desktop UI (`apps/desktop/ui`) must still work in narrow windows (down to 480 px).
 
 **UI/UX — Calm Minimal (approved 2026-10-21):** the look of the whole app comes from `ui-ux/calm-minimal/` — read `DESIGN_SYSTEM.md` first, use `ui-ux/calm-minimal/tokens.css` (not the old `ui-ux/tokens.css`), and match `ui-ux/calm-minimal/screens/`.
 - Dark graphite surfaces, one warm brand colour (Lantern `#F2A93B`), Moss green for online; Space Grotesk headings, Inter UI text, JetBrains Mono code; flat surfaces with 1px borders — no shadows, glass or gradients on chrome.
@@ -54,7 +54,7 @@ A full, installable desktop application (Windows, macOS, Linux; Tauri 2) plus a 
 
 ## 6. Checkpoint protocol (after every piece of finished work)
 **Where we are (MASTER_PLAN §16.1):** checkpoint **1** (`cp-001`, Phase 0 foundation) is done. Checkpoint **1.1** (`cp-001.1`) — done on Linux, waiting for the macOS build on the owner's Mac and Windows from CI — is **the real-world desktop application** in `apps/desktop` (Tauri 2: Rust core, typed IPC, memory governor v1, encrypted local SQLite cache, installers). HangCord is an installable application first — never treat the web shell as "the app".
-1. Full tests pass (unit, integration, e2e for touched areas) — record output. **Mobile gate (MASTER_PLAN §15.1) is part of every checkpoint:** e2e runs in `desktop-chromium`, `mobile-chrome` and `mobile-safari`; phones get one pane at a time, ≥ 44 px targets, no sideways scroll, `100dvh` + safe areas, keyboard never covers inputs; web JS ≤ 200 KB gzipped (`npm run check:size`). A checkpoint that fails on phones is not done.
+1. Full tests pass (unit, integration, e2e for touched areas) — record output. UI tests (`npm run ui-test`, `tests/ui`) run the desktop screens at 1440 / 1024 / 480 px windows, and the desktop e2e (`tests/desktop/run.mjs`) runs the built app. Phone browsers and the mobile gate are tested on the `WebApp` branch.
 2. Lint, typecheck, perf budget, gitleaks pass.
 3. Independent review by an agent that did not write the code.
 4. Update `docs/`. Update private files **only** if write permission was granted (§2).
@@ -74,7 +74,7 @@ If the push fails (no credentials, no network), stop and tell the user; never wo
 - Build installers per OS: Linux here/CI (`.deb`), macOS on the owner's Mac (`.dmg`), Windows in CI (`.msi`/NSIS).
 
 ## 6a. How to run everything
-- `npm ci` · `npm run lint` · `npm run typecheck` · `npm test` · `npm run build` · `npm run check:size` · `npm run check:secrets-names` · `npm run e2e` — or all of it: `npm run checkpoint`. `typecheck` and `test` include Rust (`desktop:check`, `desktop:test`); `typecheck:js` / `test:js` skip it (CI's checks job uses those; Rust runs in the desktop jobs).
+- `npm ci` · `npm run lint` · `npm run typecheck` · `npm test` · `npm run build` · `npm run check:secrets-names` · `npm run ui-test` — or all of it: `npm run checkpoint`. `typecheck` and `test` include Rust (`desktop:check`, `desktop:test`); `typecheck:js` / `test:js` skip it (CI's checks job uses those; Rust runs in the desktop jobs).
 - Secret scan: `gitleaks dir . --config .gitleaks.toml` (CI runs gitleaks on every push).
 - `tools/policy` turns repo rules into tests (no secrets in Wrangler `vars`, ≤ 5 Cron Triggers per account, emergency-restore has no route, private folders in every ignore file, mobile viewport/dvh/safe-area). Don't weaken a policy test to make it pass — fix the cause.
 - `packages/protocol/test/contract.test.ts` fails if an endpoint listed in the docs is missing from `openapi.yaml` — update the contract first, then the code.

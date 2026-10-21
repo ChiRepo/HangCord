@@ -16,13 +16,13 @@
 ## Download and branches
 - **Desktop app (the real application):** installers for Windows (`.exe` / `.msi`), macOS (`.dmg`) and Linux (`.deb` / AppImage) on the [Releases page](https://github.com/ChiRepo/HangCord/releases). Releases are built by `.github/workflows/release.yml` from a `v*` tag.
 - **`main`** — the real application: the desktop app (`apps/desktop`) and everything it shares (`packages/*`, `workers/*`, docs).
-- **`WebApp`** — work on the web companion (`apps/web`), merged into `main` when ready.
+- **`WebApp`** — the web companion (browser version, hosting, phone layouts). Kept separate from `main`.
 
 ## Quick start
 ```
 npm ci
 npm run checkpoint   # lint, typecheck, unit tests, build, mobile size budget, secret-name check, e2e (desktop + phones)
-npm run dev -w apps/web
+npm run dev -w @hangcord/desktop    # the desktop app with hot reload (screens: apps/desktop/ui)
 ```
 Node 22.12+ required. Workers: `npm run dev -w workers/api` (needs a git-ignored `workers/api/.dev.vars`, names in `.dev.vars.example`).
 

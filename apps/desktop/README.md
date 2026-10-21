@@ -1,6 +1,6 @@
 # HangCord desktop app (checkpoint 1.1)
 
-The real application: a Tauri 2 app for **Windows, macOS and Linux**. It runs the shared UI from `apps/web`; the Rust core (`src-tauri/`) owns storage, memory policy and, in later phases, media, crypto and networking (MASTER_PLAN §4).
+The real application: a Tauri 2 app for **Windows, macOS and Linux**. Its screens live in `ui/` (React + Vite, built into the app by Tauri; the browser companion is on the `WebApp` branch); the Rust core (`src-tauri/`) owns storage, memory policy and, in later phases, media, crypto and networking (MASTER_PLAN §4).
 
 ## What's in the Rust core
 | Module | Does | Plan |
@@ -16,7 +16,7 @@ IPC errors are short codes only (`bad_key`, `too_large`, `full`, `storage`, `cor
 From the repo root (Node 22.12+, Rust 1.95+):
 ```
 npm ci
-npm run dev -w apps/desktop        # dev window with hot reload
+npm run dev -w @hangcord/desktop        # dev window with hot reload
 npm run desktop:test               # Rust unit tests (also part of `npm test`)
 npm run desktop:build              # release build + installers for THIS OS
 ```

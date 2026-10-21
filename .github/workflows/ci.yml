@@ -1,4 +1,4 @@
-# CI for pushes and PRs (MASTER_PLAN §13, §15, §15.1, §16.1). Branches: main = the real application,
+# CI for the real application (MASTER_PLAN §13, §15, §16.1). The web companion's CI lives on WebApp. Branches: main = the real application,
 # WebApp = web companion work. Releases are built by release.yml.
 #
 # Free-minute budget (private repo: 2,000 min/month; Windows counts 2×, macOS 10×):
@@ -33,11 +33,10 @@ jobs:
       - run: npm run typecheck:js   # Rust is checked in desktop-linux
       - run: npm run test:js
       - run: npm run build
-      - run: npm run check:size
       - run: npm run check:secrets-names
-      - run: npx playwright install --with-deps chromium webkit
-        working-directory: tests/e2e
-      - run: npm run e2e
+      - run: npx playwright install --with-deps chromium
+        working-directory: tests/ui
+      - run: npm run ui-test
         env: { CI: "true" }
 
   secrets-scan:

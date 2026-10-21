@@ -599,7 +599,7 @@ HangCord/
   README.md
   docs/MASTER_PLAN.md       # this file
   apps/desktop/             # Tauri 2 app (src-tauri = Rust core)
-  apps/web/                 # web companion
+  apps/desktop/ui/          # the desktop app's screens (React); the web companion lives on the WebApp branch
   packages/ui/              # shared React UI + design tokens
   packages/protocol/        # openapi.yaml, gateway-events.ts, zod schemas
   packages/cache/           # preference + hangout cache core (versions, patches, merge, LRU, wipe) — §7.1
@@ -609,7 +609,7 @@ HangCord/
   workers/storage-router/   # StorageRouter DO, Mover, rotation jobs, CSV journal/snapshots/backups (encrypt-only for backups)
   workers/emergency-restore/ # break-glass only: holds the emergency CSV decryption key, no public route
   infra/livekit/            # docker-compose for the Oracle VM
-  tests/e2e/                # Playwright: web shell on desktop + phone profiles (mobile gate §15.1)
+  tests/ui/                 # Playwright: desktop screens at 1440 / 1024 / 480 px windows (phones: WebApp branch)
   tests/desktop/            # desktop e2e: the built app via tauri-driver + WebKitWebDriver
   tools/policy/             # repo rules as tests (secrets, crons, private folders, mobile, Graphify)
   graphify/                 # code map (Graphify, local only): graph/GRAPH_REPORT.md, graph.html, graph.json, refresh.sh
@@ -619,7 +619,7 @@ HangCord/
 ```
 
 **Checkpoint** (numbering and current status: §16.1 — checkpoint 1 = foundation, **checkpoint 1.1 = the real desktop application**) = a vertical slice that builds, passes all tests, lint, typecheck, secret scan and perf budget, and is documented. After every checkpoint:
-1. Run the full test suite and record the result — **including the mobile gate (§15.1)**.
+1. Run the full test suite and record the result — on `WebApp` this includes the mobile gate (§15.1).
 2. Run gitleaks; abort on any finding.
 3. Update `docs/` (and the private files **only** if write permission was granted — see AGENTS.md).
 4. Commit with a conventional-commit message, tag `cp-NNN`.
@@ -633,7 +633,7 @@ HangCord/
 | Subagent | Owns | Never touches |
 |---|---|---|
 | Architect | `packages/protocol`, diagrams | app code |
-| UI | `packages/ui`, `apps/web` UI | Workers |
+| UI | `packages/ui`, `apps/desktop/ui` (web companion: `WebApp` branch) | Workers |
 | Desktop core | `apps/desktop/src-tauri` (governor, cache, IPC) | Workers |
 | Cache | `packages/cache` (shared cache logic, §7.1) | UI, Workers |
 | Backend | `workers/api`, `workers/gateway` | storage-router internals |
@@ -665,6 +665,7 @@ Rules:
 - Performance targets (measured, not promised): send→echo p95 < 150 ms on the same continent; cold start < 1.5 s on an 8 GB machine; message list scrolls at 60 fps.
 
 ### 15.1 Mobile gate — every checkpoint (owner request, 2026-10-21)
+_Since 2026-10-22 the web companion lives on the `WebApp` branch, so this gate runs there; `main` (the desktop app) tests narrow windows instead (§13)._
 Every checkpoint must also work well on phones. In v1, phones use the **web companion** (installable PWA) on iOS Safari and Android Chrome; native iOS/Android builds with Tauri 2 mobile are a later decision for the owner, so all shared code (`packages/ui`, `packages/protocol`, `packages/cache`) stays free of desktop-only assumptions.
 
 A checkpoint passes the mobile gate only when, for every screen or flow it touches:

@@ -11,10 +11,10 @@
   "workspaces": [
     "packages/*",
     "workers/*",
-    "apps/web",
+    "apps/desktop/ui",
     "apps/desktop",
     "tools/*",
-    "tests/e2e"
+    "tests/ui"
   ],
   "scripts": {
     "lint": "eslint .",
@@ -23,16 +23,15 @@
     "test:js": "npm run test --workspaces --if-present",
     "test": "npm run test:js && npm run desktop:test",
     "build": "npm run build --workspaces --if-present",
-    "check:size": "node scripts/check-bundle-size.mjs",
     "check:secrets-names": "node scripts/check-secret-names.mjs",
-    "e2e": "npm run e2e -w tests/e2e",
-    "checkpoint": "npm run lint && npm run typecheck && npm run test && npm run build && npm run check:size && npm run check:secrets-names && npm run e2e",
-    "desktop:test": "npm run rust:test -w apps/desktop",
-    "desktop:check": "npm run rust:check -w apps/desktop",
-    "desktop:build": "npm run build:app -w apps/desktop",
+    "checkpoint": "npm run lint && npm run typecheck && npm run test && npm run build && npm run check:secrets-names && npm run ui-test",
+    "desktop:test": "npm run rust:test -w @hangcord/desktop",
+    "desktop:check": "npm run rust:check -w @hangcord/desktop",
+    "desktop:build": "npm run build:app -w @hangcord/desktop",
     "graph": "sh graphify/refresh.sh",
     "graph:check": "sh graphify/refresh.sh --check",
-    "graph:hook": "node -e \"const fs=require('fs');if(!fs.existsSync('.git'))throw new Error('run git init first');fs.copyFileSync('graphify/hooks/pre-commit','.git/hooks/pre-commit');fs.chmodSync('.git/hooks/pre-commit',0o755);console.log('pre-commit hook installed')\""
+    "graph:hook": "node -e \"const fs=require('fs');if(!fs.existsSync('.git'))throw new Error('run git init first');fs.copyFileSync('graphify/hooks/pre-commit','.git/hooks/pre-commit');fs.chmodSync('.git/hooks/pre-commit',0o755);console.log('pre-commit hook installed')\"",
+    "ui-test": "npm run e2e -w tests/ui"
   },
   "devDependencies": {
     "@eslint/js": "10.0.1",

@@ -4,14 +4,14 @@
   "version": "0.0.1",
   "identifier": "app.hangcord.desktop",
   "build": {
-    "frontendDist": "../../web/dist",
+    "frontendDist": "../ui/dist",
     "devUrl": "http://localhost:5173",
     "beforeDevCommand": {
-      "script": "npm run dev -w apps/web",
+      "script": "npm run dev -w apps/desktop/ui",
       "cwd": "../../.."
     },
     "beforeBuildCommand": {
-      "script": "npm run build -w apps/web",
+      "script": "npm run build -w apps/desktop/ui",
       "cwd": "../../.."
     }
   },
