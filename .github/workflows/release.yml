@@ -1,11 +1,15 @@
-# Release: push a tag like v0.1.0 (or run manually with a tag) → installers for Windows, macOS and Linux
-# are built from that tag and attached to a DRAFT GitHub Release. The owner reviews and publishes it.
+# Release → installers for Windows, macOS and Linux attached to a DRAFT GitHub Release. Three ways in:
+#   1. push the `release` branch (git push origin main:release) → tag v<version in tauri.conf.json> is created
+#   2. push a tag like v0.1.0
+#   3. run manually with an existing tag
+# The draft is The owner reviews and publishes it.
 # Unsigned for now (code signing is an open owner decision — handoff.md). Never uses any secret except
 # the built-in GITHUB_TOKEN.
 name: release
 on:
   push:
     tags: ["v*"]
+    branches: [release]
   workflow_dispatch:
     inputs:
       tag: { description: "Existing tag to release (e.g. v0.1.0)", required: true }
@@ -26,7 +30,7 @@ jobs:
     timeout-minutes: 60
     steps:
       - uses: actions/checkout@v7
-        with: { ref: "${{ inputs.tag || github.ref }}" }
+        with: { ref: "${{ inputs.tag || github.sha }}" }
       - uses: actions/setup-node@v7
         with: { node-version: 22, cache: npm }
       - if: matrix.name == 'linux'
@@ -59,6 +63,8 @@ jobs:
     timeout-minutes: 10
     permissions: { contents: write }
     steps:
+      - uses: actions/checkout@v7
+        with: { ref: "${{ inputs.tag || github.sha }}", path: src }
       - uses: actions/download-artifact@v7
         with: { path: dist, merge-multiple: true }
       - name: Checksums
@@ -66,8 +72,9 @@ jobs:
       - name: Draft GitHub Release with the installers
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          TAG: ${{ inputs.tag || github.ref_name }}
+          TAG_IN: ${{ inputs.tag || (github.ref_type == 'tag' && github.ref_name) || '' }}
         run: |
-          gh release create "$TAG" dist/* --repo "$GITHUB_REPOSITORY" --draft --verify-tag \
+          TAG="${TAG_IN:-v$(node -p "require('./src/apps/desktop/src-tauri/tauri.conf.json').version")}"
+          gh release create "$TAG" dist/* --repo "$GITHUB_REPOSITORY" --draft --target "$GITHUB_SHA" \
             --title "HangCord $TAG" \
             --notes "HangCord desktop app $TAG — Windows (.exe / .msi), macOS (.dmg), Linux (.deb / AppImage). Unsigned early build: expect bugs; Windows SmartScreen and macOS Gatekeeper will warn the first time. Verify downloads with SHA256SUMS.txt."
