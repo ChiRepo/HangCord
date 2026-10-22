@@ -149,71 +149,6 @@ components:
             properties:
               value: {}
               updatedAt: { type: integer }
-    SessionRequest:
-      type: object
-      additionalProperties: false
-      required: [idToken]
-      properties: { idToken: { type: string, minLength: 20, maxLength: 4096, description: Firebase ID token } }
-    RefreshRequest:
-      type: object
-      additionalProperties: false
-      required: [refreshToken]
-      properties: { refreshToken: { type: string, minLength: 20, maxLength: 512 } }
-    User:
-      type: object
-      required: [id, displayName, email, createdAt]
-      properties:
-        id: { type: string }
-        displayName: { type: string, maxLength: 64 }
-        email: { type: [string, "null"] }
-        avatarUrl: { type: [string, "null"] }
-        createdAt: { type: integer }
-    Session:
-      type: object
-      required: [session, expiresAt, refreshToken, user]
-      properties:
-        session: { type: string, description: "Bearer token, 15 minutes" }
-        expiresAt: { type: integer, description: Unix ms }
-        refreshToken: { type: string, description: "Single use; rotated by POST /auth/refresh" }
-        user: { $ref: "#/components/schemas/User" }
-    CreateHangoutRequest:
-      type: object
-      additionalProperties: false
-      required: [name]
-      properties: { name: { type: string, minLength: 2, maxLength: 100 } }
-    HangoutSummary:
-      type: object
-      required: [id, name, ownerId, version]
-      properties:
-        id: { type: string, pattern: "^[a-z0-9_-]{1,64}$" }
-        name: { type: string }
-        icon: { type: [string, "null"] }
-        ownerId: { type: string }
-        version: { type: integer }
-    Message:
-      type: object
-      required: [id, roomId, hangoutId, authorId, content, createdAt, editedAt]
-      properties:
-        id: { type: string }
-        roomId: { type: string }
-        hangoutId: { type: string }
-        authorId: { type: string }
-        content: { type: string, maxLength: 4000 }
-        createdAt: { type: integer }
-        editedAt: { type: [integer, "null"] }
-    SendMessageRequest:
-      type: object
-      additionalProperties: false
-      required: [content, nonce]
-      properties:
-        content: { type: string, maxLength: 4000, description: "Not blank" }
-        nonce: { type: string, pattern: "^[A-Za-z0-9_-]{8,64}$", description: "Client id; a retry with the same nonce never posts twice" }
-    MessagesPage:
-      type: object
-      required: [messages, hasMore]
-      properties:
-        messages: { type: array, items: { $ref: "#/components/schemas/Message" }, description: "Newest last" }
-        hasMore: { type: boolean }
     HangoutSnapshot:
       type: object
       description: detailed (cp-001) — cacheable hangout bundle, MASTER_PLAN §7.1
@@ -284,16 +219,7 @@ paths:
 
   # ---- Auth (MASTER_PLAN §6.1) ----
   /auth/session:
-    post:
-      operationId: createSession
-      security: []
-      x-hangcord-phase: 1
-      summary: "Firebase ID token → HangCord session (403 email_unverified until verified)"
-      requestBody: { required: true, content: { application/json: { schema: { $ref: "#/components/schemas/SessionRequest" } } } }
-      responses:
-        "200": { description: Session, content: { application/json: { schema: { $ref: "#/components/schemas/Session" } } } }
-        "401": { $ref: "#/components/responses/Error" }
-        "403": { $ref: "#/components/responses/Error" }
+    post: { operationId: createSession, security: [], x-hangcord-phase: 1, summary: "Firebase ID token → HangCord session (403 email_unverified until verified)", responses: { "200": { $ref: "#/components/responses/Ok" }, "403": { $ref: "#/components/responses/Error" } } }
   /auth/email-code/send:
     post: { operationId: sendEmailCode, security: [], x-hangcord-phase: 1, summary: "Send a 6-digit code (verify | reset), rate-limited", responses: { "202": { $ref: "#/components/responses/Ok" } } }
   /auth/email-code/verify:
@@ -303,15 +229,7 @@ paths:
   /auth/google/exchange:
     post: { operationId: exchangeGoogleCode, security: [], x-hangcord-phase: 1, summary: "Desktop PKCE code exchange (client secret stays in Workers secrets)", responses: { "200": { $ref: "#/components/responses/Ok" } } }
   /auth/refresh:
-    post:
-      operationId: refreshSession
-      security: []
-      x-hangcord-phase: 1
-      summary: "Rotate refresh token (single use; reuse revokes the whole session)"
-      requestBody: { required: true, content: { application/json: { schema: { $ref: "#/components/schemas/RefreshRequest" } } } }
-      responses:
-        "200": { description: New session, content: { application/json: { schema: { $ref: "#/components/schemas/Session" } } } }
-        "401": { $ref: "#/components/responses/Error" }
+    post: { operationId: refreshSession, security: [], x-hangcord-phase: 1, summary: "Rotate refresh token", responses: { "200": { $ref: "#/components/responses/Ok" } } }
   /auth/logout:
     post: { operationId: logout, x-hangcord-phase: 1, summary: "Revoke session", responses: { "204": { description: Logged out } } }
   /auth/step-up:
@@ -319,7 +237,7 @@ paths:
 
   # ---- Me ----
   /me:
-    get: { operationId: getMe, x-hangcord-phase: 1, responses: { "200": { description: Me, content: { application/json: { schema: { $ref: "#/components/schemas/User" } } } } } }
+    get: { operationId: getMe, x-hangcord-phase: 1, responses: { "200": { $ref: "#/components/responses/Ok" } } }
     patch: { operationId: updateMe, x-hangcord-phase: 1, responses: { "200": { $ref: "#/components/responses/Ok" } } }
   /me/entitlements:
     get: { operationId: getEntitlements, x-hangcord-phase: 1, summary: "Plus slot (reserved, disabled)", responses: { "200": { $ref: "#/components/responses/Ok" } } }
@@ -362,15 +280,7 @@ paths:
 
   # ---- Hangouts & rooms ----
   /hangouts:
-    get: { operationId: listMyHangouts, x-hangcord-phase: 1, summary: "Hangouts I'm a member of", responses: { "200": { description: Hangouts, content: { application/json: { schema: { type: array, items: { $ref: "#/components/schemas/HangoutSummary" } } } } } } }
-    post:
-      operationId: createHangout
-      x-hangcord-phase: 1
-      summary: "New hangout: caller becomes owner; @everyone gets the Member preset; starter category + room + lounge"
-      requestBody: { required: true, content: { application/json: { schema: { $ref: "#/components/schemas/CreateHangoutRequest" } } } }
-      responses:
-        "201": { description: Created, content: { application/json: { schema: { $ref: "#/components/schemas/HangoutSummary" } } } }
-        "400": { $ref: "#/components/responses/Error" }
+    post: { operationId: createHangout, x-hangcord-phase: 1, responses: { "201": { $ref: "#/components/responses/Ok" } } }
   /hangouts/{id}:
     get: { operationId: getHangout, x-hangcord-phase: 1, parameters: [{ $ref: "#/components/parameters/HangoutId" }], responses: { "200": { $ref: "#/components/responses/Ok" } } }
     patch: { operationId: updateHangout, x-hangcord-phase: 1, parameters: [{ $ref: "#/components/parameters/HangoutId" }], responses: { "200": { $ref: "#/components/responses/Ok" } } }
@@ -451,28 +361,8 @@ paths:
 
   # ---- Messages ----
   /rooms/{id}/messages:
-    get:
-      operationId: listMessages
-      x-hangcord-phase: 1
-      summary: "History, newest last; needs VIEW_ROOM + READ_HISTORY (served by the gateway Worker)"
-      parameters:
-        - { $ref: "#/components/parameters/RoomId" }
-        - { name: before, in: query, required: false, schema: { type: string }, description: "Message id; page older than it" }
-        - { name: limit, in: query, required: false, schema: { type: integer, minimum: 1, maximum: 100, default: 50 } }
-      responses:
-        "200": { description: Page, content: { application/json: { schema: { $ref: "#/components/schemas/MessagesPage" } } } }
-        "404": { $ref: "#/components/responses/Error" }
-    post:
-      operationId: sendMessageFallback
-      x-hangcord-phase: 1
-      summary: "Fallback send when the WebSocket is down (same checks as MESSAGE_CREATE)"
-      parameters: [{ $ref: "#/components/parameters/RoomId" }]
-      requestBody: { required: true, content: { application/json: { schema: { $ref: "#/components/schemas/SendMessageRequest" } } } }
-      responses:
-        "201": { description: Sent, content: { application/json: { schema: { $ref: "#/components/schemas/Message" } } } }
-        "403": { $ref: "#/components/responses/Error" }
-        "404": { $ref: "#/components/responses/Error" }
-        "429": { $ref: "#/components/responses/Error" }
+    get: { operationId: listMessages, x-hangcord-phase: 1, parameters: [{ $ref: "#/components/parameters/RoomId" }], responses: { "200": { $ref: "#/components/responses/Ok" } } }
+    post: { operationId: sendMessageFallback, x-hangcord-phase: 1, summary: "Fallback send when the WebSocket is down", parameters: [{ $ref: "#/components/parameters/RoomId" }], responses: { "201": { $ref: "#/components/responses/Ok" } } }
   /messages/{id}:
     patch: { operationId: editMessage, x-hangcord-phase: 1, parameters: [{ name: id, in: path, required: true, schema: { type: string } }], responses: { "200": { $ref: "#/components/responses/Ok" } } }
     delete: { operationId: deleteMessage, x-hangcord-phase: 1, parameters: [{ name: id, in: path, required: true, schema: { type: string } }], responses: { "204": { description: Deleted } } }

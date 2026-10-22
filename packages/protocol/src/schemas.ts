@@ -114,67 +114,8 @@ export const HangoutSnapshot = z.object({
 });
 export type HangoutSnapshot = z.infer<typeof HangoutSnapshot>;
 
-
-// ---- Sessions (MASTER_PLAN §6.1) — detailed since cp-002 ----
-export const SessionRequest = z.object({ idToken: z.string().min(20).max(4096) }).strict();
-export type SessionRequest = z.infer<typeof SessionRequest>;
-
-export const RefreshRequest = z.object({ refreshToken: z.string().min(20).max(512) }).strict();
-export type RefreshRequest = z.infer<typeof RefreshRequest>;
-
-export const User = z.object({
-  id: z.string(),
-  displayName: z.string().max(64),
-  email: z.string().nullable(),
-  avatarUrl: z.string().nullable().optional(),
-  createdAt: z.number().int(),
-});
-export type User = z.infer<typeof User>;
-
-export const Session = z.object({
-  session: z.string(),
-  /** Unix ms when `session` stops working (15 min). */
-  expiresAt: z.number().int(),
-  refreshToken: z.string(),
-  user: User,
-});
-export type Session = z.infer<typeof Session>;
-
-// ---- Hangouts — detailed since cp-002 ----
-export const CreateHangoutRequest = z.object({ name: z.string().trim().min(2).max(100) }).strict();
-export type CreateHangoutRequest = z.infer<typeof CreateHangoutRequest>;
-
-export const HangoutSummary = z.object({ id: Id, name: z.string(), icon: z.string().nullable().optional(), ownerId: z.string(), version: z.number().int() });
-export type HangoutSummary = z.infer<typeof HangoutSummary>;
-
-
-// ---- Messages — detailed since cp-002.1 ----
-export const MAX_MESSAGE_CHARS = 4000;
-export const Message = z.object({
-  id: z.string(),
-  roomId: z.string(),
-  hangoutId: z.string(),
-  authorId: z.string(),
-  content: z.string().max(MAX_MESSAGE_CHARS),
-  createdAt: z.number().int(),
-  editedAt: z.number().int().nullable(),
-});
-export type Message = z.infer<typeof Message>;
-
-export const SendMessageRequest = z.object({
-  content: z.string().max(MAX_MESSAGE_CHARS).refine((s) => s.trim().length > 0, "empty"),
-  /** Client-chosen id so a retry never posts twice. */
-  nonce: z.string().regex(/^[A-Za-z0-9_-]{8,64}$/),
-}).strict();
-export type SendMessageRequest = z.infer<typeof SendMessageRequest>;
-
-export const MessagesPage = z.object({ messages: z.array(Message), hasMore: z.boolean() });
-export type MessagesPage = z.infer<typeof MessagesPage>;
-
 /** Names of the schemas above that openapi.yaml must also define. */
 export const DETAILED_SCHEMAS = [
   "Error", "Health", "RoomType", "GuidelinesChoice", "NewRoomGuidelinesPreference", "Override",
   "RoomDefaults", "Room", "CreateRoomRequest", "Preferences", "PreferencesPatch", "HangoutSnapshot",
-  "SessionRequest", "RefreshRequest", "User", "Session", "CreateHangoutRequest", "HangoutSummary",
-  "Message", "SendMessageRequest", "MessagesPage",
 ] as const;

@@ -1,7 +1,7 @@
 // Canonical gateway (WSS) contract — MASTER_PLAN §6 + ACCESS_AND_SETTINGS §14.
 // No op may be sent or handled unless it is listed in GatewayOp.
 import { z } from "zod";
-import { HangoutSnapshot, Message, Preferences, Room, SendMessageRequest } from "./schemas";
+import { HangoutSnapshot, Preferences, Room } from "./schemas";
 import { PatchOp } from "./patch";
 
 export const GatewayOp = z.enum([
@@ -66,20 +66,11 @@ export const PreferencesUpdate = z.object({
   d: z.object({ version: z.number().int(), set: Preferences.shape.values }),
 });
 export const RoomCreate = z.object({ op: z.literal("ROOM_CREATE"), d: z.object({ hangoutVersion: z.number().int(), room: Room }) });
-/** Client → server: send in a room of the hangout this socket is identified for. */
-export const MessageCreateRequest = z.object({ op: z.literal("MESSAGE_CREATE"), d: SendMessageRequest.extend({ roomId: z.string().min(1).max(64) }) });
-/** Server → client: a new message (`nonce` only on the sender's own copy). */
-export const MessageCreateEvent = z.object({ op: z.literal("MESSAGE_CREATE"), d: z.object({ message: Message, nonce: z.string().optional() }), s: z.number().int().optional() });
-/** Server → sender: accepted (stored + broadcast) or refused with a short code. */
-export const MessageAck = z.object({
-  op: z.literal("MESSAGE_ACK"),
-  d: z.union([z.object({ nonce: z.string(), ok: z.literal(true), messageId: z.string() }), z.object({ nonce: z.string(), ok: z.literal(false), error: z.string() })]),
-});
 export const SystemNotice = z.object({ op: z.literal("SYSTEM_NOTICE"), d: z.object({ code: z.string(), message: z.string() }) });
 
 /** Frames with a detailed schema at cp-001. Others use the generic envelope until their phase. */
 export const DetailedFrame = z.discriminatedUnion("op", [
-  Hello, Heartbeat, HeartbeatAck, Identify, Resume, Ready, HangoutUpdate, PreferencesUpdate, RoomCreate, SystemNotice, MessageAck,
+  Hello, Heartbeat, HeartbeatAck, Identify, Resume, Ready, HangoutUpdate, PreferencesUpdate, RoomCreate, SystemNotice,
 ]);
 export type DetailedFrame = z.infer<typeof DetailedFrame>;
 

@@ -31,6 +31,6 @@ export function onFrame(text: string): FrameResult {
     case "HEARTBEAT":
       return { reply: [{ op: "HEARTBEAT_ACK", d: {} }] };
     default:
-      return { reply: [], close: { code: 4003, reason: "not_available_yet" } };
+      return { reply: [], close: { code: 4003, reason: "not_available_in_phase_0" } };
   }
 }

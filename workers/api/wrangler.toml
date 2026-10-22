@@ -13,20 +13,3 @@ GOOGLE_OAUTH_DESKTOP_CLIENT_ID = ""
 TURNSTILE_SITE_KEY = ""
 LIVEKIT_URL = ""
 EMAIL_FROM_ADDRESS = ""
-
-# D1: the owner creates it once with `npx wrangler d1 create hangcord` and pastes the id here
-# (an id is not a secret). Schema: migrations/ → `npx wrangler d1 migrations apply hangcord --remote`.
-[[d1_databases]]
-binding = "DB"
-database_name = "hangcord"
-database_id = "00000000-0000-0000-0000-000000000000"
-migrations_dir = "migrations"
-
-# UserDO: refresh-token hashes (Cloudflare-only sensitive state).
-[[durable_objects.bindings]]
-name = "USERS"
-class_name = "UserDO"
-
-[[migrations]]
-tag = "v1"
-new_sqlite_classes = ["UserDO"]
