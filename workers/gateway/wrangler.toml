@@ -1,7 +1,22 @@
-# WebSocket gateway Worker (MASTER_PLAN §6). Phase 0: HELLO / HEARTBEAT only.
-# RoomDO / UserDO / HangoutDO (Hibernation API) arrive in Phase 1.
+# WebSocket gateway Worker (MASTER_PLAN §6): HangoutDO sockets + message history/fallback send.
 # Secrets via `npx wrangler secret put <NAME>` only (owner).
 name = "hangcord-gateway"
 main = "src/index.ts"
 compatibility_date = "2026-10-01"
 workers_dev = true
+
+# Same D1 as the API Worker (schema: ../api/migrations).
+[[d1_databases]]
+binding = "DB"
+database_name = "hangcord"
+database_id = "00000000-0000-0000-0000-000000000000"
+migrations_dir = "../api/migrations"
+
+# HangoutDO: live sockets, hot messages (encrypted), hangout key. SQLite-backed (free plan).
+[[durable_objects.bindings]]
+name = "HANGOUTS"
+class_name = "HangoutDO"
+
+[[migrations]]
+tag = "v1"
+new_sqlite_classes = ["HangoutDO"]

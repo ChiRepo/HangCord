@@ -190,6 +190,30 @@ components:
         icon: { type: [string, "null"] }
         ownerId: { type: string }
         version: { type: integer }
+    Message:
+      type: object
+      required: [id, roomId, hangoutId, authorId, content, createdAt, editedAt]
+      properties:
+        id: { type: string }
+        roomId: { type: string }
+        hangoutId: { type: string }
+        authorId: { type: string }
+        content: { type: string, maxLength: 4000 }
+        createdAt: { type: integer }
+        editedAt: { type: [integer, "null"] }
+    SendMessageRequest:
+      type: object
+      additionalProperties: false
+      required: [content, nonce]
+      properties:
+        content: { type: string, maxLength: 4000, description: "Not blank" }
+        nonce: { type: string, pattern: "^[A-Za-z0-9_-]{8,64}$", description: "Client id; a retry with the same nonce never posts twice" }
+    MessagesPage:
+      type: object
+      required: [messages, hasMore]
+      properties:
+        messages: { type: array, items: { $ref: "#/components/schemas/Message" }, description: "Newest last" }
+        hasMore: { type: boolean }
     HangoutSnapshot:
       type: object
       description: detailed (cp-001) — cacheable hangout bundle, MASTER_PLAN §7.1
@@ -427,8 +451,28 @@ paths:
 
   # ---- Messages ----
   /rooms/{id}/messages:
-    get: { operationId: listMessages, x-hangcord-phase: 1, parameters: [{ $ref: "#/components/parameters/RoomId" }], responses: { "200": { $ref: "#/components/responses/Ok" } } }
-    post: { operationId: sendMessageFallback, x-hangcord-phase: 1, summary: "Fallback send when the WebSocket is down", parameters: [{ $ref: "#/components/parameters/RoomId" }], responses: { "201": { $ref: "#/components/responses/Ok" } } }
+    get:
+      operationId: listMessages
+      x-hangcord-phase: 1
+      summary: "History, newest last; needs VIEW_ROOM + READ_HISTORY (served by the gateway Worker)"
+      parameters:
+        - { $ref: "#/components/parameters/RoomId" }
+        - { name: before, in: query, required: false, schema: { type: string }, description: "Message id; page older than it" }
+        - { name: limit, in: query, required: false, schema: { type: integer, minimum: 1, maximum: 100, default: 50 } }
+      responses:
+        "200": { description: Page, content: { application/json: { schema: { $ref: "#/components/schemas/MessagesPage" } } } }
+        "404": { $ref: "#/components/responses/Error" }
+    post:
+      operationId: sendMessageFallback
+      x-hangcord-phase: 1
+      summary: "Fallback send when the WebSocket is down (same checks as MESSAGE_CREATE)"
+      parameters: [{ $ref: "#/components/parameters/RoomId" }]
+      requestBody: { required: true, content: { application/json: { schema: { $ref: "#/components/schemas/SendMessageRequest" } } } }
+      responses:
+        "201": { description: Sent, content: { application/json: { schema: { $ref: "#/components/schemas/Message" } } } }
+        "403": { $ref: "#/components/responses/Error" }
+        "404": { $ref: "#/components/responses/Error" }
+        "429": { $ref: "#/components/responses/Error" }
   /messages/{id}:
     patch: { operationId: editMessage, x-hangcord-phase: 1, parameters: [{ name: id, in: path, required: true, schema: { type: string } }], responses: { "200": { $ref: "#/components/responses/Ok" } } }
     delete: { operationId: deleteMessage, x-hangcord-phase: 1, parameters: [{ name: id, in: path, required: true, schema: { type: string } }], responses: { "204": { description: Deleted } } }

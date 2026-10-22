@@ -33,7 +33,7 @@ Free plan limits: ≤ 64 variables per Worker (secrets + vars), ≤ 5 KB each. S
 | `BREVO_API_KEY`, `MAILJET_API_KEY`, `MAILJET_SECRET_KEY`, `RESEND_API_KEY` | api | Email-code sending | 90 days |
 | `EMAIL_CODE_PEPPER` | api | 32-byte random key for HMAC of email codes and email-address hashes | 180 days (old one kept until codes expire) |
 | `SESSION_SIGNING_KEY` | api, gateway | Signs 15-minute session tokens | 90 days (two-key overlap) |
-| `HANGCORD_KEK_V1` | gateway (HangoutDO) | 32-byte master key that wraps every hangout key | yearly / on suspicion (`_V2` procedure) |
+| `HANGCORD_KEK_V1` | gateway (HangoutDO) | 32-byte master key that wraps every hangout key — **base64 of 32 random bytes** (owner generates offline: `openssl rand -base64 32`); a malformed value fails closed | yearly / on suspicion (`_V2` procedure) |
 | `TURNSTILE_SECRET_KEY` | api | CAPTCHA verification | on leak |
 | `LIVEKIT_API_KEY`, `LIVEKIT_API_SECRET` | api | Minting 10-minute voice tokens | 90 days |
 | `CF_TURN_KEY_ID`, `CF_TURN_API_TOKEN` | api | Minting 1-hour TURN credentials | 90 days |

@@ -1,58 +1,24 @@
 // Integration tests: the real Worker (test entry) on local workerd with a real local D1 + Durable Objects.
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
-import { execFileSync } from "node:child_process";
-import { generateKeyPairSync, createSign, randomUUID } from "node:crypto";
-import { mkdtempSync } from "node:fs";
-import { tmpdir } from "node:os";
-import { dirname, join } from "node:path";
-import { fileURLToPath } from "node:url";
-import { unstable_dev, type Unstable_DevWorker } from "wrangler";
+import { generateKeyPairSync } from "node:crypto";
+import type { Unstable_DevWorker } from "wrangler";
 import { HangoutSnapshot, Preferences, Room, Session, BIT } from "@hangcord/protocol";
+import { client, d1 as d1At, idToken, migrate, newPersistDir, startApi } from "./helpers";
 
-const here = dirname(fileURLToPath(import.meta.url));
-const config = join(here, "wrangler.test.toml");
-const persist = mkdtempSync(join(tmpdir(), "hc-api-"));
-const PROJECT = "hangcord-test";
-
-const { publicKey, privateKey } = generateKeyPairSync("rsa", { modulusLength: 2048 });
-const jwk = { ...publicKey.export({ format: "jwk" }), kid: "test-kid", alg: "RS256", use: "sig" };
-const b64 = (o: unknown) => Buffer.from(JSON.stringify(o)).toString("base64url");
-
-/** A Firebase-shaped ID token signed with the test key. */
-function idToken(claims: Record<string, unknown> = {}, opts: { kid?: string; key?: typeof privateKey } = {}) {
-  const now = Math.floor(Date.now() / 1000);
-  const payload = {
-    iss: `https://securetoken.google.com/${PROJECT}`, aud: PROJECT, sub: "alice-uid", iat: now, auth_time: now, exp: now + 3600,
-    email: "alice@example.test", email_verified: true, name: "Alice", firebase: { sign_in_provider: "google.com" }, ...claims,
-  };
-  const head = b64({ alg: "RS256", kid: opts.kid ?? "test-kid", typ: "JWT" });
-  const body = b64(payload);
-  const sig = createSign("RSA-SHA256").update(`${head}.${body}`).sign(opts.key ?? privateKey).toString("base64url");
-  return `${head}.${body}.${sig}`;
-}
-
+const persist = newPersistDir();
 let w: Unstable_DevWorker;
-const api = (path: string, init: RequestInit & { token?: string } = {}) => {
-  const headers = new Headers(init.headers);
-  if (init.token) headers.set("authorization", `Bearer ${init.token}`);
-  if (init.body) headers.set("content-type", "application/json");
-  return w.fetch(`http://api.test/v1${path}`, { ...init, headers } as never) as unknown as Promise<Response>;
-};
+let api: ReturnType<typeof client>;
 const signIn = async (claims: Record<string, unknown> = {}) => {
   const r = await api("/auth/session", { method: "POST", body: JSON.stringify({ idToken: idToken(claims) }) });
   expect(r.status).toBe(200);
   return Session.parse(await r.json());
 };
+const d1 = (sql: string) => d1At(persist, sql);
 
 beforeAll(async () => {
-  execFileSync("npx", ["wrangler", "d1", "migrations", "apply", "hangcord-test", "--local", "--persist-to", persist, "-c", config], { stdio: "ignore", env: { ...process.env, CI: "1" } });
-  w = await unstable_dev(join(here, "entry.ts"), {
-    config,
-    persistTo: persist,
-    vars: { TEST_JWK: JSON.stringify(jwk), SESSION_SIGNING_KEY: `test-${randomUUID()}` },
-    logLevel: "none",
-    experimental: { disableExperimentalWarning: true },
-  });
+  migrate(persist);
+  w = await startApi(persist);
+  api = client(w);
 }, 120_000);
 afterAll(async () => { await w?.stop(); });
 
@@ -146,12 +112,6 @@ describe("preferences (MASTER_PLAN §7.1)", () => {
   });
 });
 
-/** Read the local D1 directly (what the storage-router will see). */
-function d1(sql: string): Array<Record<string, unknown>> {
-  const out = execFileSync("npx", ["wrangler", "d1", "execute", "hangcord-test", "--local", "--persist-to", persist, "-c", config, "--json", "--command", sql], { encoding: "utf8", env: { ...process.env, CI: "1" } });
-  return (JSON.parse(out) as Array<{ results: Array<Record<string, unknown>> }>)[0]!.results;
-}
-
 describe("hangouts, snapshot and + room", () => {
   it("creates a hangout with a starter category, room and lounge; owner sees everything", async () => {
     const s = await signIn({ sub: "owner-uid", name: "Owner" });
@@ -168,7 +128,9 @@ describe("hangouts, snapshot and + room", () => {
     const etag = snapRes.headers.get("etag");
     expect(etag).toBe(`"h:${h.id}:1"`);
     const snap = HangoutSnapshot.parse(await snapRes.json());
-    expect(snap.rooms.map((r) => [r.type, r.name])).toEqual([["category", "Hangout"], ["text", "general"], ["lounge", "Lounge"]]);
+    expect(snap.rooms.map((r) => `${r.type}:${r.name}`).sort()).toEqual(["category:Hangout", "lounge:Lounge", "text:general"]);
+    const cat = snap.rooms.find((r) => r.type === "category")!;
+    expect(snap.rooms.filter((r) => r.type !== "category").every((r) => r.categoryId === cat.id && r.syncWithCategory)).toBe(true);
     for (const bits of Object.values(snap.myPermissions)) expect(BigInt(bits) & BIT.MANAGE_ROOMS).toBe(BIT.MANAGE_ROOMS);
     expect((await api(`/hangouts/${h.id}/snapshot`, { token: s.session, headers: { "if-none-match": etag! } })).status).toBe(304);
   });
@@ -205,7 +167,7 @@ describe("hangouts, snapshot and + room", () => {
     const s = await signIn();
     expect((await api("/hangouts", { method: "POST", token: s.session, body: "{" })).status).toBe(400);
     expect((await api("/hangouts", { method: "POST", token: s.session, body: JSON.stringify({ name: "ok name", owner: "me" }) })).status).toBe(400);
-    expect((await w.fetch("http://api.test/v1/hangouts", { method: "POST", headers: { authorization: `Bearer ${s.session}`, "content-type": "text/plain" }, body: "x" } as never)).status).toBe(415);
+    expect((await w.fetch("http://local.test/v1/hangouts", { method: "POST", headers: { authorization: `Bearer ${s.session}`, "content-type": "text/plain" }, body: "x" } as never)).status).toBe(415);
     expect((await api("/hangouts", { method: "POST", token: s.session, body: JSON.stringify({ name: "x".repeat(70_000) }) })).status).toBe(413);
   });
 });

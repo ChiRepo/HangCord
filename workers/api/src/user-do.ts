@@ -1,7 +1,7 @@
 // UserDO — one per user (idFromName(uid)). Holds refresh-token HASHES only (Cloudflare-only sensitive
 // state, docs/SECRETS_AND_SENSITIVE_DATA.md). Single-threaded, so two refreshes can't both win.
 import { DurableObject } from "cloudflare:workers";
-import { REFRESH_TTL_MS, sha256 } from "./auth/session";
+import { REFRESH_TTL_MS, sha256 } from "@hangcord/server";
 
 interface RefreshRecord { hash: string; exp: number; prevHash: string | null }
 

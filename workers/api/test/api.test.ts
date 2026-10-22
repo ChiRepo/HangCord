@@ -1,7 +1,7 @@
 import { describe, expect, it, vi } from "vitest";
 import { withConfigGate } from "@hangcord/worker-kit";
 import { REQUIRED_SECRETS, makeApp, type Env } from "../src/app";
-import { parseRefreshToken, signSession, verifySession } from "../src/auth/session";
+import { parseRefreshToken, signSession, verifySession } from "@hangcord/server";
 
 const gate = withConfigGate<Env>("api", REQUIRED_SECRETS, makeApp({ keys: async () => null }));
 const env = (extra: Partial<Env> = {}) => ({ DB: {} as D1Database, USERS: {} as Env["USERS"], ...extra }) as Env;
