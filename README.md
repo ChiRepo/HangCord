@@ -6,6 +6,7 @@
 
 > HangCord is in early development. Expect slow loading at times, bugs and glitches while we build.
 
+- **New here (human or AI)? Start with [`Handoff documentation/handoff.md`](Handoff%20documentation/handoff.md)**
 - Plan and architecture: [`docs/MASTER_PLAN.md`](docs/MASTER_PLAN.md)
 - Rules for AI agents: [`AGENTS.md`](AGENTS.md)
 - Access, roles and settings spec: [`docs/ACCESS_AND_SETTINGS.md`](docs/ACCESS_AND_SETTINGS.md)

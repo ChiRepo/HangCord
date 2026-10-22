@@ -4,7 +4,7 @@
 
 ## 1. Start of every session
 1. Read `private and only to be accessed once which is before starting work on a project or unless user specifies and AI halucinated from its task/rules.md` **once**, before you start work. Re-read it only if the owner tells you to, or if you notice you've drifted from your task or made something up. It is private: never copy it anywhere.
-2. Read this file and `docs/MASTER_PLAN.md` (especially §5 diagrams and §6 contract).
+2. Read this file, then `Handoff documentation/` (start with `handoff.md`: where things stand, what's next, the owner's preferences, data schemas, workflow diagrams), then `docs/MASTER_PLAN.md` (especially §5 diagrams and §6 contract). Keep that folder current when your work changes what it says.
 3. Run `npm ci` then `npm run checkpoint` to see the current baseline before changing anything (see §6a).
 4. Do **not** open the private folder (see §2) unless the user says so in this conversation.
 5. **GitHub first:** the repo is **`ChiRepo/HangCord`** (GitHub). Branches: **`main` = the real application** (desktop app + everything it shares), **`WebApp` = the web companion** (browser version, its hosting and phone tests; never merged into `main` wholesale — shared fixes are ported, merged into `main` when ready). Commit and push **only when the owner asks** (the owner or ChatGPT may also push). Before any new work starts, every change already made must be pushed; if it can't be, stop and tell the owner. Never push either private folder, `.dev.vars*`, `.env*` or keys — run gitleaks first.
