@@ -74,7 +74,7 @@ sequenceDiagram
 ```
 **Rule:** the cache only makes things fast. Every action is checked again on the server with `computePermissions()`.
 
-## 3. Signing in (checkpoint 2.2; confirm the Firebase-config choice with the owner)
+## 3. Signing in (checkpoint 2.2; Firebase configuration stays in Cloudflare)
 ```mermaid
 sequenceDiagram
   participant A as Desktop app
@@ -87,7 +87,7 @@ sequenceDiagram
     A->>W: POST /auth/google/exchange {code, verifier}
     W->>F: exchange (client secret stays in Workers secrets)
   else Email + password
-    A->>W: credentials (TLS) — or the app signs in with Firebase directly
+    A->>W: credentials (TLS; Firebase configuration stays in the Worker)
     W->>F: Identity Toolkit REST (key from Workers config)
   end
   F-->>W: Firebase ID token
@@ -96,20 +96,27 @@ sequenceDiagram
   A->>A: keep both in the OS keychain
 ```
 
-## 4. Sending a message (checkpoint 2.1)
+## 4. Sending a message (checkpoint 2.1, locally verified)
+Desktop integration and its optimistic outbox belong to checkpoint 2.2. This server path is working in local integration tests:
+
 ```mermaid
 sequenceDiagram
-  participant C as App
-  participant H as HangoutDO / RoomDO
-  participant D as D1 (through the journal)
-  C->>C: outbox + show instantly
-  C->>H: MESSAGE_CREATE {roomId, content, nonce}
-  H->>H: VIEW_ROOM + SEND_MESSAGES? nonce seen? rate limit?
-  H->>H: encrypt body with the room key, store in DO SQLite
-  H-->>C: MESSAGE_ACK {nonce, messageId}
-  H-->>C: MESSAGE_CREATE to every member who can see the room
-  H->>D: journal row + ciphertext row (background — delivery never waits)
+  participant C as Client
+  participant R as RoomDO
+  participant H as HangoutDO key custodian
+  participant D as D1
+  C->>R: IDENTIFY then MESSAGE_CREATE {roomId, content, nonce}
+  R->>R: Active session, current permissions, nonce and rate checks
+  R->>H: Seal message (fresh permissions checked again)
+  H-->>R: Ciphertext + epoch (no key)
+  R->>R: Atomically store encrypted message, journal, outbox and sequence
+  R-->>C: MESSAGE_CREATE to each currently authorized socket
+  R-->>C: MESSAGE_ACK {nonce, ok:true, messageId, seq}
+  R->>D: Background journal + ciphertext write
+  D-->>R: Read back persisted ciphertext
+  R->>R: Remove confirmed local journal and outbox entry
 ```
+An alarm retries failed D1 writes; the local journal remains until read-back succeeds. REST fallback send and history use the same RoomDO. Successful nonce retries return the original message and sequence. This is not yet encrypted CSV sealing or tier failover.
 
 ## 5. Storage when a free quota runs out (MASTER_PLAN §8.3)
 ```mermaid

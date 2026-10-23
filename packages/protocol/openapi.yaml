@@ -190,6 +190,35 @@ components:
         icon: { type: [string, "null"] }
         ownerId: { type: string }
         version: { type: integer }
+    Message:
+      type: object
+      description: detailed (cp-002.1); message content is plaintext only for ordinary room messages
+      required: [id, roomId, hangoutId, authorId, content, createdAt, editedAt]
+      properties:
+        id: { $ref: "#/components/schemas/Id" }
+        roomId: { $ref: "#/components/schemas/Id" }
+        hangoutId: { $ref: "#/components/schemas/Id" }
+        authorId: { type: string }
+        content: { type: string, maxLength: 4000 }
+        createdAt: { type: integer, description: Unix ms }
+        editedAt: { type: [integer, "null"], description: Unix ms }
+    SendMessageRequest:
+      type: object
+      additionalProperties: false
+      description: Same idempotent send contract for WebSocket and REST fallback
+      required: [content, nonce]
+      properties:
+        content: { type: string, minLength: 1, maxLength: 4000, pattern: "\\S" }
+        nonce: { type: string, minLength: 8, maxLength: 64, pattern: "^[A-Za-z0-9_-]+$", description: Client-chosen retry key }
+    MessagesPage:
+      type: object
+      required: [messages, hasMore]
+      properties:
+        messages: { type: array, items: { $ref: "#/components/schemas/Message" } }
+        hasMore: { type: boolean }
+    Id:
+      type: string
+      pattern: "^[a-z0-9_-]{1,64}$"
     HangoutSnapshot:
       type: object
       description: detailed (cp-001) — cacheable hangout bundle, MASTER_PLAN §7.1
@@ -252,10 +281,16 @@ paths:
     get:
       operationId: openGateway
       security: []
-      x-hangcord-phase: 0
-      summary: "WebSocket upgrade for the gateway (frames: src/gateway-events.ts). Phase 0: HELLO + HEARTBEAT only."
+      x-hangcord-phase: 1
+      summary: "One WebSocket per Room: /v1/gateway?room=<roomId>; room routed to its RoomDO master"
+      description: "Authenticate with IDENTIFY after HELLO. IDENTIFY carries cache versions. READY provides full snapshots to ordinary members even when version is unchanged, because timed access can change; owners may receive unchanged. RESUME is listed for future compatibility and is not implemented in cp-002.1."
+      parameters:
+        - { name: room, in: query, required: true, schema: { $ref: "#/components/schemas/Id" } }
       responses:
         "101": { description: Switching Protocols }
+        "400": { description: "bad_room or unknown query parameter", content: { application/json: { schema: { $ref: "#/components/schemas/Error" } } } }
+        "401": { $ref: "#/components/responses/Error" }
+        "403": { $ref: "#/components/responses/Error" }
         "426": { $ref: "#/components/responses/Error" }
 
   # ---- Auth (MASTER_PLAN §6.1) ----
@@ -428,8 +463,33 @@ paths:
 
   # ---- Messages ----
   /rooms/{id}/messages:
-    get: { operationId: listMessages, x-hangcord-phase: 1, parameters: [{ $ref: "#/components/parameters/RoomId" }], responses: { "200": { $ref: "#/components/responses/Ok" } } }
-    post: { operationId: sendMessageFallback, x-hangcord-phase: 1, summary: "Fallback send when the WebSocket is down", parameters: [{ $ref: "#/components/parameters/RoomId" }], responses: { "201": { $ref: "#/components/responses/Ok" } } }
+    get:
+      operationId: listMessages
+      x-hangcord-phase: 1
+      summary: "History page; at most one of before or after may be supplied; unknown query keys are rejected"
+      parameters:
+        - { $ref: "#/components/parameters/RoomId" }
+        - { name: before, in: query, required: false, schema: { type: string }, description: "Message ID cursor, exclusive" }
+        - { name: after, in: query, required: false, schema: { type: string }, description: "Message ID cursor, exclusive" }
+        - { name: limit, in: query, required: false, schema: { type: integer, minimum: 1, maximum: 100, default: 50 } }
+      responses:
+        "200": { description: History page, content: { application/json: { schema: { $ref: "#/components/schemas/MessagesPage" } } } }
+        "400": { description: "bad_cursor (malformed, unknown, or another room's cursor)", content: { application/json: { schema: { $ref: "#/components/schemas/Error" } } } }
+        "403": { $ref: "#/components/responses/Error" }
+        "404": { $ref: "#/components/responses/Error" }
+    post:
+      operationId: sendMessageFallback
+      x-hangcord-phase: 1
+      summary: "Fallback send; same nonce idempotency and rate guard as WebSocket"
+      parameters: [{ $ref: "#/components/parameters/RoomId" }]
+      requestBody: { required: true, content: { application/json: { schema: { $ref: "#/components/schemas/SendMessageRequest" } } } }
+      responses:
+        "200": { description: Idempotent retry, content: { application/json: { schema: { $ref: "#/components/schemas/Message" } } } }
+        "201": { description: Created, content: { application/json: { schema: { $ref: "#/components/schemas/Message" } } } }
+        "400": { $ref: "#/components/responses/Error" }
+        "403": { $ref: "#/components/responses/Error" }
+        "409": { description: "nonce_conflict: same nonce was already used with different content", content: { application/json: { schema: { $ref: "#/components/schemas/Error" } } } }
+        "429": { description: "rate_limited or slowmode; 5 message attempts per 5 seconds per user per room, with room slowmode enforced separately", content: { application/json: { schema: { $ref: "#/components/schemas/Error" } } } }
   /messages/{id}:
     patch: { operationId: editMessage, x-hangcord-phase: 1, parameters: [{ name: id, in: path, required: true, schema: { type: string } }], responses: { "200": { $ref: "#/components/responses/Ok" } } }
     delete: { operationId: deleteMessage, x-hangcord-phase: 1, parameters: [{ name: id, in: path, required: true, schema: { type: string } }], responses: { "204": { description: Deleted } } }
@@ -446,7 +506,7 @@ paths:
     get: { operationId: getInvite, security: [], x-hangcord-phase: 1, parameters: [{ name: code, in: path, required: true, schema: { type: string } }], responses: { "200": { $ref: "#/components/responses/Ok" } } }
     post: { operationId: acceptInvite, x-hangcord-phase: 1, parameters: [{ name: code, in: path, required: true, schema: { type: string } }], responses: { "200": { $ref: "#/components/responses/Ok" } } }
   /voice/token:
-    post: { operationId: getVoiceToken, x-hangcord-phase: 2, summary: "LiveKit token (10 min) + TURN credentials", responses: { "200": { $ref: "#/components/responses/Ok" } } }
+    post: { operationId: getVoiceToken, x-hangcord-phase: 1, summary: "LiveKit token (10 min) + TURN credentials", responses: { "200": { $ref: "#/components/responses/Ok" } } }
 
   # ---- Originals ----
   /translate:

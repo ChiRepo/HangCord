@@ -68,6 +68,8 @@ Local development: `.dev.vars` next to each Worker's Wrangler config, git-ignore
 | Unwrapped hangout key | `HangoutDO` **memory only** | non-extractable `CryptoKey` objects (raw bytes zeroed right after import) | ≤ 10 min, never persisted. Exact decryption procedure: ACCESS_AND_SETTINGS §10.6 |
 | Pending sign-up profile (name chosen before verification) | `VerificationDO` | display name only | deleted with the code |
 
+**Checkpoint 2.1 implementation status:** HangoutDO alone handles key material. RoomDO receives only ciphertext/epoch or authorized message plaintext through internal RPC. Wrapped bootstrap state survives a failed D1 write and retries the same key. Source 1 (DO) and source 2 (D1 backup) recovery are implemented; source 3 member-vault recovery, rotation, reference-count maintenance and key deletion are still planned. Missing keys fail closed. No new secret names are introduced. Gateway checks session activity through the API UserDO binding.
+
 **CSV snapshots** (MASTER_PLAN §8.3) may temporarily carry rows from this table between the databases (D1, Firestore, and — only if both fail — the Firestore backup and Backup DB #2) when a database's writes run out — only in the same locked form (wrapped key copies, MACs, encrypted message bodies, hashes). A snapshot never contains a plain secret, plain code, plain key or KEK.
 
 Everything in this table stays on Cloudflare **except the members' locked key copies**, which the owner asked to keep in each user's private vault folder in Firestore. Firestore never holds a usable secret: those copies can only be unlocked with the KEK, which exists only in the gateway Worker's Workers Secrets. Firestore otherwise keeps only spilled message rows whose bodies are already encrypted.

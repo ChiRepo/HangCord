@@ -140,6 +140,29 @@ export const Session = z.object({
 });
 export type Session = z.infer<typeof Session>;
 
+// ---- Messages — detailed since cp-002.1 ----
+export const MAX_MESSAGE_CHARS = 4000;
+export const Message = z.object({
+  id: Id,
+  roomId: Id,
+  hangoutId: Id,
+  authorId: z.string(),
+  content: z.string().max(MAX_MESSAGE_CHARS),
+  createdAt: z.number().int(),
+  editedAt: z.number().int().nullable(),
+});
+export type Message = z.infer<typeof Message>;
+
+export const SendMessageRequest = z.object({
+  content: z.string().max(MAX_MESSAGE_CHARS).refine((s) => s.trim().length > 0, "empty"),
+  /** Client-chosen id so a retry never posts twice. */
+  nonce: z.string().regex(/^[A-Za-z0-9_-]{8,64}$/),
+}).strict();
+export type SendMessageRequest = z.infer<typeof SendMessageRequest>;
+
+export const MessagesPage = z.object({ messages: z.array(Message), hasMore: z.boolean() });
+export type MessagesPage = z.infer<typeof MessagesPage>;
+
 // ---- Hangouts — detailed since cp-002 ----
 export const CreateHangoutRequest = z.object({ name: z.string().trim().min(2).max(100) }).strict();
 export type CreateHangoutRequest = z.infer<typeof CreateHangoutRequest>;
@@ -152,4 +175,5 @@ export const DETAILED_SCHEMAS = [
   "Error", "Health", "RoomType", "GuidelinesChoice", "NewRoomGuidelinesPreference", "Override",
   "RoomDefaults", "Room", "CreateRoomRequest", "Preferences", "PreferencesPatch", "HangoutSnapshot",
   "SessionRequest", "RefreshRequest", "User", "Session", "CreateHangoutRequest", "HangoutSummary",
+  "Message", "SendMessageRequest", "MessagesPage",
 ] as const;

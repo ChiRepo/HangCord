@@ -29,3 +29,8 @@ class_name = "UserDO"
 [[migrations]]
 tag = "v1"
 new_sqlite_classes = ["UserDO"]
+
+# Message REST routes delegate to the same RoomDO path as the gateway.
+[[services]]
+binding = "GATEWAY"
+service = "hangcord-gateway"

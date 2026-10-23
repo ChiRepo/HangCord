@@ -19,3 +19,7 @@ class_name = "UserDO"
 [[migrations]]
 tag = "v1"
 new_sqlite_classes = ["UserDO"]
+
+[[services]]
+binding = "GATEWAY"
+service = "hangcord-gateway-test"

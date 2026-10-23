@@ -11,7 +11,8 @@
   },
   "dependencies": {
     "@hangcord/protocol": "*",
-    "@hangcord/worker-kit": "*"
+    "@hangcord/worker-kit": "*",
+    "@hangcord/server": "*"
   },
   "devDependencies": {
     "@cloudflare/workers-types": "5.20261021.1",

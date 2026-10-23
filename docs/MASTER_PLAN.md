@@ -303,8 +303,8 @@ The canonical contract lives in `packages/protocol/openapi.yaml` and `packages/p
 | `GET/POST /hangouts/:id/rooms`, `PATCH /rooms/:id` | Rooms/Lounges/Boards; create takes `categoryId` + `guidelines: "category" \| "own"` (ACCESS_AND_SETTINGS §7.1) |
 | `GET /hangouts/:id/snapshot` | Cacheable hangout bundle (hangout, categories + rooms tree, roles, my member record, my permission bits per room, emoji) with `ETag: "h:<id>:<version>"`; `If-None-Match` may return 304 for owners; other members receive a freshly filtered 200 for time-dependent access (§7.1) |
 | `GET/POST /hangouts/:id/roles`, `PUT/DELETE /rooms/:id/overrides/:type/:targetId` | Permissions — full list in ACCESS_AND_SETTINGS §14 |
-| `GET /rooms/:id/messages?before=&after=&limit=` | History (router decides tier) |
-| `POST /rooms/:id/messages` | Fallback send when WebSocket is down |
+| `GET /rooms/:id/messages?before=&after=&limit=` | History; at most one exclusive message-ID cursor (`before` or `after`), limit 1–100 (default 50); malformed, unknown, or cross-room cursor is `400 bad_cursor`; unknown query keys are rejected |
+| `POST /rooms/:id/messages` | Fallback send when WebSocket is down; same nonce idempotency and rate guard as gateway |
 | `PATCH/DELETE /messages/:id`, `PUT/DELETE /messages/:id/reactions/:emoji` | Edit/delete/react |
 | `POST /attachments/presign` | Short-lived upload URL |
 | `GET /attachments/:id` | Signed download URL (may return `202 restoring` for cold items) |
@@ -317,7 +317,9 @@ The canonical contract lives in `packages/protocol/openapi.yaml` and `packages/p
 | `POST /reports` | Safety |
 | `GET /flags` | Feature flags |
 
-**Gateway (WSS)** ops: `HELLO`, `IDENTIFY` (carries `cache: {prefsVersion, hangouts: {id: version}}`), `READY` (sends only what changed since those versions, §7.1), `HANGOUT_UPDATE`, `ROOM_CREATE/UPDATE/DELETE`, `PREFERENCES_UPDATE`, `HEARTBEAT`/`HEARTBEAT_ACK`, `RESUME`, `MESSAGE_CREATE/UPDATE/DELETE`, `MESSAGE_ACK`, `REACTION_ADD/REMOVE`, `TYPING_START`, `PRESENCE_UPDATE`, `READ_STATE`, `VOICE_STATE`, `TOGETHER_STATE`, `BOARD_UPDATE` (Yjs binary), `NOTIFY`, `MLS_COMMIT`, `SYSTEM_NOTICE` (e.g. "HangCord is busy").
+**Gateway (WSS)** uses one socket per room: `GET /v1/gateway?room=<roomId>`, routed to that room's `RoomDO` master. After `HELLO`, client sends `IDENTIFY` (session token, client, and `cache: {prefsVersion, hangouts: {id: version}}`). `READY` gives ordinary members a full snapshot even if their cached version matches, because timed access can change without a version bump; owners may receive `unchanged`. `RESUME` remains listed for compatibility but is not implemented in cp-002.1. Ops: `HELLO`, `IDENTIFY`, `READY`, `HANGOUT_UPDATE`, `ROOM_CREATE/UPDATE/DELETE`, `PREFERENCES_UPDATE`, `HEARTBEAT`/`HEARTBEAT_ACK`, `RESUME`, `MESSAGE_CREATE/UPDATE/DELETE`, `MESSAGE_ACK`, `REACTION_ADD/REMOVE`, `TYPING_START`, `PRESENCE_UPDATE`, `READ_STATE`, `VOICE_STATE`, `TOGETHER_STATE`, `BOARD_UPDATE` (Yjs binary), `NOTIFY`, `MLS_COMMIT`, `SYSTEM_NOTICE` (e.g. "HangCord is busy").
+
+Room messages carry a monotonically increasing per-room `seq`; successful `MESSAGE_ACK` includes it; a refusal carries `{nonce, ok:false, error}` without a sequence. `MESSAGE_CREATE` requires `d.roomId` (cache-safe ID), nonblank `content` up to 4000 characters, and client `nonce` of 8–64 characters. Repeating a nonce with identical content returns the original result and creates no second message; reusing it with different content returns `409 nonce_conflict`. The retained historical rate guard is 5 newly accepted messages per user per room per 5 seconds; configured room slowmode is enforced separately. This is a protocol guard, not a tier entitlement.
 
 ### 6.1 Authentication (Firebase Authentication)
 

@@ -34,14 +34,16 @@ Work top to bottom. Items marked **Owner** need the owner's accounts or decision
 ## 2. Authorized checkpoint 2 implementation
 The owner authorized resuming the checkpoints after the intentional revert. Selectively reuse and harden the historical server code; do not revert the entire revert commit. Firebase configuration stays in Cloudflare, and realtime must follow the master plan's RoomDO-per-room layout.
 
-**Current state:** the server-core slice is implemented locally and reviewed. The owner authorized commit, tag and push of `cp-002`, then continuation to checkpoint 2.1, on 2026-10-23. Verify the push succeeded before starting that slice. Deployment also needs the owner's real D1 binding and Workers Secrets; the checked-in D1 ID is a placeholder, not a usable cloud database.
+**Current state:** server core is committed, tagged and pushed as `cp-002` (`7db1efa`). [GitHub CI run 39882589960](https://github.com/ChiRepo/HangCord/actions/runs/39882589960) passed. Realtime is implemented and tested locally, awaiting publication. Obtain the owner's publication instruction for this concrete slice before starting 2.2. Deployment needs real D1 bindings and Workers Secrets; checked-in D1 IDs are placeholders.
 
-For the current API, the owner sets `SESSION_SIGNING_KEY` and `FIREBASE_PROJECT_ID` as Workers Secrets, then applies both API D1 migrations. The Firebase web API key and desktop OAuth flow belong to checkpoint 2.2; no Firebase configuration enters the desktop bundle. Synthetic `hangcord-test` configuration exists only in the local integration harness.
+For the current API, the owner sets `SESSION_SIGNING_KEY` and `FIREBASE_PROJECT_ID` as Workers Secrets, then applies all three API D1 migrations. The gateway needs the same `SESSION_SIGNING_KEY`, its own `HANGCORD_KEK_V1`, and the same D1 binding. Its `USERS` binding points to the API UserDO; the API `GATEWAY` service binding points back to the gateway. Coordinate both deployments after provisioning, and verify those bindings before exposing traffic. The Firebase web API key and desktop OAuth flow belong to checkpoint 2.2; no Firebase configuration enters the desktop bundle. Synthetic `hangcord-test` configuration exists only in the local integration harness.
 
 Before any deployment to a namespace that ran the historical server core, plan invalidation/deletion of legacy `rt:*` UserDO records. The new SQL family storage does not migrate those records; users must sign in again.
-Then build checkpoint 2 in four parts, each tested, reviewed, documented and pushed to `main` before the next one starts:
-- **2: server core.** Sessions with refresh-token rotation and reuse detection; `/me`; preferences with ETag / If-Match; hangouts and their snapshot; **+ room**; the D1 schema; journaled writes.
-- **2.1: realtime.** Gateway IDENTIFY / READY with cache versions, live messages with ACK and broadcast to members who can see the room, a nonce de-dupe, rate limits, REST history and fallback send, and message bodies encrypted at rest.
+The gateway migration is a fresh-namespace `v1` containing RoomDO and HangoutDO. If a historical gateway was deployed, inspect its migration history first and create an explicit compatible migration; do not overwrite an applied `v1`. Key rotation, reference counts, member-vault recovery, CSV failover and hot-history pruning remain later work.
+
+Complete checkpoint 2 in four parts, each tested, reviewed, documented and pushed to `main` before the next one starts:
+- **2: server core — pushed.** Sessions with refresh-token rotation and reuse detection; `/me`; preferences with ETag / If-Match; hangouts and their snapshot; **+ room**; the D1 schema; journaled writes.
+- **2.1: realtime — locally verified, publication pending.** Gateway IDENTIFY / READY with cache versions, live messages with ACK and broadcast to members who can see the room, a nonce de-dupe, rate limits, REST history and fallback send, and message bodies encrypted at rest.
 - **2.2: the desktop app goes live.**
   - Google sign-in through the system browser (PKCE + a loopback redirect in Rust), and email + password.
   - The session and refresh token kept in the OS keychain.

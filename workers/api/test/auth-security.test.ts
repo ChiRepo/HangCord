@@ -1,6 +1,6 @@
 import { afterEach, beforeAll, describe, expect, it, vi } from "vitest";
 import { googleKeySource, verifyFirebaseIdToken } from "../src/auth/firebase";
-import { b64url, formatRefreshToken, parseRefreshToken, randomToken, SESSION_TTL_MS, signSession, verifySession } from "../src/auth/session";
+import { b64url, formatRefreshToken, parseRefreshToken, randomToken, SESSION_TTL_MS, signSession, verifySession } from "@hangcord/server";
 
 const enc = new TextEncoder();
 const now = 1_800_000_000;

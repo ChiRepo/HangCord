@@ -112,9 +112,9 @@ The history of the work, oldest first. Each entry says what was done, why, and w
 - **The owner then asked to revert to checkpoint 1.1** while keeping the CI fixes. That's commit `f036237`, a revert commit with no force-push. The code is recoverable with `git revert f036237`, or by cherry-picking parts of `b65d0d2` / `7b97ac0`.
 
 
-## 7. Checkpoint 2 server-core candidate (2026-10-23, local only)
+## 7. Checkpoint 2 server core (2026-10-23, pushed)
 
-The owner authorized continuing checkpoints. The implementation selectively reuses the old server core and keeps Firebase configuration in Cloudflare. Realtime remains future work using RoomDO per room. This section records local validation before publication. On 2026-10-23 the owner authorized committing/tagging/pushing this server-core slice and continuing checkpoint 2.1. Deployment remains pending.
+The owner authorized publication. Commit `7db1efa366d1c01d870031b21029cd46e582782d` and annotated tag `cp-002` were pushed atomically to `main`. [GitHub CI run 39882589960](https://github.com/ChiRepo/HangCord/actions/runs/39882589960) passed. The implementation selectively reuses and hardens the historical server core; Firebase configuration stays in Cloudflare. Deployment remains pending.
 
 Implemented:
 - Contract schemas and REST handlers for sessions, refresh, logout, `/me`, preferences, hangouts, snapshots and room creation.
@@ -138,3 +138,23 @@ Validation:
 - The graph refresh command now disables Graphify's automatic global skill rewriting. The tool's incidental skill updates were restored from its backups. Temporary agent worktrees, patches and scan copies were removed; no duplicate project or handoff files remain.
 
 Deployment limits: the D1 binding is still a placeholder; the owner provisions real secrets and database configuration. D1 journal rows are atomic write-ahead records only. Encrypted CSV sealing, tier failover and daily exports remain unimplemented and must not be represented as working. Historical KV refresh sessions are not migrated; deploying over an old namespace requires explicit cleanup and re-sign-in.
+
+
+## 8. Checkpoint 2.1 realtime candidate (2026-10-23, local only)
+
+Implemented:
+- RoomDO per room with hibernating sockets, IDENTIFY/READY, heartbeat, durable message sequences, ACKs, current per-recipient permission/session checks and REST history/fallback send. The API forwards message REST calls through its gateway service binding.
+- Durable nonce deduplication, conflicting-content rejection, five accepted messages per user/room per five seconds, inherited slowmode, atomic local encrypted-message journal/outbox and idempotent D1 retry after read-back.
+- HangoutDO key custody with the exact §10.6 derivation/AAD/envelope formats, bounded non-extractable key cache, DO-to-D1 recovery and restart-safe first-key bootstrap. Raw keys never leave the key custodian.
+- Shared data, journal and session helpers moved from the API into `packages/server`, avoiding separate gateway copies. Crypto helpers and independent Node crypto fixtures live there too.
+- Migration `0003_messages.sql`, strict protocol schemas and updated wire/storage contracts. Historical realtime code was reviewed selectively; its HangoutDO socket layout and incompatible crypto format were not restored.
+
+Validation:
+- `npm run test:js`: **196 passed, 0 failed**. Includes 45 API tests, 44 protocol tests, 3 crypto fixture tests and 19 gateway tests. Gateway integration uses real local Workers, cross-worker bindings, shared D1 and generated test credentials.
+- Gateway tests cover live room broadcasts, cache versions, forbidden rooms, forged identity headers, logout, expiry, membership revocation, concurrent nonce retries, slowmode, cursor validation, API forwarding, D1 write failure/retry, process restart and interrupted key bootstrap.
+- `npm run typecheck:js`, `npm run lint`, `npm run build`, `npm run check:secrets-names` and `git diff --check`: passed. Build output: main JS 345.06 kB / 105.56 kB gzip. No desktop source changed; prior Rust/UI checks remain baseline evidence, not newly rerun tests.
+- A stale ACK failure fixture was corrected to `{nonce, ok:false, error}`. The process-restart test initially exceeded its 30-second limit; its lifecycle budget is now 120 seconds. The full gateway rerun passed all 19 tests in 31.75 seconds.
+- Graph refresh and freshness check passed with pinned Graphify 0.9.93. The optional SQL parser is absent; all three migrations were exercised directly by integration tests. Gitleaks scanned versioned/unignored source with paths preserved: **no leaks found**. Ignored build artifacts and private folders were excluded; no scanner rules were weakened.
+- Independent read-only review completed with no actionable findings in the scoped session, permission, journal, nonce and crypto paths. The final regression additions also passed.
+
+Not implemented or claimed: desktop live sign-in/chat, RESUME, edit/delete/reaction events, key rotation/reference counts/member-vault recovery, encrypted CSV snapshots, failover, daily backups, or pruning the retained RoomDO history. The serialized room work queue is not yet admission-bounded; retries currently use a fixed five-second interval. Deployment and load/resource testing remain pending. The gateway config targets fresh namespaces; an existing historical deployment needs a migration plan first.

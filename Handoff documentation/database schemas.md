@@ -51,7 +51,7 @@ Unsent messages are kept locally until their `MESSAGE_ACK` arrives (MASTER_PLAN 
 
 ## 2. Cloudflare D1: the main database
 
-### 🔧 `0001_init.sql` + `0002_verified_user_facts.sql` (checkpoint 2)
+### ✅ `0001_init.sql` + `0002_verified_user_facts.sql` (checkpoint 2)
 ```sql
 CREATE TABLE users (id TEXT PRIMARY KEY, display_name TEXT NOT NULL, email TEXT, avatar_url TEXT,
   provider TEXT NOT NULL /* google.com | password */, created_at INTEGER NOT NULL, updated_at INTEGER NOT NULL);
@@ -90,19 +90,14 @@ CREATE TABLE journal (seq INTEGER PRIMARY KEY AUTOINCREMENT, at INTEGER NOT NULL
 
 Preference writes guard both the journal row and data mutation with the expected version. Room-creation batches share the loaded hangout version and permission version, advance the version last, and return 409 on a competing change. Every future access mutator must advance both versions atomically. Failed guards leave no phantom journal entries.
 
-### 🧪 Historical `0002_messages.sql` (checkpoint 2.1; not currently restored)
-The future messages migration needs the next free migration number; `0002` is now the gate-facts migration.
-```sql
-CREATE TABLE messages (id TEXT PRIMARY KEY, hangout_id TEXT NOT NULL, room_id TEXT NOT NULL, author_id TEXT NOT NULL,
-  body_enc TEXT NOT NULL /* v1.<iv>.<ciphertext>, AAD = hangoutId|roomId|messageId|epoch */, epoch INTEGER NOT NULL,
-  created_at INTEGER NOT NULL, edited_at INTEGER, deleted_at INTEGER);
-CREATE INDEX messages_by_room ON messages(room_id, created_at);
+### 🔧 `0003_messages.sql` (checkpoint 2.1 candidate)
+The complete migration is `workers/api/migrations/0003_messages.sql`; `0002` remains the gate-facts migration.
 
-CREATE TABLE hangout_keys (hangout_id TEXT NOT NULL, epoch INTEGER NOT NULL, kek_version INTEGER NOT NULL,
-  wrapped_key TEXT NOT NULL /* AES-GCM(HSK) under HANGCORD_KEK_V<n>, AAD = hangoutId|epoch|kekVersion */,
-  iv TEXT NOT NULL, fingerprint TEXT NOT NULL, created_at INTEGER NOT NULL, retired_at INTEGER,
-  PRIMARY KEY (hangout_id, epoch));
-```
+- `messages(id, hangout_id, room_id, author_id, body_enc, epoch, created_at, edited_at, nonce, seq, deleted_at)` has unique `(room_id, author_id, nonce)` and `(room_id, seq)` indexes, plus `(room_id, created_at, id)` for history.
+- `body_enc` is JSON `{v:1,epoch,iv,ct}` with AAD `hangoutId|roomId|messageId|epoch`.
+- `hangout_keys(hangout_id, epoch, kek_version, wrapped_key, iv, fingerprint, created_at, retired_at)` has primary key `(hangout_id, epoch)`. It holds the wrapped backup, never plaintext.
+- Wrap derivation: HKDF-SHA256 salt `hangcord`, info `hangcord/kek-wrap/v1`; wrap AAD `hangoutId|epoch|kekVersion`. Room derivation: salt `roomId`, info `hangcord/room-data/v1`. Fingerprint is the first 8 SHA-256 bytes as 16 lowercase hex characters.
+- Both tables enter the existing D1 journal. Daily export registration and encryption belong to the unfinished StorageRouter/export implementation; no daily export is working yet.
 
 ### 📐 Still to add (ACCESS_AND_SETTINGS §12–13, MASTER_PLAN §8.3)
 ```
@@ -136,8 +131,9 @@ service cloud.firestore { match /databases/{database}/documents { match /{docume
 ## 6. Durable Object storage (Cloudflare-only sensitive state)
 | Object | Holds | Status |
 |---|---|---|
-| `UserDO` (api) | SQLite `refresh_families(sid, hash, exp)` and `refresh_used(sid, hash)`. Atomic single-use rotation; any consumed-token replay revokes the family. A fixed 30-day deadline and alarms remove expired families and hashes. API access checks `isActive` on every protected request. No raw tokens or CSV export of hashes | 🔧 |
-| `HangoutDO` (gateway) | `hangoutId`, `seq`, `key:<epoch>` (a wrapped key copy), and a SQLite `messages(id, room_id, author_id, body_enc, epoch, created_at, edited_at, nonce, UNIQUE(author_id, nonce))` table as the hot live window | 🧪 |
+| `UserDO` (api) | SQLite `refresh_families(sid, hash, exp)` and `refresh_used(sid, hash)`. Atomic single-use rotation; any consumed-token replay revokes the family. A fixed 30-day deadline and alarms remove expired families and hashes. API access checks `isActive` on every protected request. No raw tokens or CSV export of hashes | ✅ |
+| `HangoutDO` (gateway) | Key custody only: `hangoutId`, `initialized`, `key:<epoch>` wrapped records and `bootstrap:key` for retrying an interrupted first write. No sockets or message history. At most 8 non-extractable cached epoch keys, expiring after 10 minutes | 🔧 |
+| `RoomDO` (gateway) | Per-room SQLite identity, encrypted messages with unique `(author_id, nonce)` and `seq`, atomic journal and retry outbox. Hibernating socket attachments contain session identity/expiry, never tokens or keys. Hot history is currently retained without pruning | 🔧 |
 | `VerificationDO` (api) | one per `HMAC(pepper, email)`: `{codeHash, purpose, uid, expiresAt, attempts, sendsThisHour, hourStart, lastSentAt}`. An alarm deletes it at expiry | 📐 |
 | `RateLimitDO` | rate-limit counters | 📐 |
 | `StorageRouter` (storage-router) | the quota meter per database, the routing index (`committed@tier` / `saved@snapshot:{db}:{id}`), and the journal chunks waiting to be sealed | 📐 |

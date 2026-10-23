@@ -2,7 +2,7 @@
 
 > **To GPT-6 Astra, or whichever model picks this up next:** welcome to HangCord. You're joining a project that already has a working desktop app, a clean contract, real tests and an owner who knows exactly what they want. Your job is not to reinvent any of it. Build the next slice carefully, prove it works, and leave the project a little better than you found it. Go one step at a time, test everything, never guess, and say plainly when you're stuck. Careful, verified work is what makes an app feel effortless to the people who use it. You can do this.
 
-_Updated 2026-10-23 during the authorized checkpoint 2 implementation. This folder is for any AI agent or developer continuing the work._
+_Updated 2026-10-23 during the authorized checkpoint 2.1 implementation. This folder is for any AI agent or developer continuing the work._
 
 ## The six files in this folder
 
@@ -26,16 +26,16 @@ A free, privacy-respecting place to hang out with friends: hangouts with text ro
 - **It is a clean-room build:** no Discord code, names, logos, colours or sounds.
 - **HangCord's own words:** use Hangout, Room, Lounge, Spotlight, Board, Bulletin, Strand and Together. Never say "server" or "channel" in the UI.
 
-## Where things stand (2026-10-22)
+## Where things stand (2026-10-23)
 
 | Checkpoint | Tag / commit | Status |
 |---|---|---|
 | 1, foundation (`cp-001`) | tag `cp-001` → `f6b9ecc` | ✅ done |
 | 1.1, the real desktop app (`cp-001.1`) | tag `cp-001.1` → `6a478e3`, then CI/release fixes up to `c2bf87d` | ✅ done |
-| 2, server core (`cp-002`) | `b65d0d2` | ↩️ **built, then reverted at the owner's request** (`f036237`); recoverable |
-| 2.1, realtime (`cp-002.1`) | `7b97ac0` | ↩️ **built, then reverted** together with cp-002; recoverable |
+| 2, server core (`cp-002`) | `7db1efa` | Pushed and tagged; GitHub CI passed; not deployed |
+| 2.1, realtime (candidate) | Current working tree | Implemented and tested locally; not published or deployed |
 
-**Committed baseline:** `ce43b8b` contains checkpoint 1.1, CI/release fixes and this handoff. The working tree now contains a reviewed checkpoint 2 server-core candidate, selectively recovered and hardened. The owner authorized publishing it as `cp-002` on 2026-10-23. Deployment remains pending.
+**Committed baseline:** `7db1efa` selectively recovered and hardened the historical server core. The historical `b65d0d2` and `7b97ac0` implementations were intentionally reverted in `f036237`; they are history, not the current implementation. Checkpoint 2.1 uses RoomDO per room and HangoutDO solely for key custody.
 
 **What is verified:**
 - The desktop app builds and launches.
@@ -43,11 +43,11 @@ A free, privacy-respecting place to hang out with friends: hangouts with text ro
 - The automatic checks on GitHub (CI) pass on `main`.
 - A **draft release `v0.0.1`** has installers for macOS (`.dmg`), Windows (`.exe` / `.msi`) and Linux (`.deb` / AppImage). The owner publishes it.
 
-**The owner has authorized continuing checkpoints.** The chosen approach is selective reuse with review, Firebase configuration only in Cloudflare, and the master plan's RoomDO-per-room layout for upcoming realtime work. Do not repeat the restore/rebuild question. Publish the server-core slice before starting checkpoint 2.1; the owner has now authorized both publication and continuing the next step.
+**The owner has authorized continuing checkpoints.** The chosen approach is selective reuse with review, Firebase configuration only in Cloudflare, and the master plan's RoomDO-per-room layout. Do not repeat the restore/rebuild question. The approved server-core publication succeeded. Finish and publish the realtime slice with owner authorization before beginning checkpoint 2.2.
 
-**Current local verification:** JavaScript suites cover 177 tests (including 45 API tests); Rust has 20 passing tests. Desktop UI baseline: 31 passed and 8 expected viewport skips. The API tests use local workerd, D1 and UserDO with generated test signing keys. No live Firebase login, cloud deployment, new installer or native macOS UI verification is claimed. See the current validation record in `what changes were made.md`.
+**Current local verification:** all **196 JavaScript tests pass**, including 45 API tests, 19 gateway tests and independent crypto fixtures. Lint, JavaScript types, build and secret-name checks pass. The unchanged desktop baseline has 20 passing Rust tests and 31 passing UI checks with 8 expected viewport skips; these were not rerun for this server-only slice. No live Firebase login, cloud deployment, new installer or native macOS UI verification is claimed. See `what changes were made.md` for exact evidence.
 
-**Still absent:** realtime, desktop live sign-in/chat, email codes, encrypted CSV sealing, tier failover and daily exports. The current D1 write-ahead journal is the first storage layer, not the complete StorageRouter.
+**Still absent:** desktop live sign-in/chat, email codes, encrypted CSV sealing, tier failover and daily exports. Realtime is verified locally. The current D1 write-ahead journal and RoomDO retry outbox are the first storage layer, not the complete StorageRouter.
 
 ## Where everything lives
 
@@ -60,6 +60,7 @@ A free, privacy-respecting place to hang out with friends: hangouts with text ro
 ```
 apps/desktop/            the app: src-tauri/ (Rust core) + ui/ (React screens, built into the app)
 packages/protocol/       THE contract: openapi.yaml, gateway-events.ts, zod schemas, permissions, rooms
+packages/server/         shared server data, journal, session and encryption helpers
 packages/cache/          shared cache logic (prefs + hangout snapshots, versions, patches, LRU, wipe)
 packages/ui/             Calm Minimal tokens + components (PresenceBadge)
 packages/worker-kit/     fail-closed secret gate + JSON helpers for every Worker

@@ -1,7 +1,7 @@
 // Canonical gateway (WSS) contract — MASTER_PLAN §6 + ACCESS_AND_SETTINGS §14.
 // No op may be sent or handled unless it is listed in GatewayOp.
 import { z } from "zod";
-import { HangoutSnapshot, Preferences, Room } from "./schemas";
+import { HangoutSnapshot, Id, Message, Preferences, Room, SendMessageRequest } from "./schemas";
 import { PatchOp } from "./patch";
 
 export const GatewayOp = z.enum([
@@ -66,6 +66,18 @@ export const PreferencesUpdate = z.object({
   d: z.object({ version: z.number().int(), set: Preferences.shape.values }),
 });
 export const RoomCreate = z.object({ op: z.literal("ROOM_CREATE"), d: z.object({ hangoutVersion: z.number().int(), room: Room }) });
+/** Client → server: roomId is mandatory even though the socket is room-scoped. */
+export const MessageCreateRequest = z.object({ op: z.literal("MESSAGE_CREATE"), d: SendMessageRequest.extend({ roomId: Id }) }).strict();
+/** Server → room: s is the monotonically increasing sequence for that room. */
+export const MessageCreateEvent = z.object({ op: z.literal("MESSAGE_CREATE"), d: z.object({ message: Message, nonce: z.string().optional() }), s: z.number().int().min(1) }).strict();
+/** Server → sender: success includes the committed room sequence; refusal has a short error. */
+export const MessageAck = z.object({
+  op: z.literal("MESSAGE_ACK"),
+  d: z.union([
+    z.object({ nonce: z.string(), ok: z.literal(true), messageId: z.string(), seq: z.number().int().min(1) }).strict(),
+    z.object({ nonce: z.string(), ok: z.literal(false), error: z.string().min(1).max(64) }).strict(),
+  ]),
+}).strict();
 export const SystemNotice = z.object({ op: z.literal("SYSTEM_NOTICE"), d: z.object({ code: z.string(), message: z.string() }) });
 
 /** Frames with a detailed schema at cp-001. Others use the generic envelope until their phase. */
@@ -77,7 +89,9 @@ export type DetailedFrame = z.infer<typeof DetailedFrame>;
 export const Envelope = z.object({ op: GatewayOp, d: z.unknown(), s: z.number().int().optional() });
 
 /** Parse any incoming frame: strict for detailed ops, envelope-only for the rest. */
-export type ParsedFrame = { detailed: true; frame: DetailedFrame } | { detailed: false; frame: z.infer<typeof Envelope> };
+export type ParsedFrame =
+  | { detailed: true; frame: DetailedFrame | z.infer<typeof MessageCreateRequest> }
+  | { detailed: false; frame: z.infer<typeof Envelope> | z.infer<typeof MessageCreateEvent> | z.infer<typeof MessageAck> };
 
 const DETAILED_OPS = new Set<string>(DetailedFrame.options.map((o) => o.shape.op.value));
 
@@ -85,6 +99,19 @@ const DETAILED_OPS = new Set<string>(DetailedFrame.options.map((o) => o.shape.op
 export function parseFrame(raw: unknown): ({ ok: true } & ParsedFrame) | { ok: false; error: string } {
   const env = Envelope.safeParse(raw);
   if (!env.success) return { ok: false, error: "bad_envelope" };
+  // MESSAGE_CREATE has a client request and a server event with the same op.
+  if (env.data.op === "MESSAGE_CREATE") {
+    const request = MessageCreateRequest.safeParse(raw);
+    if (request.success) return { ok: true, detailed: true, frame: request.data };
+    const event = MessageCreateEvent.safeParse(raw);
+    if (event.success) return { ok: true, detailed: false, frame: event.data as z.infer<typeof Envelope> };
+    return { ok: false, error: "bad_message_create" };
+  }
+  if (env.data.op === "MESSAGE_ACK") {
+    const ack = MessageAck.safeParse(raw);
+    if (!ack.success) return { ok: false, error: "bad_message_ack" };
+    return { ok: true, detailed: false, frame: ack.data as z.infer<typeof Envelope> };
+  }
   if (DETAILED_OPS.has(env.data.op)) {
     const strict = DetailedFrame.safeParse(raw);
     if (!strict.success) return { ok: false, error: `bad_${env.data.op.toLowerCase()}` };

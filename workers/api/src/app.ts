@@ -7,15 +7,16 @@ import {
 import { errorResponse as err, json } from "@hangcord/worker-kit";
 import type { z } from "zod";
 import { verifyFirebaseIdToken, type KeySource } from "./auth/firebase";
-import { SESSION_TTL_MS, formatRefreshToken, parseRefreshToken, randomToken, signSession, verifySession, type SessionClaims } from "./auth/session";
-import { bitsFor, buildSnapshot, loadHangout, newId } from "./data";
-import { insert, update, write, type Change } from "./store";
+import { SESSION_TTL_MS, formatRefreshToken, parseRefreshToken, randomToken, signSession, verifySession, type SessionClaims } from "@hangcord/server";
+import { bitsFor, buildSnapshot, loadHangout, newId } from "@hangcord/server";
+import { insert, update, write, type Change } from "@hangcord/server";
 import type { UserDO } from "./user-do";
 
 export interface Env extends Record<string, unknown> {
   SESSION_SIGNING_KEY?: string;
   FIREBASE_PROJECT_ID?: string;
   DB: D1Database;
+  GATEWAY?: Fetcher;
   USERS: DurableObjectNamespace<UserDO>;
 }
 
@@ -41,6 +42,9 @@ const route = (method: string, path: string, authed: boolean, h: Handler) =>
 
 export function makeApp(deps: Deps) {
   return async (req: Request, env: Env, url: URL): Promise<Response | null> => {
+    if (/^\/v1\/rooms\/[a-z0-9_-]{1,64}\/messages$/.test(url.pathname)) {
+      return env.GATEWAY ? env.GATEWAY.fetch(req) : err(503, "messages_unavailable");
+    }
     for (const [method, re, authed, h] of routes) {
       const m = re.exec(url.pathname);
       if (!m) continue;

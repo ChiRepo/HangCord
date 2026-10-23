@@ -2,7 +2,7 @@
 // Rules from Firebase's "verify ID tokens using a third-party JWT library" checklist.
 // https://firebase.google.com/docs/auth/admin/verify-id-tokens#verify_id_tokens_using_a_third-party_jwt_library
 // Errors are short codes only; the token itself is never logged.
-import { fromB64url } from "./session";
+import { fromB64url } from "@hangcord/server";
 
 export interface FirebaseClaims {
   uid: string;

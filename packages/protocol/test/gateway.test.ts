@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 import { readFileSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 import { dirname, resolve } from "node:path";
-import { GatewayOp, parseFrame, CreateRoomRequest, Preferences } from "../src";
+import { GatewayOp, parseFrame, CreateRoomRequest, Preferences, MessageCreateEvent, MessageAck, SendMessageRequest } from "../src";
 
 const here = dirname(fileURLToPath(import.meta.url));
 
@@ -50,5 +50,28 @@ describe("gateway contract", () => {
   it("Preferences carry per-key timestamps", () => {
     expect(Preferences.safeParse({ version: 1, values: { theme: { value: "dark", updatedAt: 1 } } }).success).toBe(true);
     expect(Preferences.safeParse({ version: 1, values: { theme: "dark" } }).success).toBe(false);
+  });
+
+  it("validates MESSAGE_CREATE in both directions without adding duplicate discriminators", () => {
+    const request = { op: "MESSAGE_CREATE", d: { roomId: "room_1", content: "hello", nonce: "nonce_123" } };
+    expect(parseFrame(request)).toMatchObject({ ok: true, detailed: true });
+    expect(parseFrame({ ...request, d: { ...request.d, roomId: "Bad ID" } }).ok).toBe(false);
+    const rest = { content: "hello", nonce: "nonce_123" };
+    expect(SendMessageRequest.safeParse(rest).success).toBe(true);
+    expect(SendMessageRequest.safeParse(request.d).success).toBe(false); // room identity comes from the REST path
+    expect(SendMessageRequest.safeParse({ ...rest, content: "  " }).success).toBe(false);
+    expect(SendMessageRequest.safeParse({ ...rest, nonce: "short" }).success).toBe(false);
+    expect(SendMessageRequest.safeParse({ ...rest, content: "x".repeat(4001) }).success).toBe(false);
+
+    const event = { op: "MESSAGE_CREATE", d: { message: { id: "m1", roomId: "room_1", hangoutId: "h1", authorId: "u1", content: "hello", createdAt: 1, editedAt: null }, nonce: "nonce_123" }, s: 1 };
+    expect(MessageCreateEvent.safeParse(event).success).toBe(true);
+    expect(parseFrame(event)).toMatchObject({ ok: true, detailed: false });
+    expect(parseFrame({ ...event, s: undefined })).toEqual({ ok: false, error: "bad_message_create" });
+  });
+
+  it("requires a sequence on successful ACKs and a short error on refusal", () => {
+    expect(MessageAck.safeParse({ op: "MESSAGE_ACK", d: { nonce: "nonce_123", ok: true, messageId: "m1", seq: 9 } }).success).toBe(true);
+    expect(MessageAck.safeParse({ op: "MESSAGE_ACK", d: { nonce: "nonce_123", ok: false, error: "rate_limited" } }).success).toBe(true);
+    expect(parseFrame({ op: "MESSAGE_ACK", d: { nonce: "nonce_123", ok: true, messageId: "m1" } })).toEqual({ ok: false, error: "bad_message_ack" });
   });
 });

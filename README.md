@@ -29,6 +29,6 @@ Node 22.12+ required. Workers: `npm run dev -w workers/api` (needs a git-ignored
 
 Status: **checkpoint 1 (`cp-001`) done** — foundation. **Checkpoint 1.1 (`cp-001.1`) — the real desktop application** (`apps/desktop`, Tauri 2) is **done on Linux** (installer `.deb` + AppImage, end-to-end tested); macOS is built on the owner's Mac and Windows in CI. See `docs/MASTER_PLAN.md` §16.1.
 
-Checkpoint 2 server core is implemented locally and reviewed; publication as `cp-002` is authorized and deployment is pending. Realtime and live desktop sign-in/chat are still upcoming. See the handoff for verification and remaining work.
+Checkpoint 2 server core is pushed as `cp-002` (`7db1efa`), with passing GitHub CI. Checkpoint 2.1 realtime is implemented and tested locally; publication and cloud deployment are pending. Live desktop sign-in/chat comes next. See the handoff for verification and remaining work.
 
 No secrets live in this repository. Fixed secrets are Cloudflare Workers Secrets; changing sensitive data (email codes, tokens, keys) lives in Cloudflare Durable Objects.
