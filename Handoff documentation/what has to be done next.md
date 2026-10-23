@@ -23,7 +23,7 @@ Work top to bottom. Items marked **Owner** need the owner's accounts or decision
     - `npx wrangler secret put SESSION_SIGNING_KEY` for **api** and **gateway** (the same value in both)
     - `npx wrangler secret put HANGCORD_KEK_V1` for **gateway**: 32 random bytes in base64 (`openssl rand -base64 32`), with an offline copy kept
     - `npx wrangler secret put GOOGLE_OAUTH_DESKTOP_CLIENT_SECRET` for **api**
-    - **Firebase config, per the owner's rule "store it in Cloudflare Workers":** keep the main project's web API key and project ID in Workers configuration, not in the app or the repo. The secret name and exact form are decided in checkpoint 2, step 2 below; record them in `docs/SECRETS_AND_SENSITIVE_DATA.md` at the same time.
+    - **Firebase config, per the owner's rule "store it in Cloudflare Workers":** keep the main project's web API key and project ID in Workers configuration, not in the app or the repo. The current API uses `FIREBASE_PROJECT_ID` as a Workers Secret. Register the web API key when implementing checkpoint 2.2; never put its value in this repo.
 - [ ] **Open decisions** (from the plan):
   - the domain for the API and web companion
   - code signing (Apple Developer ID; for Windows, SignPath Foundation is free for open source)
@@ -31,14 +31,14 @@ Work top to bottom. Items marked **Owner** need the owner's accounts or decision
   - the provider and key for Backup DB #2
   - generating the emergency CSV key pair offline (MASTER_PLAN §8.6)
 
-## 2. Checkpoint 2: ask the owner how to build it, then build it
-The owner reverted the first attempt (`b65d0d2` and `7b97ac0`, undone in `f036237`). **Before writing code, confirm these choices with the owner:**
-1. **Restore or rebuild?** `git revert f036237` brings back the tested server core and realtime code: 25 integration tests on local Cloudflare. Or rebuild some parts differently.
-2. **Where Firebase config lives:**
-   - **Recommended:** the app never holds Firebase config. The API Worker calls Firebase Auth's REST API server-side (sign-in, sign-up, Google credential exchange) with the key from Workers configuration, and returns a HangCord session. That keeps the key out of the app and the repo, as the owner asked, and makes the app smaller than the Firebase SDK would.
-   - **Risk to tell the owner:** all sign-ins then come from Cloudflare's IP addresses, so watch Firebase's abuse limits. Protect sign-up with Cloudflare Turnstile.
-3. **Durable Object layout:** the reverted code used one `HangoutDO` per hangout, which means fewer objects and requests on the free plan. MASTER_PLAN §5.1 shows a `RoomDO` per room. Pick one, then update §5.1 or the code so they agree.
+## 2. Authorized checkpoint 2 implementation
+The owner authorized resuming the checkpoints after the intentional revert. Selectively reuse and harden the historical server code; do not revert the entire revert commit. Firebase configuration stays in Cloudflare, and realtime must follow the master plan's RoomDO-per-room layout.
 
+**Current state:** the server-core slice is implemented locally and reviewed. The owner authorized commit, tag and push of `cp-002`, then continuation to checkpoint 2.1, on 2026-10-23. Verify the push succeeded before starting that slice. Deployment also needs the owner's real D1 binding and Workers Secrets; the checked-in D1 ID is a placeholder, not a usable cloud database.
+
+For the current API, the owner sets `SESSION_SIGNING_KEY` and `FIREBASE_PROJECT_ID` as Workers Secrets, then applies both API D1 migrations. The Firebase web API key and desktop OAuth flow belong to checkpoint 2.2; no Firebase configuration enters the desktop bundle. Synthetic `hangcord-test` configuration exists only in the local integration harness.
+
+Before any deployment to a namespace that ran the historical server core, plan invalidation/deletion of legacy `rt:*` UserDO records. The new SQL family storage does not migrate those records; users must sign in again.
 Then build checkpoint 2 in four parts, each tested, reviewed, documented and pushed to `main` before the next one starts:
 - **2: server core.** Sessions with refresh-token rotation and reuse detection; `/me`; preferences with ETag / If-Match; hangouts and their snapshot; **+ room**; the D1 schema; journaled writes.
 - **2.1: realtime.** Gateway IDENTIFY / READY with cache versions, live messages with ACK and broadcast to members who can see the room, a nonce de-dupe, rate limits, REST history and fallback send, and message bodies encrypted at rest.
@@ -52,7 +52,7 @@ Then build checkpoint 2 in four parts, each tested, reviewed, documented and pus
   - The provider chain Brevo → Mailjet → Resend, with Firebase's verification link as the last fallback.
   - Password reset, and a cleanup of unverified accounts after 24 h.
 
-**Checkpoint 2 is done when:** two desktop apps chat in real time with each other; a restart shows hangouts and preferences instantly from the cache; and all tests, the desktop e2e, gitleaks and the code-map check pass.
+**The full checkpoint 2 series (2–2.3) is done when:** two desktop apps chat in real time with each other; a restart shows hangouts and preferences instantly from the cache; and all tests, the desktop e2e, gitleaks and the code-map check pass.
 
 ## 3. Engineering debt (do it alongside the checkpoints)
 - [ ] **WebApp branch CI:** port the `main` CI fixes (pinned gitleaks CLI, preview on `127.0.0.1`, readable failure annotations). Its CI fails until then.

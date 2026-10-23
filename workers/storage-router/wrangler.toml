@@ -11,6 +11,4 @@ workers_dev = false
 [triggers]
 crons = ["*/15 * * * *"]
 
-[vars]
-FIREBASE_PROJECT_ID = ""
-FIREBASE_BACKUP_PROJECT_ID = ""
+# Firebase identifiers remain in Workers Secrets when the Firebase tier is implemented.

@@ -149,6 +149,47 @@ components:
             properties:
               value: {}
               updatedAt: { type: integer }
+    SessionRequest:
+      type: object
+      additionalProperties: false
+      required: [idToken]
+      properties: { idToken: { type: string, minLength: 20, maxLength: 4096, description: Firebase ID token } }
+    RefreshRequest:
+      type: object
+      additionalProperties: false
+      required: [refreshToken]
+      properties: { refreshToken: { type: string, minLength: 20, maxLength: 1024 } }
+    User:
+      type: object
+      required: [id, displayName, email, createdAt]
+      properties:
+        id: { type: string }
+        displayName: { type: string, maxLength: 64 }
+        email: { type: [string, "null"] }
+        avatarUrl: { type: [string, "null"] }
+        createdAt: { type: integer }
+    Session:
+      type: object
+      required: [session, expiresAt, refreshToken, user]
+      properties:
+        session: { type: string, description: "Bearer token, 15 minutes" }
+        expiresAt: { type: integer, description: Unix ms }
+        refreshToken: { type: string, description: "Single use; rotated by POST /auth/refresh" }
+        user: { $ref: "#/components/schemas/User" }
+    CreateHangoutRequest:
+      type: object
+      additionalProperties: false
+      required: [name]
+      properties: { name: { type: string, minLength: 2, maxLength: 100 } }
+    HangoutSummary:
+      type: object
+      required: [id, name, ownerId, version]
+      properties:
+        id: { type: string, pattern: "^[a-z0-9_-]{1,64}$" }
+        name: { type: string }
+        icon: { type: [string, "null"] }
+        ownerId: { type: string }
+        version: { type: integer }
     HangoutSnapshot:
       type: object
       description: detailed (cp-001) — cacheable hangout bundle, MASTER_PLAN §7.1
@@ -219,7 +260,16 @@ paths:
 
   # ---- Auth (MASTER_PLAN §6.1) ----
   /auth/session:
-    post: { operationId: createSession, security: [], x-hangcord-phase: 1, summary: "Firebase ID token → HangCord session (403 email_unverified until verified)", responses: { "200": { $ref: "#/components/responses/Ok" }, "403": { $ref: "#/components/responses/Error" } } }
+    post:
+      operationId: createSession
+      security: []
+      x-hangcord-phase: 1
+      summary: "Firebase ID token → HangCord session (403 email_unverified until verified)"
+      requestBody: { required: true, content: { application/json: { schema: { $ref: "#/components/schemas/SessionRequest" } } } }
+      responses:
+        "200": { description: Session, content: { application/json: { schema: { $ref: "#/components/schemas/Session" } } } }
+        "401": { $ref: "#/components/responses/Error" }
+        "403": { $ref: "#/components/responses/Error" }
   /auth/email-code/send:
     post: { operationId: sendEmailCode, security: [], x-hangcord-phase: 1, summary: "Send a 6-digit code (verify | reset), rate-limited", responses: { "202": { $ref: "#/components/responses/Ok" } } }
   /auth/email-code/verify:
@@ -229,7 +279,15 @@ paths:
   /auth/google/exchange:
     post: { operationId: exchangeGoogleCode, security: [], x-hangcord-phase: 1, summary: "Desktop PKCE code exchange (client secret stays in Workers secrets)", responses: { "200": { $ref: "#/components/responses/Ok" } } }
   /auth/refresh:
-    post: { operationId: refreshSession, security: [], x-hangcord-phase: 1, summary: "Rotate refresh token", responses: { "200": { $ref: "#/components/responses/Ok" } } }
+    post:
+      operationId: refreshSession
+      security: []
+      x-hangcord-phase: 1
+      summary: "Rotate refresh token (single use; reuse revokes the whole session)"
+      requestBody: { required: true, content: { application/json: { schema: { $ref: "#/components/schemas/RefreshRequest" } } } }
+      responses:
+        "200": { description: New session, content: { application/json: { schema: { $ref: "#/components/schemas/Session" } } } }
+        "401": { $ref: "#/components/responses/Error" }
   /auth/logout:
     post: { operationId: logout, x-hangcord-phase: 1, summary: "Revoke session", responses: { "204": { description: Logged out } } }
   /auth/step-up:
@@ -237,7 +295,7 @@ paths:
 
   # ---- Me ----
   /me:
-    get: { operationId: getMe, x-hangcord-phase: 1, responses: { "200": { $ref: "#/components/responses/Ok" } } }
+    get: { operationId: getMe, x-hangcord-phase: 1, responses: { "200": { description: Me, content: { application/json: { schema: { $ref: "#/components/schemas/User" } } } } } }
     patch: { operationId: updateMe, x-hangcord-phase: 1, responses: { "200": { $ref: "#/components/responses/Ok" } } }
   /me/entitlements:
     get: { operationId: getEntitlements, x-hangcord-phase: 1, summary: "Plus slot (reserved, disabled)", responses: { "200": { $ref: "#/components/responses/Ok" } } }
@@ -280,7 +338,15 @@ paths:
 
   # ---- Hangouts & rooms ----
   /hangouts:
-    post: { operationId: createHangout, x-hangcord-phase: 1, responses: { "201": { $ref: "#/components/responses/Ok" } } }
+    get: { operationId: listMyHangouts, x-hangcord-phase: 1, summary: "Hangouts I'm a member of", responses: { "200": { description: Hangouts, content: { application/json: { schema: { type: array, items: { $ref: "#/components/schemas/HangoutSummary" } } } } } } }
+    post:
+      operationId: createHangout
+      x-hangcord-phase: 1
+      summary: "New hangout: caller becomes owner; @everyone gets the Member preset; starter category + room + lounge"
+      requestBody: { required: true, content: { application/json: { schema: { $ref: "#/components/schemas/CreateHangoutRequest" } } } }
+      responses:
+        "201": { description: Created, content: { application/json: { schema: { $ref: "#/components/schemas/HangoutSummary" } } } }
+        "400": { $ref: "#/components/responses/Error" }
   /hangouts/{id}:
     get: { operationId: getHangout, x-hangcord-phase: 1, parameters: [{ $ref: "#/components/parameters/HangoutId" }], responses: { "200": { $ref: "#/components/responses/Ok" } } }
     patch: { operationId: updateHangout, x-hangcord-phase: 1, parameters: [{ $ref: "#/components/parameters/HangoutId" }], responses: { "200": { $ref: "#/components/responses/Ok" } } }
@@ -290,6 +356,7 @@ paths:
       operationId: getHangoutSnapshot
       x-hangcord-phase: 1
       summary: Cacheable hangout bundle (ETag "h:<id>:<version>") — MASTER_PLAN §7.1
+      description: Owners may receive 304. Other members receive a freshly filtered 200 because timed gates can change without a version bump.
       parameters: [{ $ref: "#/components/parameters/HangoutId" }, { $ref: "#/components/parameters/IfNoneMatch" }]
       responses:
         "200":
@@ -314,7 +381,7 @@ paths:
           content: { application/json: { schema: { $ref: "#/components/schemas/Room" } } }
         "400": { description: "bad_bits | not_a_category | nested_category | bad_name", content: { application/json: { schema: { $ref: "#/components/schemas/Error" } } } }
         "403": { description: "forbidden | needs_manage_room_permissions | grants_exceed_creator", content: { application/json: { schema: { $ref: "#/components/schemas/Error" } } } }
-        "409": { description: "category_full | hangout_full", content: { application/json: { schema: { $ref: "#/components/schemas/Error" } } } }
+        "409": { description: "category_full | hangout_full | version_conflict", content: { application/json: { schema: { $ref: "#/components/schemas/Error" } } } }
   /rooms/{id}:
     patch: { operationId: updateRoom, x-hangcord-phase: 1, summary: "Settings per type; categories also roomDefaults + guidelinesText", parameters: [{ $ref: "#/components/parameters/RoomId" }], responses: { "200": { $ref: "#/components/responses/Ok" } } }
   /rooms/{id}/sync:

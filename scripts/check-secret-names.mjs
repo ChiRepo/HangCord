@@ -11,14 +11,17 @@ const listed = new Set(
 );
 let bad = 0;
 for (const w of readdirSync("workers")) {
-  const p = join("workers", w, "src", "index.ts");
-  if (!existsSync(p)) continue;
-  const m = readFileSync(p, "utf8").match(/REQUIRED_SECRETS\s*=\s*\[([^\]]*)\]/);
-  if (!m) continue;
-  for (const name of [...m[1].matchAll(/"([A-Z0-9_]+)"/g)].map((x) => x[1])) {
-    if (!listed.has(name)) {
-      console.error(`workers/${w}: secret ${name} is not in .dev.vars.example / the secrets register`);
-      bad++;
+  const src = join("workers", w, "src");
+  if (!existsSync(src)) continue;
+  for (const file of readdirSync(src, { recursive: true }).filter((name) => name.endsWith(".ts"))) {
+    const source = readFileSync(join(src, file), "utf8");
+    for (const m of source.matchAll(/REQUIRED_SECRETS\s*=\s*\[([^\]]*)\]/g)) {
+      for (const name of [...m[1].matchAll(/"([A-Z0-9_]+)"/g)].map((x) => x[1])) {
+        if (!listed.has(name)) {
+          console.error(`workers/${w}: secret ${name} is not in .dev.vars.example / the secrets register`);
+          bad++;
+        }
+      }
     }
   }
 }

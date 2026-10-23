@@ -8,6 +8,8 @@
 # Needs Graphify, pinned in graphify/requirements.txt:  uv tool install graphifyy==0.9.93
 #                                                   or: pipx install graphifyy==0.9.93
 set -eu
+# A repository map refresh must not rewrite skills in the user's other agent clients.
+export GRAPHIFY_NO_AUTO_REFRESH=1
 cd "$(dirname "$0")/.."
 
 PINNED=$(sed -n 's/^graphifyy==//p' graphify/requirements.txt)

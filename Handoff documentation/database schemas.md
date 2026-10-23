@@ -6,6 +6,7 @@ Every place HangCord stores data, from the device up to the cold archive. The st
 |---|---|
 | ✅ | In `main` and tested |
 | 🧪 | Written and tested in checkpoint 2 (`b65d0d2`, `7b97ac0`), then **reverted** (`f036237`); recover with `git show b65d0d2:workers/api/migrations/0001_init.sql` and so on |
+| 🔧 | Implemented in the current local candidate; not pushed or deployed |
 | 📐 | Designed in the docs, not built yet |
 
 **Sources of truth:** `docs/ACCESS_AND_SETTINGS.md` §13 (data model), `docs/MASTER_PLAN.md` §7–8 (storage, rotation, CSV), and `packages/protocol` (the JSON shapes on the wire). If this file disagrees with them, fix the docs first and then this file.
@@ -50,7 +51,7 @@ Unsent messages are kept locally until their `MESSAGE_ACK` arrives (MASTER_PLAN 
 
 ## 2. Cloudflare D1: the main database
 
-### 🧪 `0001_init.sql` (checkpoint 2)
+### 🔧 `0001_init.sql` + `0002_verified_user_facts.sql` (checkpoint 2)
 ```sql
 CREATE TABLE users (id TEXT PRIMARY KEY, display_name TEXT NOT NULL, email TEXT, avatar_url TEXT,
   provider TEXT NOT NULL /* google.com | password */, created_at INTEGER NOT NULL, updated_at INTEGER NOT NULL);
@@ -85,7 +86,12 @@ CREATE TABLE journal (seq INTEGER PRIMARY KEY AUTOINCREMENT, at INTEGER NOT NULL
   tbl TEXT NOT NULL, op TEXT NOT NULL /* insert|update|delete */, pk TEXT NOT NULL /* JSON */, cols TEXT NOT NULL /* JSON */);
 ```
 
-### 🧪 `0002_messages.sql` (checkpoint 2.1)
+`0002_verified_user_facts.sql` adds `users.email_verified` and `users.adult_confirmed`, integer booleans defaulting to 0. Verified Firebase sign-in updates the former; no adult-confirmation endpoint exists in this slice. Gate ages use the server-owned `users.created_at` and `members.joined_at`, not client preferences or Firebase's last-authentication timestamp.
+
+Preference writes guard both the journal row and data mutation with the expected version. Room-creation batches share the loaded hangout version and permission version, advance the version last, and return 409 on a competing change. Every future access mutator must advance both versions atomically. Failed guards leave no phantom journal entries.
+
+### 🧪 Historical `0002_messages.sql` (checkpoint 2.1; not currently restored)
+The future messages migration needs the next free migration number; `0002` is now the gate-facts migration.
 ```sql
 CREATE TABLE messages (id TEXT PRIMARY KEY, hangout_id TEXT NOT NULL, room_id TEXT NOT NULL, author_id TEXT NOT NULL,
   body_enc TEXT NOT NULL /* v1.<iv>.<ciphertext>, AAD = hangoutId|roomId|messageId|epoch */, epoch INTEGER NOT NULL,
@@ -130,7 +136,7 @@ service cloud.firestore { match /databases/{database}/documents { match /{docume
 ## 6. Durable Object storage (Cloudflare-only sensitive state)
 | Object | Holds | Status |
 |---|---|---|
-| `UserDO` (api) | `rt:<sid>` → `{hash: sha256(refresh secret), exp, prevHash}`. Never the token itself. Reusing the previous hash revokes the session | 🧪 |
+| `UserDO` (api) | SQLite `refresh_families(sid, hash, exp)` and `refresh_used(sid, hash)`. Atomic single-use rotation; any consumed-token replay revokes the family. A fixed 30-day deadline and alarms remove expired families and hashes. API access checks `isActive` on every protected request. No raw tokens or CSV export of hashes | 🔧 |
 | `HangoutDO` (gateway) | `hangoutId`, `seq`, `key:<epoch>` (a wrapped key copy), and a SQLite `messages(id, room_id, author_id, body_enc, epoch, created_at, edited_at, nonce, UNIQUE(author_id, nonce))` table as the hot live window | 🧪 |
 | `VerificationDO` (api) | one per `HMAC(pepper, email)`: `{codeHash, purpose, uid, expiresAt, attempts, sendsThisHour, hourStart, lastSentAt}`. An alarm deletes it at expiry | 📐 |
 | `RateLimitDO` | rate-limit counters | 📐 |

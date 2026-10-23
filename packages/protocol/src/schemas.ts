@@ -114,8 +114,42 @@ export const HangoutSnapshot = z.object({
 });
 export type HangoutSnapshot = z.infer<typeof HangoutSnapshot>;
 
+
+// ---- Sessions (MASTER_PLAN §6.1) — detailed since cp-002 ----
+export const SessionRequest = z.object({ idToken: z.string().min(20).max(4096) }).strict();
+export type SessionRequest = z.infer<typeof SessionRequest>;
+
+export const RefreshRequest = z.object({ refreshToken: z.string().min(20).max(1024) }).strict();
+export type RefreshRequest = z.infer<typeof RefreshRequest>;
+
+export const User = z.object({
+  id: z.string(),
+  displayName: z.string().max(64),
+  email: z.string().nullable(),
+  avatarUrl: z.string().nullable().optional(),
+  createdAt: z.number().int(),
+});
+export type User = z.infer<typeof User>;
+
+export const Session = z.object({
+  session: z.string(),
+  /** Unix ms when `session` stops working (15 min). */
+  expiresAt: z.number().int(),
+  refreshToken: z.string(),
+  user: User,
+});
+export type Session = z.infer<typeof Session>;
+
+// ---- Hangouts — detailed since cp-002 ----
+export const CreateHangoutRequest = z.object({ name: z.string().trim().min(2).max(100) }).strict();
+export type CreateHangoutRequest = z.infer<typeof CreateHangoutRequest>;
+
+export const HangoutSummary = z.object({ id: Id, name: z.string(), icon: z.string().nullable().optional(), ownerId: z.string(), version: z.number().int() });
+export type HangoutSummary = z.infer<typeof HangoutSummary>;
+
 /** Names of the schemas above that openapi.yaml must also define. */
 export const DETAILED_SCHEMAS = [
   "Error", "Health", "RoomType", "GuidelinesChoice", "NewRoomGuidelinesPreference", "Override",
   "RoomDefaults", "Room", "CreateRoomRequest", "Preferences", "PreferencesPatch", "HangoutSnapshot",
+  "SessionRequest", "RefreshRequest", "User", "Session", "CreateHangoutRequest", "HangoutSummary",
 ] as const;

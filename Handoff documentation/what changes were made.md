@@ -110,3 +110,31 @@ The history of the work, oldest first. Each entry says what was done, why, and w
   - 10 realtime integration tests.
 - **The owner sent the Firebase web configs** for the main and backup projects, and asked that they be **stored in Cloudflare Workers, not in the app or repo**. A partly finished local edit had put the API key in an app file. It was deleted before any commit, so **no Firebase key is in git**.
 - **The owner then asked to revert to checkpoint 1.1** while keeping the CI fixes. That's commit `f036237`, a revert commit with no force-push. The code is recoverable with `git revert f036237`, or by cherry-picking parts of `b65d0d2` / `7b97ac0`.
+
+
+## 7. Checkpoint 2 server-core candidate (2026-10-23, local only)
+
+The owner authorized continuing checkpoints. The implementation selectively reuses the old server core and keeps Firebase configuration in Cloudflare. Realtime remains future work using RoomDO per room. This section records local validation before publication. On 2026-10-23 the owner authorized committing/tagging/pushing this server-core slice and continuing checkpoint 2.1. Deployment remains pending.
+
+Implemented:
+- Contract schemas and REST handlers for sessions, refresh, logout, `/me`, preferences, hangouts, snapshots and room creation.
+- Strict Firebase signature/project/claim/provider checks, verified email for both supported providers, and bounded public-key fetching. Firebase sign-in itself is not wired into the desktop yet.
+- Fifteen-minute access tokens, immediate logout checks, atomic single-use refresh rotation with complete consumed-token replay detection, fixed 30-day family expiry and cleanup alarms. Firebase UIDs containing dots are encoded safely.
+- Preference compare-and-swap, server-wins timestamp ties, safe handling of valid object-property names, and guards that prevent rejected writes from entering the journal.
+- Version-guarded room creation that preserves capacity under concurrency; live category inheritance; member permission recomputation for timed gates; deterministic room ordering.
+- Permission evaluation for overrides, verification, pending/quarantined members, age restrictions, hierarchy, private Strands and closed schedules. Schedule calculation and feature endpoints are later work; an unevaluated configured schedule stays closed. Adult confirmation has no endpoint yet.
+- The historical initial D1 schema plus a separate gate-facts migration, preserving the original migration for existing databases.
+- `FIREBASE_PROJECT_ID` registered as a Workers Secret; empty Firebase identifiers removed from production Wrangler vars. Secret-name checks now inspect all Worker source files, including re-exported declarations.
+
+Resource bounds retained for API input protection: 64 KiB request bodies measured in UTF-8 bytes, 200 preference keys, 128-character key names and 4,096-character serialized values per preference. These are input guards, not paid-tier limits. Room limits remain the existing protocol's 50 per category and 500 per hangout.
+
+Validation:
+- Baseline dependency installation, JS lint/types/build, UI tests and Rust check passed before implementation. UI: **31 passed, 8 expected viewport skips**; desktop UI code is unchanged.
+- Current JS suites: **177 tests passed across their latest runs**, including **45 API tests** against unit fixtures and real local workerd/D1/UserDO, and **42 protocol tests**. The complete workspace run exposed an empty Firebase var in storage-router after reclassification; that configuration was fixed and all **26 policy tests** passed afterward.
+- `npm run desktop:test`: **20 passed, 0 failed** on macOS. No new native UI/installer claim.
+- Independent review found the inherited preference-property bug; fixed and covered by integration tests. A proposed missing-value schema issue was disproved against installed Zod 4.6.7 (missing `value` is rejected), and an API regression records that behavior. The first reviewer hit a model usage limit; a fresh agent completed the bounded independent review.
+- Final `npm run lint`, `npm run typecheck:js`, `npm run build`, `npm run check:secrets-names`, `npm run graph:check` and `git diff --check` passed. `npm run graph` refreshed the existing three map artifacts with pinned Graphify 0.9.93; SQL nodes are omitted because the optional SQL parser is not installed. Migrations were reviewed directly and exercised by the integration suite.
+- Gitleaks scanned all versioned and unignored source files with file paths preserved: **no leaks found** (exit 0). The unfiltered checkout scan reported two generic-key matches in ignored Rust `libmuda-*.rmeta` dependency metadata. No secret-scanner rule was weakened; generated build caches were not deleted to hide findings.
+- The graph refresh command now disables Graphify's automatic global skill rewriting. The tool's incidental skill updates were restored from its backups. Temporary agent worktrees, patches and scan copies were removed; no duplicate project or handoff files remain.
+
+Deployment limits: the D1 binding is still a placeholder; the owner provisions real secrets and database configuration. D1 journal rows are atomic write-ahead records only. Encrypted CSV sealing, tier failover and daily exports remain unimplemented and must not be represented as working. Historical KV refresh sessions are not migrated; deploying over an old namespace requires explicit cleanup and re-sign-in.

@@ -22,6 +22,7 @@ Free plan limits: ≤ 64 variables per Worker (secrets + vars), ≤ 5 KB each. S
 
 | Secret name | Used by Worker | What it is | Rotate |
 |---|---|---|---|
+| `FIREBASE_PROJECT_ID` | api | Firebase project identifier, kept server-side by owner decision (2026-10-22); required for token issuer/audience checks | project change |
 | `FIREBASE_AUTH_ADMIN_SA_JSON` | api | Google service account limited to Firebase Auth admin (verify, set emailVerified, update password, delete unverified users) | 90 days |
 | `FIRESTORE_SA_JSON` | api, storage-router | Service account limited to Firestore read/write (membership proofs, message spill) | 90 days |
 | `CSV_ROUTINE_KEY` | storage-router | 32 random bytes (base64); encrypts/decrypts the live CSV journal and snapshots | yearly (old key kept until its files are gone) |
@@ -42,7 +43,9 @@ Free plan limits: ≤ 64 variables per Worker (secrets + vars), ≤ 5 KB each. S
 | `GARAGE_ACCESS_KEY`, `GARAGE_SECRET_KEY` | storage-router | Self-hosted S3 on the Oracle VM | 90 days |
 | `ORACLE_ARCHIVE_ACCESS_KEY`, `ORACLE_ARCHIVE_SECRET_KEY` | storage-router | Oracle Object Storage (archive tier) customer secret key | 90 days |
 
-**Not secrets** (plain `vars` in the Wrangler config, safe to be public): `FIREBASE_PROJECT_ID`, `FIREBASE_BACKUP_PROJECT_ID`, the Firebase web config (its `apiKey` is a public identifier, locked down by API-key restrictions and security rules), `GOOGLE_OAUTH_DESKTOP_CLIENT_ID`, `TURNSTILE_SITE_KEY`, `LIVEKIT_URL`, `EMAIL_FROM_ADDRESS`. Never put a value from the table above in `vars`.
+**Firebase configuration:** even public identifiers stay in Cloudflare Workers Secrets by the owner's 2026-10-22 decision. Never embed project IDs, Firebase web configuration or API keys in the app or repository. This checkpoint requires only `FIREBASE_PROJECT_ID`; register later sign-in configuration before implementing those routes.
+
+**Other public configuration** (plain `vars`): `GOOGLE_OAUTH_DESKTOP_CLIENT_ID`, `TURNSTILE_SITE_KEY`, `LIVEKIT_URL`, `EMAIL_FROM_ADDRESS`. Never put a registered secret in `vars`.
 
 **How the owner sets them** (agents never see or type the values):
 ```bash
@@ -57,7 +60,7 @@ Local development: `.dev.vars` next to each Worker's Wrangler config, git-ignore
 |---|---|---|---|
 | **Email codes (OTP)** for sign-up, password reset and step-up | `VerificationDO` (api), one object per `HMAC(EMAIL_CODE_PEPPER, normalised email)` | `{codeHash = HMAC(EMAIL_CODE_PEPPER, code\|purpose\|uid), purpose, uid, expiresAt, attempts, sendsThisHour, hourStart, lastSentAt}` — never the plain code, never the plain email | 5 min; DO alarm deletes at expiry; deleted immediately on success; 3 wrong tries → burned |
 | **Step-up tokens** (after a correct step-up code) | `UserDO` (gateway) | SHA-256 of a random token, bound to `{action, targetId}` | 5 min, single use, deleted on use |
-| **Refresh tokens / sessions** | `UserDO` (gateway) | SHA-256 of the token + device name, created, last used | rotated on every use; revoked on logout / "log out everywhere" / password change |
+| **Refresh tokens / sessions** | `UserDO` (api; authoritative for API and future gateway checks) | SHA-256 of the token + device name, created, last used | rotated on every use; revoked on logout / "log out everywhere" / password change |
 | **Rate-limit counters** (per user, per IP hash, per email hash) | `RateLimitDO` (api) | counters + window start; IPs stored only as `HMAC(EMAIL_CODE_PEPPER, ip)` | expire with the window (alarm) |
 | **Hangout secret keys** | `HangoutDO` (gateway) — primary | wrapped with `HANGCORD_KEK_V1` (AES-256-GCM, AAD = `hangoutId\|epoch\|kekVersion`) | kept per epoch; old epochs read-only |
 | Hangout key **backup** | D1 `hangout_keys` (same Cloudflare account) | same wrapped ciphertext | deleted with the hangout (after the 7-day soft delete) |

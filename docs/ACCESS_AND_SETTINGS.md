@@ -155,6 +155,30 @@ Hangout-wide kill switches (`hangoutPolicyMask`): during *Security actions* (§8
 
 **Explainer.** Every step that changes a bit records `{step, source: 'role'|'override'|'timeout'|..., id, bit, from, to}`. `GET /hangouts/:id/members/:uid/permissions?room=` (needs `VIEW_AS_ROLE` or asking about yourself) returns bits + explanation; the UI shows "Why?" next to each toggle.
 
+### 4.1 Permission inputs and fail-closed evaluation (checkpoint 2)
+
+`computePermissions(context)` returns the effective bigint for compatibility with Worker access checks. `explainPermissions(context)` returns `{ bits, explain }`; each changed bit records its source, source id, previous value and new value. Both use the same evaluator. All facts must come from current, trusted server state; client-supplied role, age, verification or schedule claims never authorize an operation.
+
+`verificationLevel` uses the D1 integer levels below. Gates are cumulative. Times are Unix milliseconds; equality satisfies a minimum age. Missing, future or invalid facts fail the corresponding gate. An absent level means the schema default, 0; an unknown level fails closed.
+
+| Level | Name | Required facts |
+|---|---|---|
+| 0 | Open | No additional gate |
+| 1 | Verified email | `emailVerified === true` |
+| 2 | Account at least 1 day old | Level 1 and `now - accountCreatedAt >= 86400000` |
+| 3 | Member at least 10 minutes | Level 2 and `now - joinedAt >= 600000` |
+| 4 | Account at least 7 days old | Level 3 and `now - accountCreatedAt >= 604800000` |
+
+For checkpoint 2, the trusted HangCord account `users.created_at` may be supplied as a conservative account-age lower bound. Firebase `auth_time` is a sign-in time, not account creation; never use it as a creation claim. Unknown verification facts restrict interactions to existing view/history permissions. Member flags use `PENDING=1`, `ONBOARDED=2`, `REJOINED=4`, `BYPASS_VERIFICATION=8`, `QUARANTINED=16`; the moderator-set bypass skips only the verification gate, and quarantine restricts interactions like pending screening.
+
+For room evaluation, `ageRestricted` comes from validated persisted settings; it requires `adultConfirmed === true`. A scheduled room supplies `hasSchedule: true` and the trusted server's `scheduleOpen` result. Missing evaluation closes the schedule. A closed schedule clears `SEND_MESSAGES`, `SEND_IN_STRANDS` and `CONNECT`, then applies send/voice dependencies. `MANAGE_ROOMS` bypasses only the schedule restriction. Weekly schedule parsing and its administration arrive with the schedule feature; a client boolean never substitutes for that evaluation.
+
+A synced child must resolve a category with the requested id and type `category`; missing, mismatched, self-referential or nested-category sources deny access instead of falling back to stale child overrides. Room overrides must use known room-scoped bits, contain no duplicate target, and never both allow and deny the same bit. Invalid role bitfields, duplicate role ids, missing assigned roles, invalid member flags, and missing or forbidden `@everyone` permissions deny non-owner access. Owner and Administrator bypasses retain the order in §4; unknown role bits cannot manufacture Administrator authority.
+
+A Strand permission context uses `type: "strand"`, `parentRoomId`, and for private Strands `private: true` plus `memberIds`. It inherits the parent's evaluated result; missing/cyclic parents deny access. Private membership or `MANAGE_STRANDS` is required. Posting dependencies inside a Strand use `SEND_IN_STRANDS`.
+
+`invitesPausedUntil > now` removes `CREATE_INVITES` for ordinary members. Owner/Administrator early returns remain as specified above, so invite handlers must additionally enforce the pause for every caller. DM protection and minimum-age policy require dedicated handler checks; no permission bit or missing account flag may be treated as proof that those policies passed.
+
 ## 5. Hierarchy
 
 `highest(m)` = max `position` among the member's roles (0 if only @everyone). The actor `a` may act on target `t` only if:

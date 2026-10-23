@@ -301,7 +301,7 @@ The canonical contract lives in `packages/protocol/openapi.yaml` and `packages/p
 | `GET/POST /friends`, `DELETE /friends/:id`, `POST /blocks` | Friends |
 | `POST /hangouts`, `GET /hangouts/:id`, `PATCH /hangouts/:id` | Hangouts |
 | `GET/POST /hangouts/:id/rooms`, `PATCH /rooms/:id` | Rooms/Lounges/Boards; create takes `categoryId` + `guidelines: "category" \| "own"` (ACCESS_AND_SETTINGS §7.1) |
-| `GET /hangouts/:id/snapshot` | Cacheable hangout bundle (hangout, categories + rooms tree, roles, my member record, my permission bits per room, emoji) with `ETag: "h:<id>:<version>"`; `If-None-Match` → 304 (§7.1) |
+| `GET /hangouts/:id/snapshot` | Cacheable hangout bundle (hangout, categories + rooms tree, roles, my member record, my permission bits per room, emoji) with `ETag: "h:<id>:<version>"`; `If-None-Match` may return 304 for owners; other members receive a freshly filtered 200 for time-dependent access (§7.1) |
 | `GET/POST /hangouts/:id/roles`, `PUT/DELETE /rooms/:id/overrides/:type/:targetId` | Permissions — full list in ACCESS_AND_SETTINGS §14 |
 | `GET /rooms/:id/messages?before=&after=&limit=` | History (router decides tier) |
 | `POST /rooms/:id/messages` | Fallback send when WebSocket is down |

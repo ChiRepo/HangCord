@@ -3,6 +3,7 @@
 # Full register with owners, storage and rotation: docs/SECRETS_AND_SENSITIVE_DATA.md
 
 # ---- workers/api : secrets ----
+FIREBASE_PROJECT_ID=
 FIREBASE_AUTH_ADMIN_SA_JSON=
 FIRESTORE_SA_JSON=
 GOOGLE_OAUTH_DESKTOP_CLIENT_SECRET=
@@ -38,7 +39,7 @@ ORACLE_ARCHIVE_ACCESS_KEY=
 ORACLE_ARCHIVE_SECRET_KEY=
 
 # ---- NOT secrets: put these in wrangler `vars` (public is fine) ----
-# FIREBASE_PROJECT_ID, FIREBASE_BACKUP_PROJECT_ID, FIREBASE_WEB_CONFIG, GOOGLE_OAUTH_DESKTOP_CLIENT_ID,
+# GOOGLE_OAUTH_DESKTOP_CLIENT_ID,
 # TURNSTILE_SITE_KEY, LIVEKIT_URL, EMAIL_FROM_ADDRESS
 
 # ---- workers/emergency-restore : secrets (break-glass only; local dev uses TEST keys only, never the real one) ----
