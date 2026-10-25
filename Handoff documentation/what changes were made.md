@@ -205,3 +205,9 @@ Checkpoint 2.2 local changes:
 - Checkpoint 2.2 remains unpublished. Cross-platform CI, real password-account acceptance and encryption-key recovery custody remain outstanding.
 
 All 37 Rust tests then passed with `--features test-hooks` and `HANGCORD_KEY_STORAGE=file`, which bypasses the OS keychain only for the cache-key test path. This does not prove the stalled keychain migration path; live sign-in and session restoration were separately verified in the normal app without test hooks.
+
+## 13. Checkpoint 2.2 publication and Windows CI fixture correction (2026-10-25)
+
+- Published `0e45836ea0d4d7f4a22022fb206ee05c4cd5d08e` and annotated tag `cp-002.2` after a clean staged-source secret scan. Remote branch and peeled tag match.
+- CI run 40195612508 passed shared checks, UI tests, code-map verification and the full-history secret scan. Linux passed Rust tests and native e2e. Windows passed 36 tests but timed out in the offline logout test's one-second connection-refused wait.
+- The test now accepts a loopback request and drops the connection without an HTTP response. This tests failed revocation without depending on operating-system closed-port timing. Local credentials/cache clearing and rejection of a gateway connection arriving after logout remain asserted. All three focused logout tests pass locally; Windows rerun is required. No production behavior changed.

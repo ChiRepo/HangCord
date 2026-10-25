@@ -1345,7 +1345,14 @@ mod tests {
     async fn logout_offline_clears_local_state_and_late_gateway_install_is_rejected() {
         let listener = TcpListener::bind("127.0.0.1:0").await.unwrap();
         let addr = listener.local_addr().unwrap();
-        drop(listener);
+        // Fail after accepting the request instead of depending on platform-specific
+        // connection-refused timing for a closed loopback port.
+        let failed_connection = tokio::spawn(async move {
+            let (mut stream, _) = listener.accept().await.unwrap();
+            let mut request = [0u8; 4096];
+            assert!(stream.read(&mut request).await.unwrap() > 0);
+            // Drop without an HTTP response to simulate a lost connection.
+        });
         let config =
             Config::parse(&format!("http://{addr}"), &format!("ws://{addr}"), true).unwrap();
         let vault = Arc::new(MemoryCredentials::default());
@@ -1371,8 +1378,12 @@ mod tests {
             "auth_cancelled"
         );
         assert!(bridge.gateway.lock().unwrap().is_none());
-        tokio::time::timeout(Duration::from_secs(1), bridge.revoke_previous(previous))
+        tokio::time::timeout(Duration::from_secs(5), bridge.revoke_previous(previous))
             .await
+            .unwrap();
+        tokio::time::timeout(Duration::from_secs(5), failed_connection)
+            .await
+            .unwrap()
             .unwrap();
         assert!(vault.load().unwrap().is_none());
     }
