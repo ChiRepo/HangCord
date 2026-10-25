@@ -20,6 +20,24 @@ export class ClientCache {
     private readonly now: () => number = Date.now,
   ) {}
 
+  /** Bind non-secret cached data to one account; switching accounts wipes the previous copy. */
+  async bindAccount(uid: string): Promise<void> {
+    if (!uid || uid.length > 128) throw new Error("bad_account");
+    if (await this.store.get<string>("account") === uid) return;
+    await this.wipeAll();
+    await this.store.put("account", uid);
+  }
+
+  /** Validated snapshots for immediate first paint. Access must still be checked online. */
+  async cachedHangouts(): Promise<HangoutSnapshot[]> {
+    const snapshots: HangoutSnapshot[] = [];
+    for (const key of await this.store.keys(KEYS.hangoutPrefix)) {
+      const snapshot = await this.read(key, HangoutSnapshot);
+      if (snapshot) snapshots.push(snapshot);
+    }
+    return snapshots.slice(0, MAX_HANGOUT_SNAPSHOTS[this.platform]);
+  }
+
   /** Everything read back is checked against the contract; an old or damaged shape is a cache miss. */
   private async read<T>(key: string, schema: { safeParse(v: unknown): { success: true; data: T } | { success: false } }): Promise<T | undefined> {
     const raw = await this.store.get<unknown>(key);

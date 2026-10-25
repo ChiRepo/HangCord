@@ -1,5 +1,5 @@
 import { withConfigGate } from "@hangcord/worker-kit";
-import { REQUIRED_SECRETS, makeApp, type Env } from "./app";
+import { REQUIRED_SECRETS, makeApp, withNativeCors, type Env } from "./app";
 import { googleKeySource } from "./auth/firebase";
 
 export { UserDO } from "./user-do";
@@ -10,5 +10,5 @@ export { REQUIRED_SECRETS };
 const app = makeApp({ keys: googleKeySource() });
 
 export default {
-  fetch: withConfigGate<Env>("api", REQUIRED_SECRETS, app),
+  fetch: withNativeCors(withConfigGate<Env>("api", REQUIRED_SECRETS, app)),
 } satisfies ExportedHandler<Env>;

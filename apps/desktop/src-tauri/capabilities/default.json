@@ -15,6 +15,15 @@
     "allow-cache-wipe",
     "allow-governor-status",
     "allow-set-lightweight",
-    "allow-app-info"
+    "allow-app-info",
+    "allow-auth-status",
+    "allow-auth-password",
+    "allow-auth-google",
+    "allow-auth-cancel",
+    "allow-auth-logout",
+    "allow-api-request",
+    "allow-gateway-connect",
+    "allow-gateway-send",
+    "allow-gateway-disconnect"
   ]
 }

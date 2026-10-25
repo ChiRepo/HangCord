@@ -31,6 +31,17 @@ function idToken(claims: Record<string, unknown> = {}, opts: { kid?: string; key
   return `${head}.${body}.${sig}`;
 }
 
+function googleIdToken(claims: Record<string, unknown> = {}, key = privateKey) {
+  const now = Math.floor(Date.now() / 1000);
+  const head = b64({ alg: "RS256", kid: "test-kid", typ: "JWT" });
+  const payload = b64({
+    iss: "https://accounts.google.com", aud: "test-desktop-client-id", sub: "google-sub",
+    iat: now, exp: now + 3600, email: "google@example.test", email_verified: true, ...claims,
+  });
+  const sig = createSign("RSA-SHA256").update(`${head}.${payload}`).sign(key).toString("base64url");
+  return `${head}.${payload}.${sig}`;
+}
+
 let w: Unstable_DevWorker;
 const api = (path: string, init: RequestInit & { token?: string } = {}) => {
   const headers = new Headers(init.headers);
@@ -49,7 +60,11 @@ beforeAll(async () => {
   w = await unstable_dev(join(here, "entry.ts"), {
     config,
     persistTo: persist,
-    vars: { TEST_JWK: JSON.stringify(jwk), SESSION_SIGNING_KEY: `test-${randomUUID()}` },
+    vars: {
+      TEST_JWK: JSON.stringify(jwk), SESSION_SIGNING_KEY: `test-${randomUUID()}`,
+      FIREBASE_WEB_API_KEY: `test-${randomUUID()}`, GOOGLE_OAUTH_DESKTOP_CLIENT_ID: "test-desktop-client-id",
+      GOOGLE_OAUTH_DESKTOP_CLIENT_SECRET: `test-${randomUUID()}`,
+    },
     logLevel: "none",
     experimental: { disableExperimentalWarning: true },
   });
@@ -114,6 +129,162 @@ describe("sessions (MASTER_PLAN §6.1)", () => {
     const s = await signIn();
     expect((await api("/auth/logout", { method: "POST", token: s.session })).status).toBe(204);
     expect((await api("/auth/refresh", { method: "POST", body: JSON.stringify({ refreshToken: s.refreshToken }) })).status).toBe(401);
+  });
+
+  it("desktop password sign-in returns only a HangCord session and verified user", async () => {
+    const token = idToken({ sub: "desktop-password", email: "password@example.test", firebase: { sign_in_provider: "password" } });
+    const r = await api("/auth/password", {
+      method: "POST", body: JSON.stringify({ email: "password@example.test", password: "test-password" }),
+      headers: { "x-test-firebase-token": token },
+    });
+    expect(r.status).toBe(200);
+    const raw = await r.json() as Record<string, unknown>;
+    expect(raw).not.toHaveProperty("idToken");
+    expect(raw).not.toHaveProperty("oauthRefreshToken");
+    expect(Session.parse(raw).user).toMatchObject({ id: "desktop-password", email: "password@example.test" });
+  });
+
+  it("desktop password maps invalid credentials, unverified email, provider failures and throttling", async () => {
+    const body = JSON.stringify({ email: "person@example.test", password: "test-password" });
+    for (const [mode, token, status, error] of [
+      ["password-failure", "", 401, "invalid_credentials"],
+      ["", idToken({ email_verified: false, firebase: { sign_in_provider: "password" } }), 403, "email_unverified"],
+      ["provider-500", "", 503, "auth_unavailable"],
+      ["rate-limit", "", 429, "rate_limited"],
+      ["fetch-error", "", 503, "auth_unavailable"],
+      ["redirect", "", 503, "auth_unavailable"],
+      ["oversized", "", 503, "auth_unavailable"],
+      ["malformed", "", 503, "auth_unavailable"],
+    ] as const) {
+      const headers = new Headers({ "x-test-provider-mode": mode });
+      if (token) headers.set("x-test-firebase-token", token);
+      const r = await api("/auth/password", { method: "POST", body, headers });
+      expect(r.status).toBe(status);
+      expect(await r.json()).toEqual({ error });
+    }
+  });
+
+  it("desktop Google exchange accepts only the strict loopback callback and issues a HangCord session", async () => {
+    const token = idToken({ sub: "desktop-google", email: "google@example.test", firebase: { sign_in_provider: "google.com" } });
+    const r = await api("/auth/google/exchange", {
+      method: "POST",
+      body: JSON.stringify({ code: "auth-code", codeVerifier: "A".repeat(43), redirectUri: "http://127.0.0.1:49152/oauth/callback" }),
+      headers: { "x-test-firebase-token": token, "x-test-google-id-token": googleIdToken(), "x-test-provider-uid": "desktop-google" },
+    });
+    expect(r.status).toBe(200);
+    const raw = await r.json() as Record<string, unknown>;
+    expect(raw).not.toHaveProperty("idToken");
+    expect(raw).not.toHaveProperty("oauthAccessToken");
+    expect(Session.parse(raw).user).toMatchObject({ id: "desktop-google", email: "google@example.test" });
+
+    const invalid = await api("/auth/google/exchange", {
+      method: "POST", body: JSON.stringify({ code: "c", codeVerifier: "short", redirectUri: "http://localhost:49152/oauth/callback" }),
+    });
+    expect(invalid.status).toBe(400);
+
+    const badGoogleIdentity = await api("/auth/google/exchange", {
+      method: "POST",
+      body: JSON.stringify({ code: "auth-code", codeVerifier: "C".repeat(43), redirectUri: "http://127.0.0.1:49152/oauth/callback" }),
+      headers: { "x-test-google-id-token": "not.a.valid.jwt.with.enough.length" },
+    });
+    expect(badGoogleIdentity.status).toBe(401);
+    expect(await badGoogleIdentity.json()).toEqual({ error: "invalid_credentials" });
+
+    const unverifiedGoogleIdentity = await api("/auth/google/exchange", {
+      method: "POST",
+      body: JSON.stringify({ code: "auth-code", codeVerifier: "D".repeat(43), redirectUri: "http://127.0.0.1:49152/oauth/callback" }),
+      headers: { "x-test-google-id-token": googleIdToken({ email_verified: false }) },
+    });
+    expect(unverifiedGoogleIdentity.status).toBe(401);
+  });
+
+  it("Google account collision requires a matching password proof before linking", async () => {
+    const owner = idToken({ sub: "shared-account", email: "same@example.test", firebase: { sign_in_provider: "password" } });
+    const linked = idToken({ sub: "shared-account", email: "same@example.test", firebase: { sign_in_provider: "google.com" } });
+    const request = (firebaseToken: string, googleEmail: string, providerUid = "shared-account", mode = "collision") => api("/auth/google/exchange", {
+      method: "POST",
+      body: JSON.stringify({
+        code: "auth-code", codeVerifier: "B".repeat(43), redirectUri: "http://127.0.0.1:49153/oauth/callback",
+        link: { email: "same@example.test", password: "test-password" },
+      }),
+      headers: {
+        "x-test-provider-mode": mode, "x-test-firebase-token": owner,
+        "x-test-google-id-token": googleIdToken({ email: googleEmail }),
+        "x-test-linked-token": firebaseToken, "x-test-google-email": googleEmail, "x-test-provider-uid": providerUid,
+      },
+    });
+    const success = await request(linked, "same@example.test");
+    expect(success.status).toBe(200);
+    expect(Session.parse(await success.json()).user.id).toBe("shared-account");
+
+    const mismatch = await request(linked, "other@example.test");
+    expect(mismatch.status).toBe(409);
+    expect(await mismatch.json()).toEqual({ error: "account_link_required" });
+
+    const wrongOwner = await request(linked, "same@example.test", "different-account");
+    expect(wrongOwner.status).toBe(409);
+    expect(await wrongOwner.json()).toEqual({ error: "account_link_required" });
+
+    const providerCollision = await request(linked, "same@example.test", "shared-account", "collision-error");
+    expect(providerCollision.status).toBe(200);
+    expect(Session.parse(await providerCollision.json()).user.id).toBe("shared-account");
+
+    const httpCollision = await request(linked, "same@example.test", "shared-account", "collision-http-error");
+    expect(httpCollision.status).toBe(200);
+    expect(Session.parse(await httpCollision.json()).user.id).toBe("shared-account");
+  });
+
+  it("desktop auth config returns only the public Google client ID", async () => {
+    const r = await api("/auth/desktop-config");
+    expect(r.status).toBe(200);
+    expect(await r.json()).toEqual({ googleClientId: "test-desktop-client-id" });
+  });
+});
+
+describe("native CORS", () => {
+  it("adds exact CORS headers across successful and error responses", async () => {
+    for (const origin of ["tauri://localhost", "http://tauri.localhost", "https://tauri.localhost"]) {
+      for (const [path, method, status] of [
+        ["/health", "GET", 200], ["/me", "GET", 401], ["/auth/session", "GET", 405], ["/unknown", "GET", 404],
+      ] as const) {
+        const r = await w.fetch(`http://api.test/v1${path}`, { method, headers: { origin } } as never) as unknown as Response;
+        expect(r.status).toBe(status);
+        expect(r.headers.get("access-control-allow-origin")).toBe(origin);
+        expect(r.headers.get("access-control-expose-headers")).toBe("ETag");
+        expect(r.headers.get("access-control-allow-credentials")).toBeNull();
+      }
+      for (const [mode, status] of [["provider-500", 503], ["rate-limit", 429]] as const) {
+        const r = await api("/auth/password", {
+          method: "POST", body: JSON.stringify({ email: "person@example.test", password: "password" }),
+          headers: { origin, "x-test-provider-mode": mode },
+        });
+        expect(r.status).toBe(status);
+        expect(r.headers.get("access-control-allow-origin")).toBe(origin);
+      }
+    }
+  });
+
+  it("answers exact preflight and rejects unknown origins, methods and headers", async () => {
+    const origin = "tauri://localhost";
+    const preflight = await w.fetch("http://api.test/v1/me", {
+      method: "OPTIONS", headers: {
+        origin, "access-control-request-method": "PATCH",
+        "access-control-request-headers": "authorization, content-type, if-match",
+      },
+    } as never) as unknown as Response;
+    expect(preflight.status).toBe(204);
+    expect(preflight.headers.get("access-control-allow-methods")).toBe("GET, POST, PATCH");
+    expect(preflight.headers.get("access-control-allow-headers")).toBe("authorization, content-type, if-match, if-none-match");
+    for (const headers of [
+      { origin: "https://evil.example", "access-control-request-method": "GET" },
+      { origin, "access-control-request-method": "DELETE" },
+      { origin, "access-control-request-method": "GET", "access-control-request-headers": "x-secret" },
+    ]) {
+      const r = await w.fetch("http://api.test/v1/me", { method: "OPTIONS", headers } as never) as unknown as Response;
+      expect(r.status).toBe(403);
+    }
+    const unknown = await w.fetch("http://api.test/v1/me", { headers: { origin: "https://evil.example" } } as never) as unknown as Response;
+    expect(unknown.status).toBe(403);
   });
 });
 

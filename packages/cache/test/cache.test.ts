@@ -20,6 +20,20 @@ const snap = (version: number, extra: Partial<HangoutSnapshot> = {}): HangoutSna
   ...extra,
 });
 
+it("keeps only validated snapshots for the same account and wipes on account change", async () => {
+  const store = new MemoryCacheStore();
+  const cache = new ClientCache(store, "desktop");
+  await cache.bindAccount("u1");
+  await cache.putHangout(snap(1));
+  await cache.bindAccount("u1");
+  expect(await cache.cachedHangouts()).toHaveLength(1);
+  await cache.bindAccount("u2");
+  expect(await cache.cachedHangouts()).toEqual([]);
+  expect(await store.get("account")).toBe("u2");
+  await cache.wipeAll();
+  expect(await store.keys("")).toEqual([]);
+});
+
 describe("applyPatch", () => {
   it("sets and removes without mutating the input", () => {
     const doc = { a: { b: 1 }, list: [1, 2, 3] };

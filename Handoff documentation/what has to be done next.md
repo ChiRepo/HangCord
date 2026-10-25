@@ -16,14 +16,14 @@ Work top to bottom. Items marked **Owner** need the owner's accounts or decision
   - [ ] Backup project: it only needs **Firestore**, with no sign-in and no apps. Turn Authentication off there.
   - [ ] Both projects: create Firestore in production mode with the deny-all rules from `docs/ACCESS_AND_SETTINGS.md` §13.
   - [ ] Google Cloud Console → Credentials: restrict the main project's browser API key to the Identity Toolkit and Token Service APIs. Add website restrictions once there is a domain.
-  - [ ] Create an OAuth client of type **Desktop app**, for Google sign-in through the system browser.
-- [ ] **Cloudflare**, with the owner running each command:
-  - [ ] Create the D1 database: `npx wrangler d1 create hangcord`. Paste its id, which is not a secret, into the Worker configs when checkpoint 2 lands.
-  - [ ] Set the secrets. Each command asks for the value; never paste a value into chat or a file:
-    - `npx wrangler secret put SESSION_SIGNING_KEY` for **api** and **gateway** (the same value in both)
-    - `npx wrangler secret put HANGCORD_KEK_V1` for **gateway**: 32 random bytes in base64 (`openssl rand -base64 32`), with an offline copy kept
-    - `npx wrangler secret put GOOGLE_OAUTH_DESKTOP_CLIENT_SECRET` for **api**
-    - **Firebase config, per the owner's rule "store it in Cloudflare Workers":** keep the main project's web API key and project ID in Workers configuration, not in the app or the repo. The current API uses `FIREBASE_PROJECT_ID` as a Workers Secret. Register the web API key when implementing checkpoint 2.2; never put its value in this repo.
+  - [x] Create OAuth client **HangCord Desktop**, type **Desktop app** (2026-10-25, explicitly approved). Its public client ID and encrypted client secret are configured in the API.
+- [ ] **Cloudflare**, provisioned through owner-authorized agent setup on 2026-10-24:
+  - [x] Create D1 `hangcord`, bind it in both Worker configs and apply migrations 0001–0003. Migration records were verified in the dashboard.
+  - [ ] Finish secret provisioning. The owner explicitly authorized agent entry for this setup; values remain outside chat output and project files:
+    - [x] `SESSION_SIGNING_KEY` is installed in **api** and **gateway** with the same generated value.
+    - [x] `HANGCORD_KEK_V1` is installed in **gateway** (32 random bytes, base64). An offline recovery copy has **not** been created; resolve recovery custody before storing real messages.
+    - [x] Transfer `GOOGLE_OAUTH_DESKTOP_CLIENT_SECRET` to **api**. Cloudflare secret metadata and the configured Google exchange route were verified.
+    - [x] Main Firebase `FIREBASE_PROJECT_ID` and `FIREBASE_WEB_API_KEY` are installed as API Workers Secrets. The backup configuration is unused. Neither configuration is in the app or repository.
 - [ ] **Open decisions** (from the plan):
   - the domain for the API and web companion
   - code signing (Apple Developer ID; for Windows, SignPath Foundation is free for open source)
@@ -34,17 +34,17 @@ Work top to bottom. Items marked **Owner** need the owner's accounts or decision
 ## 2. Authorized checkpoint 2 implementation
 The owner authorized resuming the checkpoints after the intentional revert. Selectively reuse and harden the historical server code; do not revert the entire revert commit. Firebase configuration stays in Cloudflare, and realtime must follow the master plan's RoomDO-per-room layout.
 
-**Current state:** server core is committed, tagged and pushed as `cp-002` (`7db1efa`). [GitHub CI run 39882589960](https://github.com/ChiRepo/HangCord/actions/runs/39882589960) passed. Realtime is implemented and tested locally, awaiting publication. Obtain the owner's publication instruction for this concrete slice before starting 2.2. Deployment needs real D1 bindings and Workers Secrets; checked-in D1 IDs are placeholders.
+**Current state:** server core is committed, tagged and pushed as `cp-002` (`7db1efa`). [GitHub CI run 39882589960](https://github.com/ChiRepo/HangCord/actions/runs/39882589960) passed. Realtime is published as `cp-002.1` (`8174bc4`), with successful CI run 39952649234. The owner authorized continuation to checkpoint 2.2, now implemented locally with 35 Rust tests and a macOS native fixture smoke test passed. Obtain publication authorization for 2.2 before starting 2.3. API/gateway Workers and their shared D1 binding are deployed. Live Google sign-in and authenticated macOS restart passed after the callback issuer fix. Real password-account acceptance and Linux/Windows verification remain pending.
 
-For the current API, the owner sets `SESSION_SIGNING_KEY` and `FIREBASE_PROJECT_ID` as Workers Secrets, then applies all three API D1 migrations. The gateway needs the same `SESSION_SIGNING_KEY`, its own `HANGCORD_KEK_V1`, and the same D1 binding. Its `USERS` binding points to the API UserDO; the API `GATEWAY` service binding points back to the gateway. Coordinate both deployments after provisioning, and verify those bindings before exposing traffic. The Firebase web API key and desktop OAuth flow belong to checkpoint 2.2; no Firebase configuration enters the desktop bundle. Synthetic `hangcord-test` configuration exists only in the local integration harness.
+For the current API, the owner sets `SESSION_SIGNING_KEY` and `FIREBASE_PROJECT_ID` as Workers Secrets; all three API D1 migrations are already applied. The gateway needs the same `SESSION_SIGNING_KEY`, its own `HANGCORD_KEK_V1`, and the same D1 binding. Its `USERS` binding points to the API UserDO; the API `GATEWAY` service binding points back to the gateway. Coordinate both deployments after provisioning, and verify those bindings before exposing traffic. Checkpoint 2.2 additionally requires `FIREBASE_WEB_API_KEY`, `GOOGLE_OAUTH_DESKTOP_CLIENT_ID` and the registered `GOOGLE_OAUTH_DESKTOP_CLIENT_SECRET` in the API Worker; no Firebase configuration enters the desktop bundle. Synthetic `hangcord-test` configuration exists only in the local integration harness.
 
 Before any deployment to a namespace that ran the historical server core, plan invalidation/deletion of legacy `rt:*` UserDO records. The new SQL family storage does not migrate those records; users must sign in again.
 The gateway migration is a fresh-namespace `v1` containing RoomDO and HangoutDO. If a historical gateway was deployed, inspect its migration history first and create an explicit compatible migration; do not overwrite an applied `v1`. Key rotation, reference counts, member-vault recovery, CSV failover and hot-history pruning remain later work.
 
 Complete checkpoint 2 in four parts, each tested, reviewed, documented and pushed to `main` before the next one starts:
 - **2: server core — pushed.** Sessions with refresh-token rotation and reuse detection; `/me`; preferences with ETag / If-Match; hangouts and their snapshot; **+ room**; the D1 schema; journaled writes.
-- **2.1: realtime — locally verified, publication pending.** Gateway IDENTIFY / READY with cache versions, live messages with ACK and broadcast to members who can see the room, a nonce de-dupe, rate limits, REST history and fallback send, and message bodies encrypted at rest.
-- **2.2: the desktop app goes live.**
+- **2.1: realtime — published and CI passed; gateway deployed.** Gateway IDENTIFY / READY with cache versions, live messages with ACK and broadcast to members who can see the room, a nonce de-dupe, rate limits, REST history and fallback send, and message bodies encrypted at rest.
+- **2.2: the desktop app goes live — local implementation, macOS fixture smoke, live Google sign-in and authenticated restart passed; cross-platform checks pending.**
   - Google sign-in through the system browser (PKCE + a loopback redirect in Rust), and email + password.
   - The session and refresh token kept in the OS keychain.
   - Real data instead of `sample.ts`, and live chat.

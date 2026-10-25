@@ -140,7 +140,7 @@ Validation:
 Deployment limits: the D1 binding is still a placeholder; the owner provisions real secrets and database configuration. D1 journal rows are atomic write-ahead records only. Encrypted CSV sealing, tier failover and daily exports remain unimplemented and must not be represented as working. Historical KV refresh sessions are not migrated; deploying over an old namespace requires explicit cleanup and re-sign-in.
 
 
-## 8. Checkpoint 2.1 realtime candidate (2026-10-23, local only)
+## 8. Checkpoint 2.1 realtime (published 2026-10-23)
 
 Implemented:
 - RoomDO per room with hibernating sockets, IDENTIFY/READY, heartbeat, durable message sequences, ACKs, current per-recipient permission/session checks and REST history/fallback send. The API forwards message REST calls through its gateway service binding.
@@ -158,3 +158,50 @@ Validation:
 - Independent read-only review completed with no actionable findings in the scoped session, permission, journal, nonce and crypto paths. The final regression additions also passed.
 
 Not implemented or claimed: desktop live sign-in/chat, RESUME, edit/delete/reaction events, key rotation/reference counts/member-vault recovery, encrypted CSV snapshots, failover, daily backups, or pruning the retained RoomDO history. The serialized room work queue is not yet admission-bounded; retries currently use a fixed five-second interval. Deployment and load/resource testing remain pending. The gateway config targets fresh namespaces; an existing historical deployment needs a migration plan first.
+
+## 9. Checkpoint 2.1 publication and 2.2 desktop integration (2026-10-23)
+
+The owner authorized publication of `cp-002.1`, then paused further work. Commit `8174bc4b298509281b45bd310f9cdffa020c26c5` and tag `cp-002.1` are on origin/main; GitHub CI run 39952649234 succeeded. A later owner instruction resumed checkpoints. Remote state was rechecked during this slice.
+
+Checkpoint 2.2 local changes:
+- Contract-first API password, public desktop configuration and Google code-exchange routes. Firebase and Google tokens are verified in the Worker; same-email linking requires password-account proof. Provider fetches are bounded, fixed-origin and reject redirects. Exact native CORS origins expose ETag.
+- Rust native HTTP/WebSocket bridge, OS-keychain session rotation, Google browser PKCE/loopback callback, cancellation and short IPC errors. No HTTP/shell plugin, provider-token webview exposure or plaintext session fallback.
+- Desktop sign-in and real hangout/room/message screens replace production sample data. Shared cache binds snapshots/preferences to the account. UI guards stale responses, deduplicates sends by nonce, keeps pending sends during room changes and responds to memory pressure. Account creation/reset, member directory and durable pending-send storage remain future work.
+- Test-only mock IPC stays under `tests/ui`. A separate local HTTP/WebSocket fixture drives the real native boundary in the Linux built-app harness; Linux CI unlocks a disposable Secret Service keyring. Fixture evidence does not prove provider deployment or real-account login.
+- Current checks: 214 JavaScript tests pass; 58 UI checks pass with eight viewport skips; lint, JavaScript types, build and registered-secret checks pass. All 35 Rust tests and the isolated macOS native fixture smoke passed. No checkpoint 2.2 commit, push or release is claimed.
+
+## 10. Checkpoint 2.2 native verification and Cloudflare setup (2026-10-24)
+
+- Independent review fixes cover expired-access-token logout revocation, gateway installation racing logout, and `email_unverified` error mapping. All 35 Rust tests pass.
+- The isolated macOS debug test-hooks application built successfully (46.51 MiB). Manual fixture checks covered password sign-in, hangout/room creation, committed message delivery, Lightweight mode and restart with restored session/preferences. The final observed screen was signed out. This does not establish real-provider sign-in, cross-platform completion, signing or a release.
+- Owner-authorized setup created D1 `hangcord` (`f52a5d63-ea01-4e2e-b933-8a8082edfa94`), applied migrations 0001–0003 and verified their migration records. Both Worker configs now bind the database.
+- API and gateway deployments succeeded. The gateway uses the API UserDO namespace; the API service binding targets the gateway. Both bindings were verified through Cloudflare metadata. Initial code versions: API `aa9146aa-e254-4fcd-a168-691723b22703`, gateway `fa232304-1c06-4f87-9678-b518590783d5`; subsequent secret updates create newer versions.
+- The owner explicitly authorized agent secret entry for this setup. The supplied main Firebase configuration and newly generated 32-byte session/encryption keys were stored only in Cloudflare Workers Secrets. Values were not returned, written to the repository or passed to optimization tools. No backup Firebase configuration was installed. An offline recovery copy of the generated encryption key has not been created.
+- Real Firebase/Google account acceptance, Google desktop OAuth configuration, updated Linux/Windows CI, load/resource testing and publication remain pending.
+
+## 11. Checkpoint 2.2 OAuth setup and final checks (2026-10-25)
+
+- The owner approved creation and configuration of the **HangCord Desktop** Google OAuth client. The Desktop app client was created once; the public ID is checked into API configuration and deployed. `/v1/auth/desktop-config` returned HTTP 200 with that ID.
+- Both deployed Workers returned HTTP 200 from `/v1/health`. A deliberately invalid, synthetic password sign-in returned the expected HTTP 401 `invalid_credentials`; this is not successful real-account acceptance.
+- Cloudflare browser authentication expired before the new OAuth secret could be transferred. The Google creation dialog was left open; do not close it or create duplicate credentials. The owner was asked to complete Cloudflare sign-in.
+- The isolated macOS debug app rebuilt successfully against the deployed HTTPS/WSS origins, without `test-hooks` (46.50 MiB). It is not a signed release. UI main bundle: 361.79 kB / 109.92 kB gzip.
+- Four secret-scan findings were hard-coded test placeholders. Test-only provider values now use fresh UUIDs; scanner rules were not weakened. The affected API suite passed 54 tests and the gateway suite passed 19 tests. Lint, API types, registered-secret names and whitespace checks passed. Gitleaks scanned versioned/unignored source (3.97 MB) with paths preserved and reported no leaks. Private folders and ignored build/secret files were excluded.
+- Five temporary agent worktrees were compared with the canonical checkout and removed after integration. No checkpoint 2.2 commit, tag or push has been made.
+
+- OAuth setup completed after the owner restored Cloudflare browser sign-in. The Google client secret was transferred directly from the observed creation dialog into an encrypted API Worker secret; its value was redacted from tool output and temporary runtime variables were cleared. Secret-name metadata confirms it exists. The exchange route changed from HTTP 503 `auth_not_configured` to HTTP 401 `invalid_credentials` for a deliberately invalid test code.
+- The deployed-endpoint native app opens Google account selection in the system browser and cancellation restores the sign-in form. The first owner sign-in used the callback from the cancelled test and therefore hit `ERR_CONNECTION_REFUSED`; a fresh native attempt was started. Successful live account acceptance remains unverified until the app shows the authenticated state.
+
+- Packaging audit found that CI and release installers did not receive the required service origins. Both workflows now supply the public deployed HTTPS/WSS origins; the Linux test-hooks build retains its explicit loopback overrides and `--no-bundle`. YAML validation checked all five build paths, and all 26 policy tests passed. These workflow changes are local and have not run on GitHub yet.
+- The owner reported a second sign-in error; the desktop showed only the generic connection message and no authenticated state. The UI now distinguishes OAuth timeout, network failure, unexpected response and general sign-in failure, and explains the three-minute Google callback window. Do not claim live sign-in until a fresh owner-initiated attempt succeeds in the app.
+
+- After the clearer sign-in messages, lint and all JavaScript type checks passed; six targeted sign-in/accessibility/cancellation UI checks passed at 1440/1024/480 px. The first targeted-test command had incorrect npm argument forwarding and ran no tests; the corrected workspace command passed. The deployed-endpoint macOS debug bundle rebuilt successfully (46.50 MiB; main JS 362.11 kB / 110.01 kB gzip), without test hooks. Graph freshness and the final source secret scan passed. The rebuilt app was opened at the sign-in screen and left for an owner-initiated attempt; no callback timer was started.
+
+## 12. Google callback issuer fix and live acceptance (2026-10-25)
+
+- Read the browser error, “This sign-in callback was not accepted.” Google included `iss=https://accounts.google.com`, which the native callback allowlist rejected. The earlier timeout explanation did not identify this parser bug.
+- The parser now accepts the optional decoded issuer only when it exactly matches Google. Wrong or duplicate issuers remain rejected; state checks are unchanged. Synthetic regression tests cover the full callback through the loopback listener, invalid and duplicate issuers, state mismatch and error responses. No real authorization codes or state values were saved. Independent read-only review found no actionable issues.
+- All five OAuth tests passed. The standard Rust run stalled in the existing OS-keychain fallback migration test and was stopped; rerunning the other 36 tests passed. The isolated macOS debug app rebuilt without test hooks against deployed HTTPS/WSS origins (46.50 MiB).
+- Live verification passed: the browser displayed “You can return to HangCord. This window can be closed.” and the native app displayed “Your first hangout.” Quitting and reopening the app restored the authenticated screen, verifying the saved session across restart. No real chat messages were created during this verification.
+- Checkpoint 2.2 remains unpublished. Cross-platform CI, real password-account acceptance and encryption-key recovery custody remain outstanding.
+
+All 37 Rust tests then passed with `--features test-hooks` and `HANGCORD_KEY_STORAGE=file`, which bypasses the OS keychain only for the cache-key test path. This does not prove the stalled keychain migration path; live sign-in and session restoration were separately verified in the normal app without test hooks.

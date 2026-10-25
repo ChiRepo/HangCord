@@ -15,6 +15,11 @@ on:
 permissions:
   contents: read
 
+# Public service origins for packaged desktop builds. The native test step overrides both.
+env:
+  HANGCORD_API_BASE_URL: https://hangcord-api.jyotsnachaudhari999.workers.dev
+  HANGCORD_GATEWAY_BASE_URL: wss://hangcord-gateway.jyotsnachaudhari999.workers.dev
+
 concurrency:
   group: ci-${{ github.ref }}
   cancel-in-progress: true
@@ -64,8 +69,8 @@ jobs:
       - run: pipx install "graphifyy==$(sed -n 's/^graphifyy==//p' graphify/requirements.txt)"
       - run: sh graphify/refresh.sh --check
 
-  # The real desktop app (checkpoint 1.1): Rust tests, a test-hooks build driven end to end through
-  # tauri-driver + WebKitWebDriver, then the release .deb / AppImage.
+  # The real desktop app: Rust tests, an authenticated local HTTP/WS fixture through the built
+  # test-hooks app and native keychain, then the release .deb / AppImage.
   desktop-linux:
     runs-on: ubuntu-latest
     timeout-minutes: 45
@@ -78,7 +83,7 @@ jobs:
           sudo apt-get update
           sudo apt-get install -y --no-install-recommends libwebkit2gtk-4.1-dev libgtk-3-dev \
             libayatana-appindicator3-dev librsvg2-dev libsoup-3.0-dev libssl-dev libdbus-1-dev pkg-config \
-            build-essential webkit2gtk-driver xvfb dbus
+            build-essential webkit2gtk-driver xvfb dbus gnome-keyring
       - uses: dtolnay/rust-toolchain@1.95
       - uses: Swatinem/rust-cache@v2.9.3
         with: { workspaces: "apps/desktop/src-tauri -> target" }
@@ -86,11 +91,18 @@ jobs:
       - name: Rust unit tests
         run: cargo test --locked
         working-directory: apps/desktop/src-tauri
-      - name: Build the app with test hooks (forced file key — never shipped)
+      - name: Build the app with test hooks and local protocol fixture (never shipped)
         run: npx tauri build --no-bundle --features test-hooks --ci
+        env:
+          HANGCORD_API_BASE_URL: http://127.0.0.1:39431
+          HANGCORD_GATEWAY_BASE_URL: ws://127.0.0.1:39431
       - run: cargo install tauri-driver --version 2.1.0 --locked
-      - name: Desktop e2e (launch, governor, + room, single instance, restart from encrypted cache)
-        run: xvfb-run -a dbus-run-session -- node tests/desktop/run.mjs apps/desktop/src-tauri/target/release/hangcord-desktop
+      - name: Desktop e2e (native auth, HTTP, WebSocket, cache, keychain, single instance)
+        run: |
+          xvfb-run -a dbus-run-session -- bash -euo pipefail -c '
+            printf "%s\n" "hangcord-ci-test-keyring" | gnome-keyring-daemon --unlock --components=secrets >/dev/null
+            node tests/desktop/run.mjs apps/desktop/src-tauri/target/release/hangcord-desktop
+          '
       - name: Release installers (no test hooks)
         run: npx tauri build --bundles deb appimage --ci
       - uses: actions/upload-artifact@v7.0.2

@@ -217,3 +217,35 @@ button { cursor: pointer; background: none; border: 0; }
   .tab { flex: 1; min-height: 56px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2px; color: var(--hc-text-dim); font: 500 var(--hc-text-meta)/16px var(--hc-font); }
   .tab[aria-current="page"] { color: var(--hc-lantern); }
 }
+
+/* Sign-in follows the approved Calm Minimal SignIn screen. */
+.signin { display: flex; min-height: 100dvh; }
+.signin__brand { flex: 1; display: flex; flex-direction: column; justify-content: space-between; gap: var(--hc-space-6); padding: 48px; background: var(--hc-panel); border-right: 1px solid var(--hc-line); }
+.brand { display: flex; align-items: center; gap: var(--hc-space-3); font: 700 22px/28px var(--hc-font-display); }
+.brand span { display: grid; place-items: center; width: 36px; height: 36px; border-radius: var(--hc-radius-md); background: var(--hc-lantern); color: var(--hc-on-lantern); }
+.signin__brand h1 { max-width: 440px; font: 700 40px/48px var(--hc-font-display); }
+.signin p { color: var(--hc-text-muted); }
+.signin__main { flex: 1; display: grid; place-items: center; padding: 48px 24px; }
+.signin__form { display: flex; flex-direction: column; gap: var(--hc-space-4); width: 100%; max-width: 380px; }
+.signin__form h1, .signin__form h2 { margin: 0; font: 600 24px/32px var(--hc-font-display); }
+.signin__form p { margin: 0; }
+.signin__form label { display: flex; flex-direction: column; gap: var(--hc-space-2); }
+.signin__form input { width: 100%; height: 44px; padding: 0 12px; background: var(--hc-bg); border: 1px solid var(--hc-line-strong); border-radius: var(--hc-radius-sm); }
+.signin__form .btn { min-height: 44px; }
+.signin__divider { display: flex; align-items: center; gap: var(--hc-space-3); color: var(--hc-text-dim); font-size: 12px; }
+.signin__divider::before, .signin__divider::after { content: ""; height: 1px; flex: 1; background: var(--hc-line); }
+.signin__later { color: var(--hc-text-muted); font-size: 12px; }
+.empty-hangout { display: flex; align-items: center; justify-content: center; flex-direction: column; gap: var(--hc-space-6); min-height: 100dvh; padding: 24px; }
+.connection { margin-left: auto; color: var(--hc-text-muted); font-size: 12px; }
+.chat-error { padding: 8px 16px; color: var(--hc-ember-text); }
+.empty-messages, .directory-note { color: var(--hc-text-muted); padding: 12px; }
+.msg p { overflow-wrap: anywhere; white-space: pre-wrap; }
+.msg small { color: var(--hc-text-muted); }
+button:disabled { cursor: not-allowed; }
+@media (max-width: 719px) {
+  .signin { flex-direction: column; }
+  .signin__brand { padding: 24px; border-right: 0; border-bottom: 1px solid var(--hc-line); }
+  .signin__brand h1, .signin__brand > p, .signin__brand > div > p { display: none; }
+  .signin__main { padding: 24px; }
+  .connection { max-width: 100px; }
+}

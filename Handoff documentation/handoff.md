@@ -2,7 +2,7 @@
 
 > **To GPT-6 Astra, or whichever model picks this up next:** welcome to HangCord. You're joining a project that already has a working desktop app, a clean contract, real tests and an owner who knows exactly what they want. Your job is not to reinvent any of it. Build the next slice carefully, prove it works, and leave the project a little better than you found it. Go one step at a time, test everything, never guess, and say plainly when you're stuck. Careful, verified work is what makes an app feel effortless to the people who use it. You can do this.
 
-_Updated 2026-10-23 during the authorized checkpoint 2.1 implementation. This folder is for any AI agent or developer continuing the work._
+_Updated 2026-10-23 during the authorized checkpoint 2.2 implementation. This folder is for any AI agent or developer continuing the work._
 
 ## The six files in this folder
 
@@ -26,16 +26,17 @@ A free, privacy-respecting place to hang out with friends: hangouts with text ro
 - **It is a clean-room build:** no Discord code, names, logos, colours or sounds.
 - **HangCord's own words:** use Hangout, Room, Lounge, Spotlight, Board, Bulletin, Strand and Together. Never say "server" or "channel" in the UI.
 
-## Where things stand (2026-10-23)
+## Where things stand (2026-10-25)
 
 | Checkpoint | Tag / commit | Status |
 |---|---|---|
 | 1, foundation (`cp-001`) | tag `cp-001` → `f6b9ecc` | ✅ done |
 | 1.1, the real desktop app (`cp-001.1`) | tag `cp-001.1` → `6a478e3`, then CI/release fixes up to `c2bf87d` | ✅ done |
-| 2, server core (`cp-002`) | `7db1efa` | Pushed and tagged; GitHub CI passed; not deployed |
-| 2.1, realtime (candidate) | Current working tree | Implemented and tested locally; not published or deployed |
+| 2, server core (`cp-002`) | `7db1efa` | Pushed and tagged; GitHub CI passed; deployed during 2.2 setup |
+| 2.1, realtime | `cp-002.1` → `8174bc4` | Pushed and tagged; GitHub CI passed; deployed during 2.2 setup |
+| 2.2, desktop sign-in/chat | Current working tree | Local tests and macOS fixture smoke passed; Workers/D1 deployed; not committed or pushed |
 
-**Committed baseline:** `7db1efa` selectively recovered and hardened the historical server core. The historical `b65d0d2` and `7b97ac0` implementations were intentionally reverted in `f036237`; they are history, not the current implementation. Checkpoint 2.1 uses RoomDO per room and HangoutDO solely for key custody.
+**Committed baseline:** `8174bc4` contains the published realtime slice. Its predecessor `7db1efa` selectively recovered and hardened the historical server core. The historical `b65d0d2` and `7b97ac0` implementations were intentionally reverted in `f036237`; they are history, not the current implementation. Checkpoint 2.1 uses RoomDO per room and HangoutDO solely for key custody.
 
 **What is verified:**
 - The desktop app builds and launches.
@@ -43,11 +44,15 @@ A free, privacy-respecting place to hang out with friends: hangouts with text ro
 - The automatic checks on GitHub (CI) pass on `main`.
 - A **draft release `v0.0.1`** has installers for macOS (`.dmg`), Windows (`.exe` / `.msi`) and Linux (`.deb` / AppImage). The owner publishes it.
 
-**The owner has authorized continuing checkpoints.** The chosen approach is selective reuse with review, Firebase configuration only in Cloudflare, and the master plan's RoomDO-per-room layout. Do not repeat the restore/rebuild question. The approved server-core publication succeeded. Finish and publish the realtime slice with owner authorization before beginning checkpoint 2.2.
+**The owner has authorized continuing checkpoints.** The chosen approach is selective reuse with review, Firebase configuration only in Cloudflare, and the master plan's RoomDO-per-room layout. Do not repeat the restore/rebuild question. The approved server-core publication succeeded. The owner published checkpoint 2.1 and then authorized checkpoint 2.2. Finish this slice and obtain its publication authorization before beginning 2.3.
 
-**Current local verification:** all **196 JavaScript tests pass**, including 45 API tests, 19 gateway tests and independent crypto fixtures. Lint, JavaScript types, build and secret-name checks pass. The unchanged desktop baseline has 20 passing Rust tests and 31 passing UI checks with 8 expected viewport skips; these were not rerun for this server-only slice. No live Firebase login, cloud deployment, new installer or native macOS UI verification is claimed. See `what changes were made.md` for exact evidence.
+**Current local verification:** checkpoint 2.2 has **214 passing JavaScript tests**, including 54 API tests, 19 gateway tests, eight desktop controller tests and 19 cache tests. Lint, JavaScript types, build and secret-name checks pass. UI checks: **58 passed, eight expected viewport skips**, covering 1440/1024/480px, sign-in, chat, retry, permissions and accessibility. The previous 35-test Rust run passed. After adding issuer regressions, all five OAuth tests and 36 standard Rust tests passed; the remaining OS-keychain test stalled and was stopped. A macOS debug test-hooks app passed manual fixture sign-in, hangout/room creation, live message send, Lightweight mode, and restart with restored keychain session and preferences. Independent review findings concerning expired-session revocation, a gateway/logout race, and the email-verification error mapping were fixed. The updated Linux built-app harness and Windows checks await CI. Published baseline CI: [run 39952649234](https://github.com/ChiRepo/HangCord/actions/runs/39952649234), success at `8174bc4`.
 
-**Still absent:** desktop live sign-in/chat, email codes, encrypted CSV sealing, tier failover and daily exports. Realtime is verified locally. The current D1 write-ahead journal and RoomDO retry outbox are the first storage layer, not the complete StorageRouter.
+**Implemented locally:** native password and system-browser Google PKCE sign-in, OS-keychain HangCord sessions, authenticated native HTTP/WebSocket bridge, real-data desktop UI, account-scoped encrypted cache, bounded history and same-nonce send retry. Sample content exists only in UI tests.
+
+**Cloudflare setup:** API and gateway health checks return HTTP 200. Main Firebase configuration, shared session signing key and gateway encryption key are installed as Workers Secrets. The approved HangCord Desktop OAuth client exists and its public ID is deployed. Its client secret is installed and verified through Cloudflare metadata; the Google exchange route reaches credential validation. An offline encryption-key recovery copy is not yet established.
+
+**Still pending:** Linux/Windows verification of this candidate, real password-account acceptance, encryption-key recovery custody, email codes, durable client outbox, encrypted CSV sealing, tier failover and daily exports. Local test fixtures are not live-provider evidence. The current D1 journal and RoomDO retry outbox remain the first storage layer, not the complete StorageRouter.
 
 ## Where everything lives
 
@@ -118,3 +123,7 @@ ui-ux/calm-minimal/      the approved design system and screens
 ## When you're blocked
 
 Stop, write down what you tried and the real error output, and ask the owner one clear question. Don't work around authentication, don't disable a test or a policy check to make something pass, and don't guess.
+
+**Live Google verification (2026-10-25):** Google’s `iss` callback field had been rejected by the native parser. Exact Google issuer validation fixed the failure. The deployed-endpoint macOS app now reaches “Your first hangout” and restores that authenticated screen after quitting and reopening. The callback regression uses synthetic values; actual OAuth callback credentials were not saved.
+
+All 37 Rust tests then passed with `--features test-hooks` and `HANGCORD_KEY_STORAGE=file`, which bypasses the OS keychain only for the cache-key test path. This does not prove the stalled keychain migration path; live sign-in and session restoration were separately verified in the normal app without test hooks.

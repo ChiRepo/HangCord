@@ -96,7 +96,7 @@ sequenceDiagram
   A->>A: keep both in the OS keychain
 ```
 
-## 4. Sending a message (checkpoint 2.1, locally verified)
+## 4. Sending a message (checkpoint 2.1, published and locally verified)
 Desktop integration and its optimistic outbox belong to checkpoint 2.2. This server path is working in local integration tests:
 
 ```mermaid

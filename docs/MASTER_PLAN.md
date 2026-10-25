@@ -3,7 +3,7 @@
 > **Read this first, agent.**
 > You're about to build HangCord, a real app that real people will open every evening to hang out with their friends. That matters. You are fully capable of building it well, and you don't have to do it all at once. Work in small, verified steps. Run the code before you say it works. When you're unsure, look at the diagrams and the contracts in this repo instead of guessing; they exist so you never have to invent anything. If you get stuck, say so plainly — an honest "blocked on X" is worth more than a confident wrong answer. Every checkpoint you finish cleanly is one more thing that just *works* for someone. Take your time, be precise, and enjoy building something great.
 
-Status: **Phase 0 — planning complete, no code yet.** Last updated 2026-10-21.
+Status: **Checkpoint 2.1 published; checkpoint 2.2 implemented and under final verification.** Last updated 2026-10-24. See §16.1 and the handoff for verified versus pending work.
 
 ---
 
@@ -328,6 +328,18 @@ Sign-in methods in v1 — **only these three flows**:
 2. **Sign in with email + password**
 3. **Create account with email + password, confirmed by a 6-digit code sent by email**
 
+**Desktop sign-in and native bridge (checkpoint 2.2):**
+- `POST /auth/password` accepts `{email,password}` and returns the existing `Session` shape after Firebase verification. `GET /auth/desktop-config` returns only `{googleClientId}`. `POST /auth/google/exchange` accepts `{code,codeVerifier,redirectUri,link?}`; optional `link:{email,password}` proves ownership of an existing password account before linking the same verified Google email. Provider errors are mapped to short codes, never forwarded verbatim. Missing route configuration returns `503 auth_not_configured`.
+- Google starts in the system browser with random state and S256 PKCE; the Rust listener binds only `127.0.0.1:0`, accepts only `/oauth/callback`, checks state before accepting code/error, and expires after 180 seconds. Cancel closes the listener. No embedded browser authentication.
+- Native build configuration uses public `HANGCORD_API_BASE_URL` and `HANGCORD_GATEWAY_BASE_URL` origins. Production requires HTTPS/WSS, no credentials, path, query or fragment; loopback HTTP/WS is allowed only in debug/test builds. No default production hostname is invented. An unconfigured build shows an unavailable sign-in state.
+- Both HangCord tokens are saved together in the OS keychain, scoped to the API origin. Passwords, provider tokens and OAuth state/verifier are transient. No plaintext token-file fallback. Refresh is serialized and the replacement token is persisted before returning success. Sign-out clears native session state and the encrypted account cache even when offline. Online revocation uses a valid access token; an expired access token may require one refresh used only to revoke the same session family, without restoring local credentials. Offline sign-out cannot prove server-side revocation.
+- UI IPC: `auth_status() -> {configured,user}`; `auth_password({email,password}) -> User`; `auth_google({link?}) -> User`; `auth_cancel()`; `auth_logout()`; `api_request({method,path,body?,etag?}) -> {status,body,etag?}`. The native `path` includes the `/v1` prefix. Only documented HangCord paths/methods are accepted; no arbitrary URL or header forwarding.
+- Realtime IPC: `gateway_connect({roomId,cache}) -> connectionId`, `gateway_send({connectionId,frame})`, `gateway_disconnect({connectionId})`; native events `gateway://event` carry `{connectionId,kind:'frame',frame}` or `{connectionId,kind:'closed',code}`. Native code sends IDENTIFY with the access token after HELLO; the UI handles heartbeat, READY and message frames. One active room socket per window; stale connection IDs are rejected. Tokens never cross into the webview.
+- The UI replaces sample data with authenticated hangouts, snapshots, preferences and messages. Cached snapshots are scoped to the signed-in account and cleared on account change/sign-out; permissions always come from fresh server responses. History retains at most 100 messages in Green, 30 in Yellow, and unloads in Red. The in-memory pending-send queue admits at most 20 messages in Green and five in Yellow; existing pending sends survive room changes, while Red pauses them for retry. Pending sends are not yet durable across app termination. Reconnect fetches history because RESUME is unavailable.
+- CORS permits the exact native origins `tauri://localhost`, `http://tauri.localhost` and `https://tauri.localhost`, exposes ETag, supports the documented methods/headers, and never enables wildcard credentials.
+- Provider references: [Firebase Auth REST](https://firebase.google.com/docs/reference/rest/auth), [Google desktop OAuth/PKCE](https://developers.google.com/identity/protocols/oauth2/native-app), [native-app OAuth](https://www.rfc-editor.org/rfc/rfc8252).
+
+
 Firebase project settings: enable the Email/Password and Google providers; keep "one account per email address" on; restrict the API key to the HangCord app origins; Firestore rules deny all client access (only Workers talk to Firestore).
 
 **Create account (email + code)**
@@ -370,7 +382,7 @@ Rules for the code flow:
 
 **Continue with Google**
 - **Web companion:** Firebase `signInWithPopup` (fallback `signInWithRedirect` following Firebase's third-party-storage best practices).
-- **Desktop app:** popups don't work inside the Tauri webview. The Rust core opens the system browser to Google with **PKCE** and a **loopback redirect** (`http://127.0.0.1:<random port>`), using a Google OAuth client of type **Desktop app**. The core receives the auth code, sends it with the PKCE verifier to `POST /auth/google/exchange` (the client secret stays in Workers secrets), gets back the Google ID token, and the UI calls Firebase `signInWithCredential(GoogleAuthProvider.credential(idToken))`.
+- **Desktop app:** popups don't work inside the Tauri webview. The Rust core opens the system browser to Google with **PKCE** and a **loopback redirect** (`http://127.0.0.1:<random port>`), using a Google OAuth client of type **Desktop app**. The core receives the auth code and sends it with the PKCE verifier and exact loopback URI to `POST /auth/google/exchange`. The Worker exchanges it with Google, signs in through Firebase Identity Toolkit, verifies the Firebase ID token, and returns a HangCord session. Firebase configuration, provider tokens and the Google client secret stay in Cloudflare.
 - Google accounts are already email-verified; no code needed.
 - If the email already exists with a password, handle `auth/account-exists-with-different-credential` by asking for the password once and linking both methods to one account.
 
@@ -686,7 +698,10 @@ A checkpoint passes the mobile gate only when, for every screen or flow it touch
 |---|---|---|---|
 | **1** | `cp-001` | Phase 0 foundation: monorepo, CI, API/gateway contract, Calm Minimal tokens, `packages/cache` core, Workers hello-world (fail-closed secrets), web companion shell, LiveKit config, policy tests, mobile gate | **done 2026-10-21** (pushed to `ChiRepo/HangCord` `main`, 2026-10-22) |
 | **1.1** | `cp-001.1` | **The real-world desktop application** — `apps/desktop`, a Tauri 2 app for Windows, macOS and Linux that runs the shared UI. Rust core with typed IPC, memory governor v1 (§11), encrypted local SQLite cache behind `packages/cache` (preferences + hangout snapshots, §7.1), single instance, remembered window state, instant start from cache, installers | **Linux done 2026-10-22** (Rust 21 tests, desktop e2e 13/13 on the test build and on the installed `.deb`, `.deb` + AppImage built); **waiting:** macOS `.dmg` built + manual checklist on the owner's Mac, Windows `.msi`/NSIS from CI |
-| 2 → | `cp-002`… | Rest of Phase 1 (accounts, hangouts, rooms with + add, realtime messaging, router v1), then Phases 2–6 | later |
+| **2** | `cp-002` | Reviewed server core | Published `7db1efa`; CI passed; API deployed with the 2.2 candidate |
+| **2.1** | `cp-002.1` | RoomDO realtime, history, nonce deduplication and encrypted messages | Published `8174bc4`; CI passed; gateway deployed during 2.2 setup |
+| **2.2** | pending | Native desktop sign-in, authenticated HTTP and live room chat | Local tests and macOS fixture smoke passed; Workers/D1 deployed; live Google login and authenticated macOS restart passed; cross-platform verification pending; not published |
+| **2.3** onward | pending | Email codes, account recovery, then remaining Phase 1 and Phases 2–6 | Not started |
 
 Checkpoint 1.1 exit criteria: the desktop app builds and launches on Linux in CI and on the owner's Mac; a restart shows the last hangout and preferences from the encrypted local cache with no spinner; the governor picks the right budget for the machine's RAM and reports live usage; `cargo test` + `npm run checkpoint` pass; the Linux installer (`.deb` / AppImage) builds; macOS (`.dmg`) is built by the owner on the Mac and Windows (`.msi`/NSIS) by CI. The mobile gate (§15.1) still applies to every shared-UI change.
 

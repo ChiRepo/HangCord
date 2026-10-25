@@ -1,12 +1,13 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import {
-  has, liveSlug, MAX_ROOMS_PER_CATEGORY, planNewRoom, type HangoutSnapshot, type NewRoomError, type Preferences, type Room,
+  has, liveSlug, MAX_ROOMS_PER_CATEGORY, type NewRoomError, type Room,
 } from "@hangcord/protocol";
-import { ClientCache, getPref, MemoryCacheStore, newRoomGuidelinesDefault, setPref } from "@hangcord/cache";
+import { ClientCache, getPref, MemoryCacheStore, newRoomGuidelinesDefault } from "@hangcord/cache";
 import { Avatar } from "@hangcord/ui";
-import { SAMPLE_HANGOUT, SAMPLE_HANGOUTS, SAMPLE_MEMBERS, SAMPLE_MESSAGES, SAMPLE_PREFS } from "./sample";
+import { LiveClient, type LiveState } from "./live";
+import { SignIn, CreateHangoutForm, CreateHangoutDialog, errorText } from "./SignIn";
 import { Icon } from "./Icon";
-import { isDesktop, setLightweight, TauriCacheStore, watchGovernor, type GovernorStatus } from "./platform";
+import { isDesktop, NativeDesktopPort, setLightweight, TauriCacheStore, watchGovernor, type GovernorStatus } from "./platform";
 
 const PHONE_QUERY = "(max-width: 719px)";
 
@@ -21,53 +22,20 @@ function useMedia(query: string) {
   return match;
 }
 
-type Loaded = { snap: HangoutSnapshot; prefs: Preferences; source: "cache" | "seed" | "memory-fallback" };
-
 export const PREF_LIGHTWEIGHT = "performance.lightweight";
 
-/**
- * Paint from the local cache first (MASTER_PLAN §7.1). The cache is created ONCE per app start —
- * rotating a phone must never rebuild it. Desktop: encrypted SQLite in the Rust core. Browser:
- * in-memory until the OPFS adapter lands (Phase 1). Sample data seeds an empty cache.
- */
-function useCachedHangout() {
-  const cacheRef = useRef<ClientCache | null>(null);
-  const [state, setState] = useState<Loaded | null>(null);
+function useLive() {
+  const [state, setState] = useState<LiveState | null>(null);
+  const client = useRef<LiveClient | null>(null);
   useEffect(() => {
-    const desktop = isDesktop();
-    const platform = desktop ? "desktop" : window.matchMedia(PHONE_QUERY).matches ? "web-mobile" : "web";
-    let live = true;
-    const boot = async (cache: ClientCache): Promise<Loaded> => {
-      let snap = await cache.hangout(SAMPLE_HANGOUT.hangoutId);
-      let source: Loaded["source"] = "cache";
-      if (!snap) {
-        await cache.putHangout(SAMPLE_HANGOUT);
-        snap = SAMPLE_HANGOUT;
-        source = "seed";
-      }
-      const prefs = (await cache.preferences()).version > 0 ? await cache.preferences() : await cache.savePreferences(SAMPLE_PREFS);
-      return { snap, prefs, source };
-    };
-    void (async () => {
-      const cache = new ClientCache(desktop ? new TauriCacheStore() : new MemoryCacheStore(), platform);
-      cacheRef.current = cache;
-      let loaded: Loaded;
-      try {
-        loaded = await boot(cache);
-      } catch {
-        // Local storage failed (locked, full, damaged): never strand the user on a blank screen —
-        // run from memory for this session; the server copy is the source of truth anyway.
-        const mem = new ClientCache(new MemoryCacheStore(), platform);
-        cacheRef.current = mem;
-        loaded = { ...(await boot(mem)), source: "memory-fallback" };
-      }
-      if (live) setState(loaded);
-    })();
-    return () => {
-      live = false;
-    };
+    const cache = new ClientCache(isDesktop() ? new TauriCacheStore() : new MemoryCacheStore(), "desktop");
+    const current = new LiveClient(new NativeDesktopPort(), cache, setState);
+    client.current = current;
+    setState(current.state);
+    void current.start();
+    return () => { void current.dispose(); };
   }, []);
-  return { state, setState, cache: cacheRef };
+  return { state, client };
 }
 
 function useGovernor(lightweightPref: boolean | undefined) {
@@ -75,8 +43,9 @@ function useGovernor(lightweightPref: boolean | undefined) {
   useEffect(() => {
     if (!isDesktop()) return;
     let stop: (() => void) | undefined;
-    void watchGovernor(setStatus).then((s) => (stop = s));
-    return () => stop?.();
+    let active = true;
+    void watchGovernor((value) => { if (active) setStatus(value); }).then((s) => { if (active) stop = s; else s(); }).catch(() => {});
+    return () => { active = false; stop?.(); };
   }, []);
   // Lightweight mode is a saved preference (MASTER_PLAN §7.1): re-apply it on every start.
   useEffect(() => {
@@ -93,9 +62,10 @@ type Layer = "room" | "members" | "dialog";
 export function App() {
   const phone = useMedia(PHONE_QUERY);
   const wide = useMedia("(min-width: 1100px)");
-  const { state, setState, cache } = useCachedHangout();
+  const { state, client } = useLive();
   const [governor, setGovernor] = useGovernor(state ? getPref(state.prefs, PREF_LIGHTWEIGHT) === true : undefined);
-  const [roomId, setRoomId] = useState("general");
+  const [draft, setDraft] = useState("");
+  const [creatingHangout, setCreatingHangout] = useState(false);
   const [pane, setPane] = useState<"list" | "room">("list");
   const [membersOpen, setMembersOpen] = useState(false);
   const [addTo, setAddTo] = useState<Room | null>(null);
@@ -136,20 +106,33 @@ export function App() {
     if (!addTo) opener.current?.focus();
   }, [addTo]);
 
-  if (!state) return <div className="boot" aria-busy="true" />;
+  useEffect(() => { if (governor) client.current?.pressure(governor.zone); }, [governor, client]);
+  useEffect(() => { setDraft(""); }, [state?.roomId]);
+
+  if (!state || state.booting || !client.current) return <div className="boot" aria-busy="true" aria-label="Opening HangCord" />;
+  const live = client.current;
+  if (!state.user) return <SignIn state={state} client={live} />;
+  const signOut = <button className="btn btn--ghost" onClick={() => void live.logout()}>Sign out</button>;
+  if (!state.snap) return <main className="empty-hangout">
+    {signOut}
+    {state.error && <p className="error" role="alert">{errorText(state.error)} <button className="btn" onClick={() => void live.refresh()}>Retry</button></p>}
+    {state.hangouts.length ? <p role="status">Loading your hangout…</p> : <CreateHangoutForm client={live} />}
+  </main>;
 
   const toggleLightweight = async (on: boolean) => {
     setGovernor(await setLightweight(on));
-    const prefs = setPref(state.prefs, PREF_LIGHTWEIGHT, on, Date.now());
-    setState({ ...state, prefs: (await cache.current?.savePreferences({ ...prefs, version: prefs.version + 1 })) ?? prefs });
+    await live.preference(PREF_LIGHTWEIGHT, on);
   };
-  const { snap, prefs } = state;
+  const { snap, prefs, user } = state;
   const bits = (id: string) => BigInt(snap.myPermissions[id] ?? "0");
   const categories = snap.rooms.filter((r) => r.type === "category").sort((a, b) => a.position - b.position);
-  const room = snap.rooms.find((r) => r.id === roomId) ?? snap.rooms[1]!;
+  const room = snap.rooms.find((r) => r.id === state.roomId);
+  const initials = (name: string) => name.split(/[\s_-]+/).map((word) => word[0]).slice(0, 2).join("").toUpperCase();
+  const canSend = !!room && has(bits(room.id), "SEND_MESSAGES") && state.connection !== "paused";
+  const connectionLabel = { live: "Connected", connecting: "Reconnecting…", offline: "Offline", paused: "Paused for memory" }[state.connection];
 
   const openRoom = (id: string) => {
-    setRoomId(id);
+    void live.selectRoom(id);
     if (phone && pane !== "room") {
       setPane("room");
       push("room");
@@ -166,36 +149,13 @@ export function App() {
     push("dialog");
   };
 
-  /** Same planner as the server (packages/protocol), so the optimistic result always matches. */
   const addRoom = async (cat: Room, type: "text" | "lounge", name: string, guidelines: "category" | "own"): Promise<AddError | null> => {
-    const inCat = snap.rooms.filter((r) => r.categoryId === cat.id).length;
-    const b = bits(cat.id);
-    const r = planNewRoom({
-      req: { type, name, categoryId: cat.id, guidelines },
-      hangoutId: snap.hangoutId,
-      newId: `local-${crypto.randomUUID()}`,
-      canManageRooms: has(b, "MANAGE_ROOMS"),
-      canManageRoomPermissions: has(b, "MANAGE_ROOM_PERMISSIONS"),
-      creatorBits: b,
-      category: cat,
-      roomsInCategory: inCat,
-      roomsInHangout: snap.rooms.filter((x) => x.type !== "category").length,
-    });
-    if (!r.ok) return r.error;
-    // Phase 1: POST /hangouts/:id/rooms; the server re-checks and broadcasts ROOM_CREATE.
-    const next: HangoutSnapshot = { ...snap, version: snap.version + 1, rooms: [...snap.rooms, r.room] };
-    try {
-      await cache.current?.putHangout(next);
-    } catch {
-      return "save_failed";
-    }
-    setState({ ...state, snap: next });
-    // Swap the dialog's history entry for the new room's (no async back() race).
+    const error = await live.addRoom(cat, type, name, guidelines);
+    if (error) return Object.hasOwn(ERROR_TEXT, error) ? error as AddError : "save_failed";
     const toRoom = phone && pane !== "room";
     if (history.state?.hc === "dialog") history.replaceState(toRoom ? { hc: "room" } : null, "");
     else if (toRoom) push("room");
     setAddTo(null);
-    setRoomId(r.room.id);
     if (phone) setPane("room");
     return null;
   };
@@ -207,6 +167,7 @@ export function App() {
     <div className="app" data-layout={phone ? "phone" : "wide"} data-source={state.source} data-platform={isDesktop() ? "desktop" : "web"}>
       <div className="beta" role="note">
         <span>HangCord is in beta — things may load slowly or glitch while we build.</span>
+        {signOut}
         {governor && (
           <span className="perf">
             <span className={`mem mem--${governor.zone}`} title={`Memory profile: ${governor.profile}`}>
@@ -221,12 +182,12 @@ export function App() {
       <div className="frame">
         {showList && (
           <nav className="dock" aria-label="Hangouts">
-            {SAMPLE_HANGOUTS.map((h) => (
-              <button key={h.id} className={`hangout${h.id === snap.hangoutId ? " is-active" : ""}`} aria-label={h.id === snap.hangoutId ? `${snap.hangout.name} (selected)` : h.initials} aria-current={h.id === snap.hangoutId || undefined}>
-                {h.initials}
+            {state.hangouts.map((h) => (
+              <button key={h.id} className={`hangout${h.id === snap.hangoutId ? " is-active" : ""}`} aria-label={h.id === snap.hangoutId ? `${snap.hangout.name} (selected)` : h.name} aria-current={h.id === snap.hangoutId || undefined} onClick={() => void live.selectHangout(h.id)}>
+                {initials(h.name)}
               </button>
             ))}
-            <button className="hangout hangout--add" aria-label="Add a hangout"><Icon name="plus" /></button>
+            <button className="hangout hangout--add" aria-label="Add a hangout" onClick={() => setCreatingHangout(true)}><Icon name="plus" /></button>
           </nav>
         )}
 
@@ -257,8 +218,8 @@ export function App() {
                     {children.map((r) => (
                       <button
                         key={r.id}
-                        className={`room${r.id === room.id ? " is-active" : ""}`}
-                        aria-current={r.id === room.id ? "page" : undefined}
+                        className={`room${r.id === room?.id ? " is-active" : ""}`}
+                        aria-current={r.id === room?.id ? "page" : undefined}
                         onClick={() => openRoom(r.id)}
                         onContextMenu={may ? (e) => { e.preventDefault(); openAdd(cat, e.currentTarget); } : undefined}
                       >
@@ -273,27 +234,35 @@ export function App() {
           </aside>
         )}
 
-        {showRoom && (
+        {showRoom && room && (
           <main className="chat" aria-label={`Messages in ${room.name}`}>
             <header className="chat__head">
               {phone && <button className="icon-btn" aria-label="Back to rooms" onClick={() => closeLayer("room")}><Icon name="back" /></button>}
               <Icon name={room.type === "lounge" ? "speaker" : "hash"} />
               <h1>{room.name}</h1>
               {!room.syncWithCategory && room.type !== "category" && room.categoryId && <span className="tag">Own guidelines</span>}
+              <span className="connection" role="status">{connectionLabel}</span>
               {!wide && <button className="icon-btn push" aria-label="Members" aria-expanded={membersOpen} onClick={openMembers}><Icon name="users" /></button>}
             </header>
+            {state.error && <div className="chat-error" role="alert">{errorText(state.error)}</div>}
             <section className="messages" aria-live="polite">
-              {SAMPLE_MESSAGES.map((m) => (
-                <article key={m.id} className="msg">
-                  <Avatar initials={m.initials} />
-                  <div><p className="msg__meta"><b>{m.author}</b> <time>{m.time}</time></p><p>{m.text}</p></div>
-                </article>
-              ))}
+              {state.hasMore && <button className="btn btn--ghost" onClick={() => void live.history()}>Earlier messages</button>}
+              {!state.messages.length && <p className="empty-messages">No messages here yet.</p>}
+              {state.messages.map((m) => {
+                const author = m.authorId === user.id ? user.displayName : m.authorId;
+                return <article key={m.id} className="msg">
+                  <Avatar initials={initials(author)} />
+                  <div><p className="msg__meta"><b>{author}</b> <time dateTime={new Date(m.createdAt).toISOString()}>{new Date(m.createdAt).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}</time></p><p>{m.content}</p>
+                    {m.delivery === "sending" && <small>Sending…</small>}
+                    {m.delivery === "failed" && <button className="btn btn--ghost" disabled={!canSend} onClick={() => void live.send(m.content, m.nonce)}>Retry message</button>}
+                  </div>
+                </article>;
+              })}
             </section>
-            <form className="composer" onSubmit={(e) => e.preventDefault()}>
+            <form className="composer" onSubmit={(event) => { event.preventDefault(); if (canSend && draft.trim()) { void live.send(draft); setDraft(""); } }}>
               <label className="sr-only" htmlFor="composer">Message {room.name}</label>
-              <input id="composer" placeholder={`Message ${room.type === "lounge" ? room.name : "#" + room.name}`} autoComplete="off" />
-              <button className="icon-btn" aria-label="Send"><Icon name="send" /></button>
+              <input id="composer" placeholder={canSend ? `Message ${room.type === "lounge" ? room.name : "#" + room.name}` : "You can't send messages here"} autoComplete="off" maxLength={4000} disabled={!canSend} value={draft} onChange={(event) => setDraft(event.target.value)} />
+              <button className="icon-btn" aria-label="Send" disabled={!canSend || !draft.trim()}><Icon name="send" /></button>
             </form>
           </main>
         )}
@@ -303,15 +272,14 @@ export function App() {
             {!wide && <div className="members-scrim" onClick={() => closeLayer("members")} aria-hidden="true" />}
             <aside className={`members${!wide ? " overlay" : ""}${phone ? " sheet" : ""}`} aria-label="Members">
               <div className="members__head">
-                <h2>Members — {SAMPLE_MEMBERS.length}</h2>
+                <h2>Members</h2>
                 {!wide && <button className="icon-btn" aria-label="Close members" onClick={() => closeLayer("members")}><Icon name="close" /></button>}
               </div>
-              {SAMPLE_MEMBERS.map((m) => (
-                <div key={m.name} className="member">
-                  <Avatar initials={m.initials} status={m.status} />
-                  <span><b>{m.name}</b><small>{m.note}</small></span>
-                </div>
-              ))}
+              <div className="member">
+                <Avatar initials={initials(user.displayName)} status={state.connection === "live" ? "online" : "offline"} />
+                <span><b>{user.displayName}</b><small>You</small></span>
+              </div>
+              <p className="directory-note">The full member directory is coming later.</p>
             </aside>
           </>
         )}
@@ -324,6 +292,8 @@ export function App() {
           ))}
         </nav>
       )}
+
+      {creatingHangout && <CreateHangoutDialog client={live} close={() => setCreatingHangout(false)} />}
 
       {addTo && (
         <AddRoomDialog

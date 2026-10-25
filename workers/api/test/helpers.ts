@@ -46,7 +46,11 @@ export function d1(persist: string, sql: string): Array<Record<string, unknown>>
 export function startApi(persist: string): Promise<Unstable_DevWorker> {
   return unstable_dev(join(here, "entry.ts"), {
     config: API_CONFIG, persistTo: persist, logLevel: "none",
-    vars: { TEST_JWK: JSON.stringify(jwk), SESSION_SIGNING_KEY: SESSION_KEY },
+    vars: {
+      TEST_JWK: JSON.stringify(jwk), SESSION_SIGNING_KEY: SESSION_KEY,
+      FIREBASE_WEB_API_KEY: `test-${randomUUID()}`, GOOGLE_OAUTH_DESKTOP_CLIENT_ID: "test-desktop-client-id",
+      GOOGLE_OAUTH_DESKTOP_CLIENT_SECRET: `test-${randomUUID()}`,
+    },
     experimental: { disableExperimentalWarning: true },
   });
 }

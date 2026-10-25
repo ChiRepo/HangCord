@@ -45,3 +45,6 @@ ORACLE_ARCHIVE_SECRET_KEY=
 # ---- workers/emergency-restore : secrets (break-glass only; local dev uses TEST keys only, never the real one) ----
 CSV_EMERGENCY_PRIVATE_KEY_V1=
 
+
+# API only: Firebase Identity Toolkit sign-in (checkpoint 2.2)
+FIREBASE_WEB_API_KEY=

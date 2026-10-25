@@ -4,6 +4,8 @@
 pub mod cache;
 pub mod device_key;
 pub mod governor;
+pub mod native;
+pub mod oauth;
 
 use cache::{CacheError, EncryptedStore};
 use device_key::KeyStorage;
@@ -17,7 +19,7 @@ pub const GOVERNOR_EVENT: &str = "governor://status";
 const SAMPLE_EVERY: Duration = Duration::from_secs(5);
 
 pub struct AppState {
-    store: EncryptedStore,
+    store: Arc<EncryptedStore>,
     governor: Arc<Mutex<Governor>>,
     last: Arc<Mutex<Option<Status>>>,
     key_storage: KeyStorage,
@@ -59,7 +61,8 @@ fn cache_put(state: State<'_, AppState>, key: String, value: String) -> IpcResul
     if value.len() > cache::MAX_VALUE_BYTES {
         return Err(IpcError { code: "too_large" }); // check size before parsing anything
     }
-    serde_json::from_str::<serde_json::Value>(&value).map_err(|_| IpcError { code: "bad_value" })?;
+    serde_json::from_str::<serde_json::Value>(&value)
+        .map_err(|_| IpcError { code: "bad_value" })?;
     Ok(state.store.put(&key, &value)?)
 }
 
@@ -108,7 +111,11 @@ struct AppInfo {
 
 #[tauri::command]
 fn app_info(state: State<'_, AppState>) -> AppInfo {
-    AppInfo { version: env!("CARGO_PKG_VERSION"), platform: std::env::consts::OS, key_storage: state.key_storage }
+    AppInfo {
+        version: env!("CARGO_PKG_VERSION"),
+        platform: std::env::consts::OS,
+        key_storage: state.key_storage,
+    }
 }
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
@@ -127,24 +134,37 @@ pub fn run() {
             std::fs::create_dir_all(&data_dir)?;
             device_key::restrict(&data_dir)?; // 0700 on unix
             let (key, key_storage) = device_key::load_or_create(&data_dir)?;
-            let store = EncryptedStore::open(&data_dir.join("cache.sqlite3"), &key).map_err(|e| format!("cache: {e}"))?;
+            let store = Arc::new(
+                EncryptedStore::open(&data_dir.join("cache.sqlite3"), &key)
+                    .map_err(|e| format!("cache: {e}"))?,
+            );
+            let native = Arc::new(native::NativeBridge::new(store.clone()).map_err(|e| e.code)?);
+            app.manage(native.clone());
             let governor = Arc::new(Mutex::new(Governor::new()));
             let last = Arc::new(Mutex::new(None));
-            app.manage(AppState { store, governor: governor.clone(), last: last.clone(), key_storage });
+            app.manage(AppState {
+                store,
+                governor: governor.clone(),
+                last: last.clone(),
+                key_storage,
+            });
 
             // Governor loop: sample every 5 s and publish to the UI (MASTER_PLAN §11).
             let handle = app.handle().clone();
-            std::thread::Builder::new().name("governor".into()).spawn(move || loop {
-                let status = match governor.lock() {
-                    Ok(mut g) => g.sample(),
-                    Err(_) => break,
-                };
-                if let Ok(mut l) = last.lock() {
-                    *l = Some(status.clone());
-                }
-                let _ = handle.emit(GOVERNOR_EVENT, &status);
-                std::thread::sleep(SAMPLE_EVERY);
-            })?;
+            std::thread::Builder::new()
+                .name("governor".into())
+                .spawn(move || loop {
+                    let status = match governor.lock() {
+                        Ok(mut g) => g.sample(),
+                        Err(_) => break,
+                    };
+                    if let Ok(mut l) = last.lock() {
+                        *l = Some(status.clone());
+                    }
+                    native.memory_pressure(status.zone == governor::Zone::Red);
+                    let _ = handle.emit(GOVERNOR_EVENT, &status);
+                    std::thread::sleep(SAMPLE_EVERY);
+                })?;
             Ok(())
         })
         .invoke_handler(tauri::generate_handler![
@@ -155,7 +175,16 @@ pub fn run() {
             cache_wipe,
             governor_status,
             set_lightweight,
-            app_info
+            app_info,
+            native::auth_status,
+            native::auth_password,
+            native::auth_google,
+            native::auth_cancel,
+            native::auth_logout,
+            native::api_request,
+            native::gateway_connect,
+            native::gateway_send,
+            native::gateway_disconnect
         ])
         .run(tauri::generate_context!())
         .expect("error while running HangCord");

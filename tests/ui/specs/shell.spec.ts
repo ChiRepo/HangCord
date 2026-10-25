@@ -1,5 +1,6 @@
 import { expect, test, type Page } from "@playwright/test";
 import AxeBuilder from "@axe-core/playwright";
+import { installMockIpc } from "../fixtures/mock-ipc";
 
 const isPhone = (page: Page) => (page.viewportSize()?.width ?? 1440) < 720;
 const isTouch = (page: Page) => page.evaluate(() => matchMedia("(pointer: coarse)").matches);
@@ -28,6 +29,7 @@ async function smallTargets(page: Page) {
 }
 
 test.beforeEach(async ({ page }) => {
+  await installMockIpc(page);
   await page.goto("/");
   await expect(page.getByRole("heading", { name: "Night Owls" })).toBeVisible();
 });
@@ -90,16 +92,16 @@ test("dialog: Escape closes, focus stays inside, and returns to the +", async ({
   await expect(plus).toBeFocused();
 });
 
-test("presence badges are perfect circles with a label", async ({ page }) => {
+test("self presence badge is a perfect online circle", async ({ page }) => {
   await openMembers(page);
-  const badges = page.getByRole("img", { name: /^(Online|Idle|Do not disturb|Offline)$/ });
+  const badges = page.getByRole("img", { name: "Online" });
   const shapes = await badges.evaluateAll((els) =>
     els.map((el) => {
       const r = el.getBoundingClientRect();
       return { w: Math.round(r.width), h: Math.round(r.height), radius: getComputedStyle(el).borderRadius };
     }),
   );
-  expect(shapes.length).toBe(5);
+  expect(shapes.length).toBe(1);
   for (const s of shapes) expect(s).toEqual({ w: 16, h: 16, radius: "50%" });
 });
 

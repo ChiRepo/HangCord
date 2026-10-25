@@ -1,20 +1,25 @@
 // API Worker routes for cp-002 (openapi.yaml, phase 1): sessions, me, preferences, hangouts, snapshot, + room.
 // Every handler: validate with the shared zod schema → auth → computePermissions() → write() (journaled).
 import {
-  CreateHangoutRequest, CreateRoomRequest, NEW_ROOM_ERROR_STATUS, PRESET_MEMBER, PrefEntry, Preferences, PreferencesPatch,
-  RefreshRequest, SessionRequest, has, planNewRoom, type HangoutSummary, type Session, type User,
+  CreateHangoutRequest, CreateRoomRequest, DesktopAuthConfig, GoogleExchangeRequest, NEW_ROOM_ERROR_STATUS, PasswordSignInRequest,
+  PRESET_MEMBER, PrefEntry, Preferences, PreferencesPatch, RefreshRequest, SessionRequest, has, planNewRoom,
+  type HangoutSummary, type Session, type User,
 } from "@hangcord/protocol";
 import { errorResponse as err, json } from "@hangcord/worker-kit";
 import type { z } from "zod";
-import { verifyFirebaseIdToken, type KeySource } from "./auth/firebase";
+import { verifyFirebaseIdToken, type FirebaseClaims, type KeySource } from "./auth/firebase";
 import { SESSION_TTL_MS, formatRefreshToken, parseRefreshToken, randomToken, signSession, verifySession, type SessionClaims } from "@hangcord/server";
 import { bitsFor, buildSnapshot, loadHangout, newId } from "@hangcord/server";
 import { insert, update, write, type Change } from "@hangcord/server";
 import type { UserDO } from "./user-do";
+import { exchangeGoogleCode, firebasePasswordSignIn, firebaseGoogleSignIn, verifyGoogleIdToken, type ProviderFetch } from "./auth/desktop";
 
 export interface Env extends Record<string, unknown> {
   SESSION_SIGNING_KEY?: string;
   FIREBASE_PROJECT_ID?: string;
+  FIREBASE_WEB_API_KEY?: string;
+  GOOGLE_OAUTH_DESKTOP_CLIENT_ID?: string;
+  GOOGLE_OAUTH_DESKTOP_CLIENT_SECRET?: string;
   DB: D1Database;
   GATEWAY?: Fetcher;
   USERS: DurableObjectNamespace<UserDO>;
@@ -26,7 +31,7 @@ export interface Env extends Record<string, unknown> {
  */
 export const REQUIRED_SECRETS = ["SESSION_SIGNING_KEY", "FIREBASE_PROJECT_ID"] as const;
 
-export interface Deps { keys: KeySource; now?: () => number }
+export interface Deps { keys: KeySource; now?: () => number; providerFetch?: ProviderFetch }
 
 const MAX_BODY = 64 * 1024;
 const MAX_PREF_KEYS = 200;
@@ -60,6 +65,47 @@ export function makeApp(deps: Deps) {
     }
     return routes.some(([, re]) => re.test(url.pathname)) ? err(405, "method_not_allowed") : null;
   };
+}
+
+export const NATIVE_ORIGINS = ["tauri://localhost", "http://tauri.localhost", "https://tauri.localhost"] as const;
+const CORS_METHODS = "GET, POST, PATCH";
+const CORS_HEADERS = "authorization, content-type, if-match, if-none-match";
+const CORS_HEADER_SET = new Set(CORS_HEADERS.split(", "));
+
+/** Exact Tauri origins; native HTTP requests omit Origin and stay supported. */
+export function withNativeCors<E extends Env>(app: (req: Request, env: E) => Promise<Response>) {
+  return async (req: Request, env: E): Promise<Response> => {
+    const origin = req.headers.get("origin");
+    if (origin !== null && !NATIVE_ORIGINS.includes(origin as typeof NATIVE_ORIGINS[number])) return err(403, "origin_forbidden");
+    if (req.method === "OPTIONS") {
+      const method = req.headers.get("access-control-request-method") ?? "";
+      const headers = (req.headers.get("access-control-request-headers") ?? "").split(",").map((h) => h.trim().toLowerCase()).filter(Boolean);
+      if (!origin || !CORS_METHODS.split(", ").includes(method) || headers.some((h) => !CORS_HEADER_SET.has(h))) return err(403, "origin_forbidden");
+      return new Response(null, { status: 204, headers: corsHeaders(origin) });
+    }
+    const response = await app(req, env);
+    if (!origin) return response;
+    const headers = new Headers(response.headers);
+    for (const [key, value] of Object.entries(corsHeaders(origin))) headers.set(key, value);
+    return new Response(response.body, { status: response.status, statusText: response.statusText, headers });
+  };
+}
+
+function corsHeaders(origin: string): Record<string, string> {
+  return {
+    "access-control-allow-origin": origin,
+    "access-control-allow-methods": CORS_METHODS,
+    "access-control-allow-headers": CORS_HEADERS,
+    "access-control-expose-headers": "ETag",
+    vary: "Origin",
+  };
+}
+
+function providerError(status: 401 | 409 | 429 | 503): Response {
+  if (status === 409) return err(409, "account_link_required");
+  if (status === 429) return err(429, "rate_limited");
+  if (status === 503) return err(503, "auth_unavailable");
+  return err(401, "invalid_credentials");
 }
 
 async function body<S extends z.ZodTypeAny>(c: Ctx, schema: S): Promise<z.infer<S> | Response> {
@@ -100,15 +146,15 @@ async function issueSession(c: Ctx, uid: string, sid: string, secret: string, us
   return json(out);
 }
 
-route("POST", "/auth/session", false, async (c) => {
-  const b = await body(c, SessionRequest);
-  if (b instanceof Response) return b;
-  const v = await verifyFirebaseIdToken(b.idToken, { projectId: c.env.FIREBASE_PROJECT_ID ?? "", keys: c.deps.keys, nowS: Math.floor(c.now / 1000) });
-  if (!v.ok) return err(401, "invalid_token");
-  const cl = v.claims;
-  if (cl.provider !== "password" && cl.provider !== "google.com") return err(403, "provider_not_allowed");
-  if (!cl.emailVerified) return err(403, "email_unverified");
+async function createSessionForFirebaseToken(c: Ctx, token: string): Promise<Response> {
+  const v = await verifyFirebaseIdToken(token, { projectId: c.env.FIREBASE_PROJECT_ID ?? "", keys: c.deps.keys, nowS: Math.floor(c.now / 1000) });
+  if (!v.ok) return err(401, "invalid_credentials");
+  if (v.claims.provider !== "password" && v.claims.provider !== "google.com") return err(401, "invalid_credentials");
+  if (!v.claims.emailVerified) return err(403, "email_unverified");
+  return createSessionForClaims(c, v.claims);
+}
 
+async function createSessionForClaims(c: Ctx, cl: FirebaseClaims): Promise<Response> {
   const existing = await getUser(c.env.DB, cl.uid);
   const displayName = (existing?.display_name ?? cl.name ?? cl.email?.split("@")[0] ?? "HangCord user").slice(0, 64);
   if (!existing) {
@@ -123,6 +169,64 @@ route("POST", "/auth/session", false, async (c) => {
   const secret = randomToken(32);
   await c.env.USERS.get(c.env.USERS.idFromName(cl.uid)).issue(sid, secret, c.now);
   return issueSession(c, cl.uid, sid, secret, user);
+}
+
+route("GET", "/auth/desktop-config", false, async (c) => {
+  const googleClientId = c.env.GOOGLE_OAUTH_DESKTOP_CLIENT_ID;
+  if (!googleClientId || googleClientId.length > 256) return err(503, "auth_not_configured");
+  return json(DesktopAuthConfig.parse({ googleClientId }));
+});
+
+route("POST", "/auth/password", false, async (c) => {
+  if (!c.env.FIREBASE_WEB_API_KEY || !c.env.FIREBASE_PROJECT_ID) return err(503, "auth_not_configured");
+  const b = await body(c, PasswordSignInRequest);
+  if (b instanceof Response) return b;
+  const result = await firebasePasswordSignIn(b, c.env.FIREBASE_WEB_API_KEY, c.deps.providerFetch);
+  if (!result.ok) return providerError(result.status);
+  return createSessionForFirebaseToken(c, result.idToken);
+});
+
+route("POST", "/auth/google/exchange", false, async (c) => {
+  if (!c.env.FIREBASE_WEB_API_KEY || !c.env.FIREBASE_PROJECT_ID || !c.env.GOOGLE_OAUTH_DESKTOP_CLIENT_ID || !c.env.GOOGLE_OAUTH_DESKTOP_CLIENT_SECRET) return err(503, "auth_not_configured");
+  const b = await body(c, GoogleExchangeRequest);
+  if (b instanceof Response) return b;
+  const google = await exchangeGoogleCode(b, {
+    clientId: c.env.GOOGLE_OAUTH_DESKTOP_CLIENT_ID,
+    clientSecret: c.env.GOOGLE_OAUTH_DESKTOP_CLIENT_SECRET,
+  }, c.deps.providerFetch);
+  if (!google.ok) return providerError(google.status);
+  const identity = await verifyGoogleIdToken(google.idToken, c.env.GOOGLE_OAUTH_DESKTOP_CLIENT_ID, c.deps.providerFetch, Math.floor(c.now / 1000));
+  if (!identity.ok) return providerError(identity.status);
+  const firebase = await firebaseGoogleSignIn(google.idToken, b.redirectUri, c.env.FIREBASE_WEB_API_KEY, c.deps.providerFetch);
+  const collision = !firebase.ok ? firebase.status === 409 : firebase.needConfirmation;
+  if (!firebase.ok && !collision) return providerError(firebase.status);
+  if (collision) {
+    if (!b.link) return err(409, "account_link_required");
+    const password = await firebasePasswordSignIn(b.link, c.env.FIREBASE_WEB_API_KEY, c.deps.providerFetch);
+    if (!password.ok) return password.status === 503 || password.status === 429 ? providerError(password.status) : err(409, "account_link_required");
+    const owner = await verifyFirebaseIdToken(password.idToken, { projectId: c.env.FIREBASE_PROJECT_ID, keys: c.deps.keys, nowS: Math.floor(c.now / 1000) });
+    if (!owner.ok || owner.claims.provider !== "password" || !owner.claims.emailVerified || owner.claims.email?.trim().toLowerCase() !== identity.email.trim().toLowerCase()) return err(409, "account_link_required");
+    const linked = await firebaseGoogleSignIn(google.idToken, b.redirectUri, c.env.FIREBASE_WEB_API_KEY, c.deps.providerFetch, password.idToken);
+    if (!linked.ok) return linked.status === 503 || linked.status === 429 ? providerError(linked.status) : err(409, "account_link_required");
+    if (linked.needConfirmation || linked.localId !== owner.claims.uid) return err(409, "account_link_required");
+    const linkedClaims = await verifyFirebaseIdToken(linked.idToken, { projectId: c.env.FIREBASE_PROJECT_ID, keys: c.deps.keys, nowS: Math.floor(c.now / 1000) });
+    if (!linkedClaims.ok || linkedClaims.claims.uid !== owner.claims.uid || !linkedClaims.claims.emailVerified || linkedClaims.claims.email?.trim().toLowerCase() !== identity.email.trim().toLowerCase()) return err(409, "account_link_required");
+    return createSessionForFirebaseToken(c, linked.idToken);
+  }
+  if (!firebase.ok) return providerError(firebase.status);
+  return createSessionForFirebaseToken(c, firebase.idToken);
+});
+
+route("POST", "/auth/session", false, async (c) => {
+  const b = await body(c, SessionRequest);
+  if (b instanceof Response) return b;
+  const v = await verifyFirebaseIdToken(b.idToken, { projectId: c.env.FIREBASE_PROJECT_ID ?? "", keys: c.deps.keys, nowS: Math.floor(c.now / 1000) });
+  if (!v.ok) return err(401, "invalid_token");
+  const cl = v.claims;
+  if (cl.provider !== "password" && cl.provider !== "google.com") return err(403, "provider_not_allowed");
+  if (!cl.emailVerified) return err(403, "email_unverified");
+
+  return createSessionForClaims(c, cl);
 });
 
 route("POST", "/auth/refresh", false, async (c) => {

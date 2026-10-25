@@ -22,6 +22,7 @@ Free plan limits: ≤ 64 variables per Worker (secrets + vars), ≤ 5 KB each. S
 
 | Secret name | Used by Worker | What it is | Rotate |
 |---|---|---|---|
+| `FIREBASE_WEB_API_KEY` | api | Firebase Identity Toolkit sign-in; server-side only | on leak |
 | `FIREBASE_PROJECT_ID` | api | Firebase project identifier, kept server-side by owner decision (2026-10-22); required for token issuer/audience checks | project change |
 | `FIREBASE_AUTH_ADMIN_SA_JSON` | api | Google service account limited to Firebase Auth admin (verify, set emailVerified, update password, delete unverified users) | 90 days |
 | `FIRESTORE_SA_JSON` | api, storage-router | Service account limited to Firestore read/write (membership proofs, message spill) | 90 days |
@@ -43,7 +44,7 @@ Free plan limits: ≤ 64 variables per Worker (secrets + vars), ≤ 5 KB each. S
 | `GARAGE_ACCESS_KEY`, `GARAGE_SECRET_KEY` | storage-router | Self-hosted S3 on the Oracle VM | 90 days |
 | `ORACLE_ARCHIVE_ACCESS_KEY`, `ORACLE_ARCHIVE_SECRET_KEY` | storage-router | Oracle Object Storage (archive tier) customer secret key | 90 days |
 
-**Firebase configuration:** even public identifiers stay in Cloudflare Workers Secrets by the owner's 2026-10-22 decision. Never embed project IDs, Firebase web configuration or API keys in the app or repository. This checkpoint requires only `FIREBASE_PROJECT_ID`; register later sign-in configuration before implementing those routes.
+**Firebase configuration:** even public identifiers stay in Cloudflare Workers Secrets by the owner's 2026-10-22 decision. Never embed project IDs, Firebase web configuration or API keys in the app or repository. Checkpoint 2.2 adds `FIREBASE_WEB_API_KEY` for server-side sign-in. The public Google desktop client ID may be returned to the native OAuth launcher; it is not Firebase configuration.
 
 **Other public configuration** (plain `vars`): `GOOGLE_OAUTH_DESKTOP_CLIENT_ID`, `TURNSTILE_SITE_KEY`, `LIVEKIT_URL`, `EMAIL_FROM_ADDRESS`. Never put a registered secret in `vars`.
 

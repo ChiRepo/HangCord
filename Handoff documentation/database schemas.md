@@ -90,7 +90,7 @@ CREATE TABLE journal (seq INTEGER PRIMARY KEY AUTOINCREMENT, at INTEGER NOT NULL
 
 Preference writes guard both the journal row and data mutation with the expected version. Room-creation batches share the loaded hangout version and permission version, advance the version last, and return 409 on a competing change. Every future access mutator must advance both versions atomically. Failed guards leave no phantom journal entries.
 
-### 🔧 `0003_messages.sql` (checkpoint 2.1 candidate)
+### ✅ `0003_messages.sql` (published in checkpoint 2.1; not deployed)
 The complete migration is `workers/api/migrations/0003_messages.sql`; `0002` remains the gate-facts migration.
 
 - `messages(id, hangout_id, room_id, author_id, body_enc, epoch, created_at, edited_at, nonce, seq, deleted_at)` has unique `(room_id, author_id, nonce)` and `(room_id, seq)` indexes, plus `(room_id, created_at, id)` for history.

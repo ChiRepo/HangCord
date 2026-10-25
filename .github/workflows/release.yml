@@ -17,6 +17,11 @@ on:
 permissions:
   contents: read
 
+# Public origins only; Firebase configuration and provider secrets remain in Cloudflare.
+env:
+  HANGCORD_API_BASE_URL: https://hangcord-api.jyotsnachaudhari999.workers.dev
+  HANGCORD_GATEWAY_BASE_URL: wss://hangcord-gateway.jyotsnachaudhari999.workers.dev
+
 jobs:
   build:
     strategy:

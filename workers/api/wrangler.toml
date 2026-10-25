@@ -8,7 +8,7 @@ workers_dev = true
 
 # Public values only (docs/SECRETS_AND_SENSITIVE_DATA.md). Filled in by the owner when the accounts exist.
 [vars]
-GOOGLE_OAUTH_DESKTOP_CLIENT_ID = ""
+GOOGLE_OAUTH_DESKTOP_CLIENT_ID = "704036408206-3iuj8vj3ekl00ep8rrj6lec6pkr4t19e.apps.googleusercontent.com"
 TURNSTILE_SITE_KEY = ""
 LIVEKIT_URL = ""
 EMAIL_FROM_ADDRESS = ""
@@ -18,7 +18,7 @@ EMAIL_FROM_ADDRESS = ""
 [[d1_databases]]
 binding = "DB"
 database_name = "hangcord"
-database_id = "00000000-0000-0000-0000-000000000000"
+database_id = "f52a5d63-ea01-4e2e-b933-8a8082edfa94"
 migrations_dir = "migrations"
 
 # UserDO: refresh-token hashes (Cloudflare-only sensitive state).

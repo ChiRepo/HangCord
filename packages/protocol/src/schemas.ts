@@ -119,6 +119,21 @@ export type HangoutSnapshot = z.infer<typeof HangoutSnapshot>;
 export const SessionRequest = z.object({ idToken: z.string().min(20).max(4096) }).strict();
 export type SessionRequest = z.infer<typeof SessionRequest>;
 
+// Desktop sign-in keeps all Firebase configuration and provider tokens in the API Worker.
+export const PasswordSignInRequest = z.object({ email: z.email().max(254), password: z.string().min(1).max(4096) }).strict();
+export type PasswordSignInRequest = z.infer<typeof PasswordSignInRequest>;
+export const GoogleExchangeRequest = z.object({
+  code: z.string().min(1).max(4096),
+  codeVerifier: z.string().regex(/^[A-Za-z0-9._~-]{43,128}$/),
+  redirectUri: z.string().regex(/^http:\/\/127\.0\.0\.1:[0-9]{1,5}\/oauth\/callback$/).refine((value) => {
+    try { const u = new URL(value); return Number(u.port) > 0 && Number(u.port) <= 65535; } catch { return false; }
+  }),
+  link: PasswordSignInRequest.optional(),
+}).strict();
+export type GoogleExchangeRequest = z.infer<typeof GoogleExchangeRequest>;
+export const DesktopAuthConfig = z.object({ googleClientId: z.string().min(1).max(256) }).strict();
+export type DesktopAuthConfig = z.infer<typeof DesktopAuthConfig>;
+
 export const RefreshRequest = z.object({ refreshToken: z.string().min(20).max(1024) }).strict();
 export type RefreshRequest = z.infer<typeof RefreshRequest>;
 
@@ -174,6 +189,6 @@ export type HangoutSummary = z.infer<typeof HangoutSummary>;
 export const DETAILED_SCHEMAS = [
   "Error", "Health", "RoomType", "GuidelinesChoice", "NewRoomGuidelinesPreference", "Override",
   "RoomDefaults", "Room", "CreateRoomRequest", "Preferences", "PreferencesPatch", "HangoutSnapshot",
-  "SessionRequest", "RefreshRequest", "User", "Session", "CreateHangoutRequest", "HangoutSummary",
+  "SessionRequest", "PasswordSignInRequest", "GoogleExchangeRequest", "DesktopAuthConfig", "RefreshRequest", "User", "Session", "CreateHangoutRequest", "HangoutSummary",
   "Message", "SendMessageRequest", "MessagesPage",
 ] as const;
