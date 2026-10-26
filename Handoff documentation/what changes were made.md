@@ -211,3 +211,9 @@ All 37 Rust tests then passed with `--features test-hooks` and `HANGCORD_KEY_STO
 - Published `0e45836ea0d4d7f4a22022fb206ee05c4cd5d08e` and annotated tag `cp-002.2` after a clean staged-source secret scan. Remote branch and peeled tag match.
 - CI run 40195612508 passed shared checks, UI tests, code-map verification and the full-history secret scan. Linux passed Rust tests and native e2e. Windows passed 36 tests but timed out in the offline logout test's one-second connection-refused wait.
 - The test now accepts a loopback request and drops the connection without an HTTP response. This tests failed revocation without depending on operating-system closed-port timing. Local credentials/cache clearing and rejection of a gateway connection arriving after logout remain asserted. All three focused logout tests pass locally; Windows rerun is required. No production behavior changed.
+
+## Checkpoint 2.2 restart refresh correction (2026-10-26)
+
+[CI run 40196284728](https://github.com/ChiRepo/HangCord/actions/runs/40196284728) verified Windows Rust tests and NSIS/MSI builds on follow-up `dbc4ebe`, plus shared/UI checks, graph freshness and secret scan. Linux passed its Rust tests and native sign-in/chat checks, then failed immediately after restored-cache paint because the room list was briefly unmounted during refresh.
+
+A controller regression reproduced the failure before the fix. Refresh now retains the current Hangout snapshot while reading the same Hangout from cache/network; switching Hangouts still clears the old snapshot, and server denial still removes it. The native restart harness waits for persisted room/preferences through the real cache IPC, replacing a 300 ms delay, and checks cache source and restored room in one observation. All 11 controller tests and 58 Playwright checks pass (eight expected viewport skips); scoped lint/types pass. Independent review found no blocking issue. The updated Linux native run remains required.

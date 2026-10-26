@@ -1,17 +1,17 @@
-# Graph Report - HangCord-repo  (2026-10-25)
+# Graph Report - HangCord-repo  (2026-10-26)
 
 ## Corpus Check
-- 137 files · ~123,618 words
+- 137 files · ~124,212 words
 - Verdict: corpus is large enough that graph structure adds value.
 - Unclassified: 41 file(s) not represented in the graph (top: .toml 23, (none) 11, .xml 2)
 
 ## Summary
-- 1563 nodes · 2974 edges · 89 communities (80 shown, 9 thin omitted)
+- 1565 nodes · 2977 edges · 88 communities (79 shown, 9 thin omitted)
 - Extraction: 97% EXTRACTED · 3% INFERRED · 0% AMBIGUOUS · INFERRED: 88 edges (avg confidence: 0.89)
 - Token cost: 0 input · 0 output
 
 ## Graph Freshness
-- Built from commit: `0e45836e`
+- Built from commit: `dbc4ebef`
 - Run `git rev-parse HEAD` and compare to check if the graph is stale.
 - Run `graphify update .` after code changes (no API cost).
 
@@ -23,12 +23,12 @@
 - worker-kit/src/index.ts
 - HangCord — Master Plan
 - package.json
-- compute.ts
+- compute.test.ts
 - HangCord — Access, Settings and Hangout Keys (spec)
 - desktop/ui/package.json
 - tauri.conf.json
 - device_key.rs
-- ClientCache
+- compute.ts
 - tests/ui/package.json
 - api/package.json
 - gateway/package.json
@@ -52,7 +52,7 @@
 - LiveClient
 - packages/ui/tsconfig.json
 - schemas.ts
-- cache.test.ts
+- protocol/src/index.ts
 - api/tsconfig.json
 - emergency-restore/tsconfig.json
 - gateway/tsconfig.json
@@ -77,7 +77,7 @@
 - api.int.test.ts
 - api/src/index.ts
 - data.ts
-- What changes were made
+- DesktopPort
 - NativeBridge
 - lib.rs
 - contract.test.ts
@@ -95,9 +95,8 @@
 - What changes were made
 - server/tsconfig.json
 - HangCord UI/UX
-- MemoryCacheStore
+- permissions.test.ts
 - oauth.rs
-- .listen
 - desktop.ts
 - firebase.ts
 - vitest
@@ -116,22 +115,22 @@
 10. `App()` - 20 edges
 
 ## Surprising Connections (you probably didn't know these)
-- `3. What HangCord is` --references--> `computePermissions()`  [INFERRED]
-  AGENTS.md → packages/protocol/src/compute.ts
-- `16. Tests that must exist` --references--> `computePermissions()`  [INFERRED]
-  docs/ACCESS_AND_SETTINGS.md → packages/protocol/src/compute.ts
 - `D. Getting the plain HSK for `(hangoutId, epoch)` — source order` --references--> `computePermissions()`  [INFERRED]
   docs/ACCESS_AND_SETTINGS.md → packages/protocol/src/compute.ts
+- `2. Opening the app (cache first, then sync)` --references--> `computePermissions()`  [INFERRED]
+  Handoff documentation/workflow design.md → packages/protocol/src/compute.ts
 - `11. Step-up confirmation` --references--> `UserDO`  [INFERRED]
   docs/ACCESS_AND_SETTINGS.md → workers/api/src/user-do.ts
 - `📐 Web companion (WebApp branch)` --references--> `CacheStore`  [INFERRED]
   Handoff documentation/database schemas.md → packages/cache/src/store.ts
+- `3. What HangCord is` --references--> `computePermissions()`  [INFERRED]
+  AGENTS.md → packages/protocol/src/compute.ts
 
 ## Import Cycles
 - 2-file cycle: `workers/gateway/src/index.ts -> workers/gateway/src/room-do.ts -> workers/gateway/src/index.ts`
 - 2-file cycle: `apps/desktop/src-tauri/src/native.rs -> apps/desktop/src-tauri/src/oauth.rs -> apps/desktop/src-tauri/src/native.rs`
 
-## Communities (89 total, 9 thin omitted)
+## Communities (88 total, 9 thin omitted)
 
 ### Community 0 - "governor.rs"
 Cohesion: 0.09
@@ -146,28 +145,28 @@ Cohesion: 0.08
 Nodes (24): CacheError, BadKey, Corrupt, Full, Storage, TooLarge, db_file_is_owner_only(), each_write_uses_a_fresh_nonce() (+16 more)
 
 ### Community 3 - "AGENTS.md — rules for every AI agent working on HangCord"
-Cohesion: 0.15
-Nodes (13): 1. Start of every session, 2. The private folder, 3. What HangCord is, 4. Anti-hallucination rules, 5. Secrets, 6. Checkpoint protocol (after every piece of finished work), 6a. How to run everything, 6b. Desktop app rules (checkpoint 1.1, `apps/desktop`) (+5 more)
+Cohesion: 0.17
+Nodes (12): 1. Start of every session, 2. The private folder, 4. Anti-hallucination rules, 5. Secrets, 6. Checkpoint protocol (after every piece of finished work), 6a. How to run everything, 6b. Desktop app rules (checkpoint 1.1, `apps/desktop`), 6c. Code map (Graphify, `graphify/`) (+4 more)
 
 ### Community 4 - "worker-kit/src/index.ts"
-Cohesion: 0.12
-Nodes (20): 8.3 Snapshot mode — one write per database (owner's CSV technique), 5. Backup DB #2 (last resort), CHECKPOINT, CURRENT_PHASE, PROTOCOL_VERSION, errorResponse(), health(), json() (+12 more)
+Cohesion: 0.15
+Nodes (16): CHECKPOINT, CURRENT_PHASE, PROTOCOL_VERSION, errorResponse(), health(), json(), missingSecrets(), ServiceName (+8 more)
 
 ### Community 5 - "HangCord — Master Plan"
 Cohesion: 0.05
-Nodes (37): 10. Free VoIP and realtime transport providers, 11. Dynamic memory governor (≤ 1.7 GB), 12. Secrets and security, 13. Repository, checkpoints and pushing, 14. Agent and subagent workflow, 15.1 Mobile gate — every checkpoint (owner request, 2026-10-21), 15. Testing and release gates, 16.1 Checkpoint numbering (owner decision, 2026-10-21) (+29 more)
+Nodes (38): 10. Free VoIP and realtime transport providers, 11. Dynamic memory governor (≤ 1.7 GB), 12. Secrets and security, 13. Repository, checkpoints and pushing, 14. Agent and subagent workflow, 15.1 Mobile gate — every checkpoint (owner request, 2026-10-21), 15. Testing and release gates, 16.1 Checkpoint numbering (owner decision, 2026-10-21) (+30 more)
 
 ### Community 6 - "package.json"
 Cohesion: 0.05
 Nodes (39): description, devDependencies, eslint, @eslint/js, globals, @types/node, typescript, typescript-eslint (+31 more)
 
-### Community 7 - "compute.ts"
-Cohesion: 0.09
-Nodes (32): 2. Opening the app (cache first, then sync), ALL_BITS, canModerate(), computePermissions(), evaluate(), EVERYONE_FORBIDDEN, explainPermissions(), ExplainStep (+24 more)
+### Community 7 - "compute.test.ts"
+Cohesion: 0.12
+Nodes (19): 3. What HangCord is, 16. Tests that must exist, 6. Checkpoint 2 and 2.1: built, then reverted (2026-10-22), ALL_BITS, canModerate(), computePermissions(), EVERYONE_FORBIDDEN, FLAG_BYPASS_VERIFICATION (+11 more)
 
 ### Community 8 - "HangCord — Access, Settings and Hangout Keys (spec)"
 Cohesion: 0.06
-Nodes (34): 10.1 Key hierarchy and where every copy lives, 10.2 The member's private vault document, 10.3 Removal "until they leave", 10.4 What the key also protects, 10.5 Rotation, 10.6 Decrypting hangout keys — exact procedure, 10. Hangout secret key, 11. Step-up confirmation (+26 more)
+Nodes (33): 10.1 Key hierarchy and where every copy lives, 10.2 The member's private vault document, 10.3 Removal "until they leave", 10.4 What the key also protects, 10.5 Rotation, 10.6 Decrypting hangout keys — exact procedure, 10. Hangout secret key, 11. Step-up confirmation (+25 more)
 
 ### Community 9 - "desktop/ui/package.json"
 Cohesion: 0.06
@@ -181,13 +180,13 @@ Nodes (25): app, security, windows, cwd, script, cwd, script, build (+17 more)
 Cohesion: 0.16
 Nodes (16): ACCOUNT, an_existing_fallback_key_is_kept_across_launches(), file_key_is_private_from_creation_and_never_overwritten(), forced_file(), from_hex(), hex_round_trip_and_rejects_junk(), KEY_FILE, keychain_get() (+8 more)
 
-### Community 12 - "ClientCache"
-Cohesion: 0.15
-Nodes (10): 1. Device (Ground 0), ✅ Desktop encrypted cache: `cache.sqlite3` (`apps/desktop/src-tauri/src/cache.rs`), 📐 Desktop outbox, 📐 Web companion (WebApp branch), ClientCache, mergePreferences(), CacheStore, KEYS (+2 more)
+### Community 12 - "compute.ts"
+Cohesion: 0.14
+Nodes (18): evaluate(), explainPermissions(), ExplainStep, gateSatisfied(), isTimestamp(), MODERATION, ModerationAction, NEEDS_SEND (+10 more)
 
 ### Community 13 - "tests/ui/package.json"
 Cohesion: 0.07
-Nodes (27): @axe-core/playwright, @playwright/test, InitOptions, installMockIpc(), MockApiRequest, MockCommand, MockGatewayFrame, MockIpcCommand (+19 more)
+Nodes (28): BIT, @axe-core/playwright, @playwright/test, InitOptions, installMockIpc(), MockApiRequest, MockCommand, MockGatewayFrame (+20 more)
 
 ### Community 14 - "api/package.json"
 Cohesion: 0.08
@@ -206,8 +205,8 @@ Cohesion: 0.11
 Nodes (18): description, devDependencies, react, @types/react, exports, ./components.css, ./tokens.css, react (+10 more)
 
 ### Community 18 - "gateway-events.ts"
-Cohesion: 0.06
-Nodes (43): CLIENT_OPS, DETAILED_OPS, DetailedFrame, Envelope, GatewayOp, HangoutUpdate, Heartbeat, HeartbeatAck (+35 more)
+Cohesion: 0.05
+Nodes (47): CLIENT_OPS, DETAILED_OPS, DetailedFrame, Envelope, GatewayOp, HangoutUpdate, Heartbeat, HeartbeatAck (+39 more)
 
 ### Community 19 - "compilerOptions"
 Cohesion: 0.12
@@ -218,7 +217,7 @@ Cohesion: 0.13
 Nodes (14): description, devDependencies, @tauri-apps/cli, name, private, scripts, build:app, dev (+6 more)
 
 ### Community 21 - "run.mjs"
-Cohesion: 0.16
+Cohesion: 0.19
 Nodes (9): dataHome, deadline, driver, env, results, session(), sleep(), waitFor() (+1 more)
 
 ### Community 22 - "protocol/package.json"
@@ -231,7 +230,7 @@ Nodes (13): description, devDependencies, @cloudflare/workers-types, wrangler, @
 
 ### Community 24 - "app.ts"
 Cohesion: 0.12
-Nodes (20): Change, Guard, insert(), Op, pick(), update(), write(), CORS_HEADER_SET (+12 more)
+Nodes (20): Change, Guard, insert(), Op, pick(), update(), write(), body() (+12 more)
 
 ### Community 25 - "cache/package.json"
 Cohesion: 0.15
@@ -246,24 +245,24 @@ Cohesion: 0.17
 Nodes (11): smol-toml, description, devDependencies, smol-toml, name, private, scripts, test (+3 more)
 
 ### Community 28 - "server/src/session.ts"
-Cohesion: 0.20
-Nodes (19): b64url(), decoder, enc, formatRefreshToken(), hmacKey(), parseRefreshToken(), randomToken(), SESSION_TTL_MS (+11 more)
+Cohesion: 0.21
+Nodes (19): b64url(), decoder, enc, formatRefreshToken(), fromB64url(), hmacKey(), parseRefreshToken(), randomToken() (+11 more)
 
 ### Community 30 - "rooms.ts"
-Cohesion: 0.15
-Nodes (17): BIT, has(), KNOWN_BITS, parseBits(), PERMISSIONS, ROOM_SCOPED_BITS, key(), liveSlug() (+9 more)
+Cohesion: 0.23
+Nodes (9): key(), liveSlug(), MAX_ROOMS_PER_HANGOUT, NEW_ROOM_ERROR_STATUS, openedBits(), planNewRoom(), slugRoomName(), base (+1 more)
 
 ### Community 31 - "Database schemas"
-Cohesion: 0.18
-Nodes (10): ✅ `0001_init.sql` + `0002_verified_user_facts.sql` (checkpoint 2), ✅ `0003_messages.sql` (published in checkpoint 2.1; not deployed), 2. Cloudflare D1: the main database, 3. Firestore (main project), 4. Firestore backup (separate project, Firestore only, no sign-in), 7. R2 and object tiers, 8. Not stored anywhere (on purpose), Database schemas (+2 more)
+Cohesion: 0.17
+Nodes (11): ✅ `0001_init.sql` + `0002_verified_user_facts.sql` (checkpoint 2), ✅ `0003_messages.sql` (published in checkpoint 2.1; not deployed), 2. Cloudflare D1: the main database, 3. Firestore (main project), 4. Firestore backup (separate project, Firestore only, no sign-in), 5. Backup DB #2 (last resort), 7. R2 and object tiers, 8. Not stored anywhere (on purpose) (+3 more)
 
 ### Community 32 - "HangCord desktop app (checkpoint 1.1)"
 Cohesion: 0.18
 Nodes (10): Checkpoint 2.2 verification (2026-10-24), Configure sign-in, Desktop end-to-end test, HangCord desktop app, Linux, macOS (owner, on the Mac), Manual checklist (every checkpoint, each OS), Run and build (+2 more)
 
 ### Community 33 - "LiveClient"
-Cohesion: 0.20
-Nodes (6): useLive(), codeOf(), failure(), LiveClient, GatewayEvent, fixture()
+Cohesion: 0.23
+Nodes (4): codeOf(), failure(), LiveClient, has()
 
 ### Community 34 - "packages/ui/tsconfig.json"
 Cohesion: 0.25
@@ -271,11 +270,11 @@ Nodes (7): compilerOptions, jsx, lib, types, extends, include, ../../tsconfig.ba
 
 ### Community 35 - "schemas.ts"
 Cohesion: 0.14
-Nodes (13): bitfield, CreateHangoutRequest, DesktopAuthConfig, ErrorBody, GoogleExchangeRequest, GuidelinesChoice, Health, MAX_MESSAGE_CHARS (+5 more)
+Nodes (14): parseBits(), bitfield, CreateHangoutRequest, DesktopAuthConfig, ErrorBody, GoogleExchangeRequest, GuidelinesChoice, Health (+6 more)
 
-### Community 36 - "cache.test.ts"
-Cohesion: 0.12
-Nodes (23): MAX_HANGOUT_SNAPSHOTS, Platform, applyHangoutUpdate(), ApplyResult, etagForHangout(), planReadyForHangout(), ReadyAction, reconcileReady() (+15 more)
+### Community 36 - "protocol/src/index.ts"
+Cohesion: 0.06
+Nodes (40): 1. Device (Ground 0), ✅ Desktop encrypted cache: `cache.sqlite3` (`apps/desktop/src-tauri/src/cache.rs`), 📐 Desktop outbox, 📐 Web companion (WebApp branch), ClientCache, MAX_HANGOUT_SNAPSHOTS, Platform, applyHangoutUpdate() (+32 more)
 
 ### Community 37 - "api/tsconfig.json"
 Cohesion: 0.29
@@ -319,7 +318,7 @@ Nodes (5): compilerOptions, types, extends, include, ../../tsconfig.base.json
 
 ### Community 47 - "App.tsx"
 Cohesion: 0.14
-Nodes (23): AddError, AddRoomDialog(), App(), ERROR_TEXT, Layer, mb(), PREF_LIGHTWEIGHT, useGovernor() (+15 more)
+Nodes (22): AddError, AddRoomDialog(), App(), ERROR_TEXT, Layer, mb(), PREF_LIGHTWEIGHT, useGovernor() (+14 more)
 
 ### Community 54 - "tests/ui/tsconfig.json"
 Cohesion: 0.29
@@ -334,12 +333,12 @@ Cohesion: 0.08
 Nodes (19): account_cache_is_preserved_only_for_same_keychain_account(), ambiguous_rotation_drops_old_credential_across_restart(), cancellation_rejects_late_signin_result_without_persisting(), concurrent_expired_requests_rotate_once_and_persist_before_return(), Config, failed_persistence_never_releases_rotated_token(), GATEWAY_EVENT, logout_offline_clears_local_state_and_late_gateway_install_is_rejected() (+11 more)
 
 ### Community 57 - "Workflow design"
-Cohesion: 0.22
-Nodes (8): 1. App ↔ API ↔ storage (big picture), 3. Signing in (checkpoint 2.2; Firebase configuration stays in Cloudflare), 4. Sending a message (checkpoint 2.1, published and locally verified), 5. Storage when a free quota runs out (MASTER_PLAN §8.3), 6. Git, branches and releases, 7. How an agent works (every task), 8. Where each rule is enforced, Workflow design
+Cohesion: 0.20
+Nodes (9): 1. App ↔ API ↔ storage (big picture), 2. Opening the app (cache first, then sync), 3. Signing in (checkpoint 2.2; Firebase configuration stays in Cloudflare), 4. Sending a message (checkpoint 2.1, published and locally verified), 5. Storage when a free quota runs out (MASTER_PLAN §8.3), 6. Git, branches and releases, 7. How an agent works (every task), 8. Where each rule is enforced (+1 more)
 
 ### Community 58 - "UserDO"
-Cohesion: 0.29
-Nodes (3): 6. Durable Object storage (Cloudflare-only sensitive state), sha256(), UserDO
+Cohesion: 0.23
+Nodes (5): 6. Durable Object storage (Cloudflare-only sensitive state), REFRESH_TTL_MS, sha256(), RefreshRecord, UserDO
 
 ### Community 59 - "Preferences: what the owner wants"
 Cohesion: 0.29
@@ -350,20 +349,16 @@ Cohesion: 0.29
 Nodes (6): 0. Before any new work, 1. Owner tasks (agents can explain each one, but not do it), 2. Authorized checkpoint 2 implementation, 3. Engineering debt (do it alongside the checkpoints), 4. Later phases (MASTER_PLAN §16), What has to be done next
 
 ### Community 61 - "api.int.test.ts"
-Cohesion: 0.16
-Nodes (12): 6.1 Authentication (Firebase Authentication), Session, api(), b64(), config, googleIdToken(), here, idToken() (+4 more)
+Cohesion: 0.19
+Nodes (10): api(), b64(), config, googleIdToken(), here, idToken(), jwk, persist (+2 more)
 
 ### Community 62 - "api/src/index.ts"
-Cohesion: 0.16
-Nodes (10): REFRESH_TTL_MS, corsHeaders(), Env, REQUIRED_SECRETS, withNativeCors(), app, RefreshRecord, app (+2 more)
+Cohesion: 0.22
+Nodes (9): corsHeaders(), Env, makeApp(), REQUIRED_SECRETS, withNativeCors(), app, app, env (+1 more)
 
 ### Community 63 - "data.ts"
-Cohesion: 0.20
-Nodes (14): PermHangout, PermMember, PermRoom, Override, Room, RoomType, HangoutRow, HangoutState (+6 more)
-
-### Community 64 - "What changes were made"
-Cohesion: 0.14
-Nodes (13): 10. Checkpoint 2.2 native verification and Cloudflare setup (2026-10-24), 11. Checkpoint 2.2 OAuth setup and final checks (2026-10-25), 12. Google callback issuer fix and live acceptance (2026-10-25), 13. Checkpoint 2.2 publication and Windows CI fixture correction (2026-10-25), 1. Planning and design (2026-10-21), 3. Checkpoint 1.1: the real desktop application (`cp-001.1`), 4. Tooling (2026-10-22), 5. GitHub, branches and the first release (2026-10-22) (+5 more)
+Cohesion: 0.21
+Nodes (13): PermHangout, PermMember, PermRoom, Override, Room, RoomSettings, RoomType, HangoutRow (+5 more)
 
 ### Community 65 - "NativeBridge"
 Cohesion: 0.14
@@ -374,20 +369,20 @@ Cohesion: 0.20
 Nodes (16): KeyStorage, FileFallback, OsKeychain, Status, app_info(), AppInfo, AppState, cache_delete() (+8 more)
 
 ### Community 67 - "contract.test.ts"
-Cohesion: 0.13
-Nodes (11): DETAILED_SCHEMAS, docsDir, here, METHODS, shape(), spec, specPath, specShapes (+3 more)
+Cohesion: 0.22
+Nodes (8): DETAILED_SCHEMAS, docsDir, here, METHODS, shape(), spec, specPath, specShapes
 
 ### Community 68 - "policy.test.ts"
 Cohesion: 0.22
 Nodes (7): configs, files, read(), root, secretNames, walk(), workers
 
 ### Community 69 - "live.ts"
-Cohesion: 0.09
-Nodes (16): DisplayMessage, initial(), LiveState, summary(), ApiReply, DesktopPort, GovernorStatus, Invoke (+8 more)
+Cohesion: 0.10
+Nodes (16): DisplayMessage, initial(), LiveState, summary(), ApiReply, GatewayEvent, GovernorStatus, Invoke (+8 more)
 
 ### Community 70 - "realtime.int.test.ts"
 Cohesion: 0.12
-Nodes (19): MessagesPage, API_CONFIG, b64(), client(), d1(), here, idToken(), jwk (+11 more)
+Nodes (18): API_CONFIG, b64(), client(), d1(), here, idToken(), jwk, keys (+10 more)
 
 ### Community 71 - "NativeResult"
 Cohesion: 0.24
@@ -398,8 +393,8 @@ Cohesion: 0.12
 Nodes (15): dependencies, @hangcord/protocol, description, devDependencies, @cloudflare/workers-types, exports, @cloudflare/workers-types, @hangcord/protocol (+7 more)
 
 ### Community 73 - "tauri"
-Cohesion: 0.21
-Nodes (3): NativeDesktopPort, tauri(), TauriCacheStore
+Cohesion: 0.18
+Nodes (5): NativeDesktopPort, tauri(), TauriCacheStore, watchGovernor(), @tauri-apps/api
 
 ### Community 74 - "HangCord — Secrets and Sensitive Data Register"
 Cohesion: 0.18
@@ -418,12 +413,12 @@ Cohesion: 0.28
 Nodes (8): effective_budget(), Profile, Balanced, profile_for_total(), Lite, Max, Rich, Smooth
 
 ### Community 78 - "Handoff — start here"
-Cohesion: 0.22
-Nodes (8): Handoff — start here, How to work: the loop, every time, Non-negotiables (break one and the work is rejected), The six files in this folder, What HangCord is, When you're blocked, Where everything lives, Where things stand (2026-10-25)
+Cohesion: 0.20
+Nodes (9): Checkpoint 2.2 restart refresh correction (2026-10-26), Handoff — start here, How to work: the loop, every time, Non-negotiables (break one and the work is rejected), The six files in this folder, What HangCord is, When you're blocked, Where everything lives (+1 more)
 
 ### Community 79 - "What changes were made"
-Cohesion: 0.19
-Nodes (10): 2. Checkpoint 1: foundation (`cp-001`), contrast(), luminance(), Avatar(), LABEL, PresenceBadge(), breakpoint, color (+2 more)
+Cohesion: 0.08
+Nodes (23): 10. Checkpoint 2.2 native verification and Cloudflare setup (2026-10-24), 11. Checkpoint 2.2 OAuth setup and final checks (2026-10-25), 12. Google callback issuer fix and live acceptance (2026-10-25), 13. Checkpoint 2.2 publication and Windows CI fixture correction (2026-10-25), 1. Planning and design (2026-10-21), 2. Checkpoint 1: foundation (`cp-001`), 3. Checkpoint 1.1: the real desktop application (`cp-001.1`), 4. Tooling (2026-10-22) (+15 more)
 
 ### Community 80 - "server/tsconfig.json"
 Cohesion: 0.29
@@ -433,44 +428,44 @@ Nodes (6): compilerOptions, lib, types, extends, include, ../../tsconfig.base.js
 Cohesion: 0.40
 Nodes (5): Building from these screens, Current design: Calm Minimal (approved 2026-10-21), Earlier design (v1, Lantern orange / Manrope), HangCord UI/UX, Screens
 
-### Community 82 - "MemoryCacheStore"
-Cohesion: 0.20
-Nodes (5): CacheStoreError, isValidCacheKey(), MAX_KEY_LEN, MAX_VALUE_BYTES, MemoryCacheStore
+### Community 82 - "permissions.test.ts"
+Cohesion: 0.24
+Nodes (4): here, css, here, listed
 
 ### Community 83 - "oauth.rs"
 Cohesion: 0.11
 Nodes (6): authorization_url(), callback(), challenge(), google_issuer_callback_is_accepted_by_listener(), listen(), open_browser()
 
 ### Community 85 - "desktop.ts"
-Cohesion: 0.25
-Nodes (16): decodeJson(), exchangeGoogleCode(), firebaseGoogleSignIn(), firebasePasswordSignIn(), firebaseUrl(), GOOGLE_ISSUERS, isRecord(), loadGoogleKeys() (+8 more)
+Cohesion: 0.24
+Nodes (17): decodeJson(), exchangeGoogleCode(), firebaseGoogleSignIn(), firebasePasswordSignIn(), firebaseUrl(), GOOGLE_ISSUERS, isRecord(), loadGoogleKeys() (+9 more)
 
 ### Community 86 - "firebase.ts"
-Cohesion: 0.26
-Nodes (11): 6. API and realtime contract, fromB64url(), decodeJson(), FirebaseClaims, googleKeySource(), refresh(), importRsaJwk(), record() (+3 more)
+Cohesion: 0.19
+Nodes (12): 6.1 Authentication (Firebase Authentication), 6. API and realtime contract, Session, createSessionForFirebaseToken(), decodeJson(), FirebaseClaims, googleKeySource(), refresh() (+4 more)
 
 ### Community 88 - "backend.mjs"
-Cohesion: 0.23
+Cohesion: 0.19
 Nodes (10): API, BITS, frame(), GATEWAY, json(), PORT, readFrames(), room() (+2 more)
 
 ## Knowledge Gaps
 - **65 isolated node(s):** `graphify-mcp`, `@tauri-apps/cli`, `hangcord-desktop`, `BadKey`, `TooLarge` (+60 more)
-  These have ≤1 connection - possible missing edges or undocumented components. (Counts symbols only; 749 node(s) total have ≤1 connection when file, concept and rationale nodes are included.)
+  These have ≤1 connection - possible missing edges or undocumented components. (Counts symbols only; 751 node(s) total have ≤1 connection when file, concept and rationale nodes are included.)
 - **9 thin communities (<3 nodes) omitted from report** — run `graphify query` to explore isolated nodes.
 
 ## Suggested Questions
 _Questions this graph is uniquely positioned to answer:_
 
-- **Why does `vitest` connect `vitest` to `contract.test.ts`, `cache.test.ts`, `live.ts`, `package.json`, `compute.ts`, `worker-kit/src/index.ts`, `policy.test.ts`, `realtime.int.test.ts`, `gateway-events.ts`, `hangout-do.ts`, `api/src/index.ts`, `server/src/session.ts`, `api.int.test.ts`, `rooms.ts`?**
-  _High betweenness centrality (0.082) - this node is a cross-community bridge._
+- **Why does `vitest` connect `vitest` to `contract.test.ts`, `protocol/src/index.ts`, `live.ts`, `package.json`, `compute.test.ts`, `worker-kit/src/index.ts`, `policy.test.ts`, `realtime.int.test.ts`, `gateway-events.ts`, `permissions.test.ts`, `hangout-do.ts`, `api/src/index.ts`, `server/src/session.ts`, `api.int.test.ts`, `rooms.ts`?**
+  _High betweenness centrality (0.083) - this node is a cross-community bridge._
 - **Are the 2 inferred relationships involving `fail()` (e.g. with `callback()` and `open_browser()`) actually correct?**
   _`fail()` has 2 INFERRED edges - model-reasoned connections that need verification._
 - **What connects `graphify-mcp`, `@tauri-apps/cli`, `hangcord-desktop` to the rest of the system?**
   _65 weakly-connected nodes found - possible documentation gaps or missing edges._
 - **Should `governor.rs` be split into smaller, more focused modules?**
   _Cohesion score 0.0873440285204991 - nodes in this community are weakly interconnected._
-- **Why does `computePermissions()` connect `compute.ts` to `What changes were made`, `AGENTS.md — rules for every AI agent working on HangCord`, `HangCord — Master Plan`, `HangCord — Access, Settings and Hangout Keys (spec)`, `gateway-events.ts`, `data.ts`?**
-  _High betweenness centrality (0.046) - this node is a cross-community bridge._
+- **Why does `computePermissions()` connect `compute.test.ts` to `HangCord — Master Plan`, `HangCord — Access, Settings and Hangout Keys (spec)`, `compute.ts`, `gateway-events.ts`, `Workflow design`, `data.ts`?**
+  _High betweenness centrality (0.045) - this node is a cross-community bridge._
 - **Are the 2 inferred relationships involving `RoomDO` (e.g. with `6. API and realtime contract` and `6. Durable Object storage (Cloudflare-only sensitive state)`) actually correct?**
   _`RoomDO` has 2 INFERRED edges - model-reasoned connections that need verification._
 - **Should `cache.rs` be split into smaller, more focused modules?**

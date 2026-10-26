@@ -137,7 +137,9 @@ export class LiveClient {
     const selected = this.selection + 1;
     await this.closeRoom();
     if (!this.current(epoch, selected)) return;
-    this.emit({ snap: null, roomId: null, messages: [], error: null });
+    // Refreshing the current hangout must keep its restored rooms visible while
+    // cache and network reads finish. A different hangout starts with an empty view.
+    this.emit({ snap: this.state.snap?.hangoutId === id ? this.state.snap : null, roomId: null, messages: [], error: null });
     try {
       const cached = await this.cacheWork(epoch, () => this.cache.hangout(id));
       if (this.current(epoch, selected) && cached) this.emit({ snap: cached, source: "cache" });

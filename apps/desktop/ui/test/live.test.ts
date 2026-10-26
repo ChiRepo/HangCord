@@ -1,7 +1,7 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { ClientCache, MemoryCacheStore } from "@hangcord/cache";
 import { BIT, type HangoutSnapshot, type User } from "@hangcord/protocol";
-import { LiveClient, codeOf } from "../src/live";
+import { LiveClient, codeOf, type LiveState } from "../src/live";
 import type { ApiReply, DesktopPort, GatewayEvent } from "../src/platform";
 
 const user: User = { id: "u1", displayName: "Test", email: "test@example.test", avatarUrl: null, createdAt: 1 };
@@ -38,18 +38,52 @@ function fixture() {
     connect: vi.fn(async () => `connection-${++counter}`), send: vi.fn(async () => {}), disconnect: vi.fn(async () => {}),
   };
   const store = new MemoryCacheStore(), cache = new ClientCache(store, "desktop");
-  const client = new LiveClient(port, cache, () => {}); clients.push(client);
+  const states: LiveState[] = [];
+  const client = new LiveClient(port, cache, (state) => states.push(state)); clients.push(client);
   const emit = (frame: unknown, connectionId = `connection-${counter}`) => handler({ connectionId, kind: "frame", frame });
   const ready = () => emit({ op: "READY", d: { sessionId: "session1", hangouts: { h1: { kind: "unchanged", version: 1 } }, preferences: { kind: "unchanged", version: 0 } } });
-  return { client, port, request, store, cache, emit, ready };
+  return { client, port, request, store, cache, emit, ready, states };
 }
 afterEach(async () => { for (const client of clients.splice(0)) await client.dispose(); vi.useRealTimers(); });
 
 describe("native-backed live state", () => {
+  it("keeps the restored hangout visible while refreshing the same snapshot", async () => {
+    const f = fixture();
+    await f.cache.bindAccount(user.id);
+    await f.cache.putHangout(snapshot);
+    const network = deferred<ApiReply>();
+    const original = f.request.getMockImplementation()!;
+    f.request.mockImplementation((method, path, body) => path.endsWith("/snapshot") ? network.promise : original(method, path, body));
+    const starting = f.client.start();
+    await vi.waitFor(() => expect(f.request).toHaveBeenCalledWith("GET", "/hangouts/h1/snapshot", undefined, undefined));
+    const restored = f.states.findIndex((state) => state.source === "cache" && state.snap?.hangoutId === "h1");
+    expect(restored).toBeGreaterThanOrEqual(0);
+    expect(f.states.slice(restored).every((state) => state.snap?.rooms.some((room) => room.id === "r2"))).toBe(true);
+    network.resolve({ status: 200, body: { ...snapshot, version: 2 } });
+    await starting;
+    expect(f.client.state.snap?.version).toBe(2);
+  });
   it("accepts only short error codes from string and object IPC errors", () => {
     expect(codeOf("account_link_required")).toBe("account_link_required");
     expect(codeOf({ code: "reauth_required" })).toBe("reauth_required");
     expect(codeOf("/private/path or sensitive detail")).toBe("unavailable");
+  });
+  it("removes the retained snapshot when the server denies its refresh", async () => {
+    const f = fixture(); await f.client.start();
+    f.request.mockResolvedValueOnce({ status: 403, body: { error: "forbidden" } });
+    await f.client.selectHangout("h1");
+    expect(f.client.state.snap).toBeNull();
+    expect(await f.cache.hangout("h1")).toBeUndefined();
+  });
+  it("does not show the previous snapshot while switching hangouts", async () => {
+    const f = fixture(); await f.client.start();
+    const network = deferred<ApiReply>();
+    f.request.mockReturnValueOnce(network.promise);
+    const switching = f.client.selectHangout("h2");
+    await vi.waitFor(() => expect(f.request).toHaveBeenCalledWith("GET", "/hangouts/h2/snapshot", undefined, undefined));
+    expect(f.client.state.snap).toBeNull();
+    network.resolve({ status: 404, body: { error: "not_found" } });
+    await switching;
   });
   it("discards history arriving after a room switch", async () => {
     const f = fixture(); await f.client.start();

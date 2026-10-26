@@ -154,15 +154,18 @@ try {
   ok("a second launch focuses the running app instead of opening another");
   await a.click('button[role="switch"]');
   await waitFor("lite profile again", () => a.js("return document.querySelector('.mem').textContent.endsWith('· lite')"));
-  await sleep(300);
+  await waitFor("room and Lightweight preference persisted before restart", async () => {
+    const snapshot = JSON.parse(await a.ipc("cache_get", { key: "hangout:fixture_hangout" }) ?? "null");
+    const prefs = JSON.parse(await a.ipc("cache_get", { key: "prefs" }) ?? "null");
+    return snapshot?.rooms.some((room) => room.name === "desktop-room") && prefs?.values["performance.lightweight"]?.value === true;
+  });
   backend.state.holdSnapshot = true;
   await a.end();
 
   // ---- Run 2: full restart --------------------------------------------------------------
   const b = await session();
-  await waitFor("cached app shell", () => b.js("return document.querySelector('.app')?.dataset.source === 'cache'"));
+  await waitFor("cached app shell with restored room", () => b.js("return document.querySelector('.app')?.dataset.source === 'cache' && [...document.querySelectorAll('.room span')].some(s => s.textContent === 'desktop-room')"));
   ok("restart paints from the encrypted local cache", `${b.paintMs} ms incl. process start`);
-  assert.equal(await b.js("return [...document.querySelectorAll('.room span')].some(s => s.textContent === 'desktop-room')"), true);
   ok("the room created before the restart is still there");
   await waitFor("lightweight restored", () => b.js("return document.querySelector('button[role=switch]')?.getAttribute('aria-checked') === 'true'"));
   ok("Lightweight mode is remembered across restarts");
